@@ -5,6 +5,7 @@ import {
     isNull
 } from 'util';
 import * as fs from 'fs';
+import * as readline from 'readline';
 import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -108,14 +109,20 @@ export class GrepSearvice {
                 let filePath = this.baseDir + "/" + file;
                 let stat = fs.statSync(filePath);
                 if (stat.isDirectory()) {
-
+                    // TODO grep file recursively
+                    
                 } else if (stat.isFile()) {
-                    // TODO read file 
-                    fs.readFile(filePath, 'utf-8', (err, txt) => {
-                        let _editBuilder = editBuilder;
-                        let _txt = txt;
-                        console.log(_txt);
-                        this.insertText(this.getContent(filePath, _txt), _editBuilder);
+                    let stream = fs.createReadStream(filePath, { encoding : "utf8"});
+ 
+                    let reader = readline.createInterface({ input: stream });
+                    let lineNumber = 1;
+                    reader.on("line", (data) => {                        
+                        if (this.isContainSearchWord(data)) {
+                            let contentText = this.getContent(filePath, lineNumber, data);
+                            console.log(contentText);
+                            this.insertText(contentText, editBuilder);
+                        }
+                        lineNumber++;
                     });
                 }
             });
@@ -125,19 +132,32 @@ export class GrepSearvice {
 
     }
 
-    protected grepSync() {
+    /**
+     * Check if line contains search word or not.
+     * @param textLine 
+     */
+    protected isContainSearchWord(textLine: string) {
+        // TODO take care of regexp and plain text
+        let re = new RegExp(this.searchWord);
+        if (re.test(textLine)) {
+            return true;
+        }
 
-    }
+        return false;
+    } 
 
     protected insertText(text: string, editBuilder: vscode.TextEditorEdit): void {
         editBuilder.insert(new vscode.Position(this.line++, 0), text);
     }
 
+    // TODO separate functions which are related to content.
     private getTitle() {
         return `Search Dir: ${this.baseDir} \n Search Word: ${this.searchWord}`;
     }
 
-    private getContent(filePath: string, line: string) {
-        return `${filePath} : ${line}`;
+    private getContent(filePath: string, lineNumber: number, line: string) {
+        return `${filePath} : ${lineNumber.toString()} : ${line}`;
     }
+
+
 }
