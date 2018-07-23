@@ -7,6 +7,9 @@ import {
 import * as fs from 'fs';
 import * as readline from 'readline';
 import * as path from 'path';
+import {
+    resolve
+} from 'url';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -65,9 +68,10 @@ class SearchWordInputBox extends InputBoxBase {
 
 export class GrepSearvice {
     protected line = 0;
-    protected searchWord = "";
     protected editor = vscode.window.activeTextEditor;
+    protected searchWord = "";
     protected baseDir = "";
+    // protected grepResults = [""];
 
     constructor(searchWord: string | undefined) {
         if (!isNullOrUndefined(searchWord)) {
@@ -80,57 +84,166 @@ export class GrepSearvice {
     }
     public serve() {
 
-        if (isNullOrUndefined(this.editor)) {
+        let searchWord = this.searchWord;
+        if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
+            vscode.window.showInformationMessage("Sorry, I can't grep this word...");
             return;
         }
 
-        this.editor.edit((editBuilder) => {
-            let searchWord = this.searchWord;
-            if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
-                vscode.window.showInformationMessage("Sorry, I can't grep this word...");
-                return;
-            }
+        this.grep();
 
-            this.insertText(this.getTitle(), editBuilder);
-            this.grep(editBuilder);
-
-        });
     }
 
     // TODO now implementing
     /**
      * Search word in current directory and output found result in each.
-     * @param editBuilder 
      */
-    protected grep(editBuilder: vscode.TextEditorEdit) {
+    protected grep() {
 
-        fs.readdir(this.baseDir, (err, files) => {
-            files.forEach(file => {
-                let filePath = this.baseDir + "/" + file;
-                let stat = fs.statSync(filePath);
-                if (stat.isDirectory()) {
-                    // TODO grep file recursively
-                    
-                } else if (stat.isFile()) {
-                    let stream = fs.createReadStream(filePath, { encoding : "utf8"});
- 
-                    let reader = readline.createInterface({ input: stream });
-                    let lineNumber = 1;
-                    reader.on("line", (data) => {                        
-                        if (this.isContainSearchWord(data)) {
-                            let contentText = this.getContent(filePath, lineNumber, data);
-                            console.log(contentText);
-                            this.insertText(contentText, editBuilder);
-                        }
-                        lineNumber++;
-                    });
+        // this.writeContent(this.getTitle());
+
+        new Promise((resolve, reject) => {
+            fs.readdir(this.baseDir, (err, files) => {
+                if (err) {
+                    {
+                        reject(err);
+                    }
                 }
+                resolve(files);
+            });
+        }).then((files) => {
+
+
+
+            // let grepResults = [""];
+            // let promises: Array <Promise> = [];
+
+            (files as Array < string > ).forEach(file => {
+
+                new Promise((resolve, reject) => {
+
+                    // this.writeContent("TEST: C");
+
+                    let filePath = this.baseDir + "/" + file;
+                    let stat = fs.statSync(filePath);
+
+
+
+                    if (stat.isDirectory()) {
+                        // TODO grep file recursively
+
+                    } else if (stat.isFile()) {
+
+
+                        let grepResultsInFile: Array < string > = [];
+
+                        let stream = fs.createReadStream(filePath, {
+                            encoding: "utf8"
+                        });
+
+                        let reader = readline.createInterface({
+                            input: stream
+                        });
+                        let lineNumber = 1;
+                        reader.on("line", (data) => {
+
+                            // this.writeContent("TEST: C");
+
+                            if (this.isContainSearchWord(data)) {
+                                let contentText = this.getContent(filePath, lineNumber, data);
+                                // this.grepResults.push(contentText);
+                                grepResultsInFile.push(contentText);
+                                console.log(contentText);
+                                // this.writeContent(contentText);
+
+                                // resolve(contentText);
+                            }
+                            lineNumber++;
+
+                            resolve(grepResultsInFile);
+                        });
+
+                        // promises.push(promise);
+                    }
+                }).then((results) => {
+                    // let outputText = this.getTitle() + "\n" + (results as Array < string > ).join("\n");
+                    let outputText = (results as Array < string > ).join("\n");
+                    this.writeContent(outputText);
+                });
+
+                // Promise.all(promises)
+                //     .then((results) => {
+                //         let outputText = this.getTitle() + "\n" + (results as Array < string > ).join("\n");
+                //         // let outputText = results.
+                //         this.writeContent(outputText);
+                //     });
+
+                // resolve(grepResults);
             });
         });
+        // }).then((grepResults) => {
+        //     let outputText = this.getTitle() + "\n" + (grepResults as Array<string>).join("\n");
+        //     this.writeContent(outputText);
+        // });
 
+
+        // new Promise((resolve, reject) => {
+
+        //     // this.writeContent("TEST: A");
+
+        //     fs.readdir(this.baseDir, (err, files) => {
+
+        //         // this.writeContent("TEST: B");
+
+        //         let grepResults = [""];
+
+        //         files.forEach(file => {
+
+        //             // this.writeContent("TEST: C");
+
+        //             let filePath = this.baseDir + "/" + file;
+        //             let stat = fs.statSync(filePath);
+        //             if (stat.isDirectory()) {
+        //                 // TODO grep file recursively
+
+        //             } else if (stat.isFile()) {
+        //                 let stream = fs.createReadStream(filePath, {
+        //                     encoding: "utf8"
+        //                 });
+
+        //                 let reader = readline.createInterface({
+        //                     input: stream
+        //                 });
+        //                 let lineNumber = 1;
+        //                 reader.on("line", (data) => {
+
+        //                     // this.writeContent("TEST: C");
+
+        //                     if (this.isContainSearchWord(data)) {
+        //                         let contentText = this.getContent(filePath, lineNumber, data);
+        //                         // this.grepResults.push(contentText);
+        //                         grepResults.push(contentText);
+        //                         console.log(contentText);
+        //                         // this.writeContent(contentText);
+        //                     }
+        //                     lineNumber++;
+        //                 });
+        //             }
+        //         });
+        //         resolve(grepResults);
+        //     });
+        // }).then((results) => {
+        //     let gResults = results as Array<string>;
+
+        //     let outputText = this.getTitle() + "\n" + gResults.join("\n");
+        //     this.writeContent(outputText);
+        // });
 
 
     }
+
+
+
 
     /**
      * Check if line contains search word or not.
@@ -144,15 +257,24 @@ export class GrepSearvice {
         }
 
         return false;
-    } 
-
-    protected insertText(text: string, editBuilder: vscode.TextEditorEdit): void {
-        editBuilder.insert(new vscode.Position(this.line++, 0), text);
     }
+
+    protected async writeContent(content: string) {
+        if (!this.editor) {
+            return;
+        }
+
+        await this.editor.edit((editBuilder) => {
+            let lineBreakText = content + "\n";
+            editBuilder.insert(new vscode.Position(this.line++, 0), lineBreakText);
+        });
+    }
+
+
 
     // TODO separate functions which are related to content.
     private getTitle() {
-        return `Search Dir: ${this.baseDir} \n Search Word: ${this.searchWord}`;
+        return `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
     }
 
     private getContent(filePath: string, lineNumber: number, line: string) {
