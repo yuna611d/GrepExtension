@@ -67,7 +67,8 @@ class SearchWordInputBox extends InputBoxBase {
 }
 
 export class GrepSearvice {
-    protected line = 0;
+    private LINE_BREAK = "\n";
+    private position = this.getPosition();
     protected editor = vscode.window.activeTextEditor;
     protected searchWord = "";
     protected baseDir = "";
@@ -259,17 +260,23 @@ export class GrepSearvice {
         return false;
     }
 
-    protected async writeContent(content: string) {
+    protected writeContent(content: string) {
         if (!this.editor) {
             return;
         }
 
-        await this.editor.edit((editBuilder) => {
-            let lineBreakText = content + "\n";
-            editBuilder.insert(new vscode.Position(this.line++, 0), lineBreakText);
+        this.editor.edit((editBuilder) => {
+            let lineBreakText = content + this.LINE_BREAK;
+            editBuilder.insert(this.position(), lineBreakText);
         });
     }
 
+    private getPosition() {
+        var line = 0;
+        return () => {
+            return new vscode.Position(line++, 0);
+        };
+    }
 
 
     // TODO separate functions which are related to content.
