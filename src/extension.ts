@@ -123,18 +123,7 @@ export class GrepSearvice {
                         // TODO grep file recursively
 
                     } else if (stat.isFile()) {
-
-                        let contents = fs.readFileSync(filePath, 'utf-8');
-                        let lines = contents.split(this.LINE_BREAK);
-                        let lineNumber = 1;
-                        lines.forEach(line => {
-                            if (this.isContainSearchWord(line)) {
-                                let contentText = this.getContent(filePath, lineNumber, line);
-                                console.log(contentText);
-                                this.insertText(editBuilder, contentText);
-                            }
-                            lineNumber++;
-                        });
+                        this.readFileAndInsertText(editBuilder, filePath);
                     }
                 });
                 
@@ -145,6 +134,24 @@ export class GrepSearvice {
     }
 
 
+    /**
+     * Read file and insert text to activeeditor.
+     * @param editBuilder editBuilder
+     * @param filePath filePath
+     */
+    protected readFileAndInsertText(editBuilder: vscode.TextEditorEdit, filePath: string) {
+        let contents = fs.readFileSync(filePath, 'utf-8');
+        let lines = contents.split(this.LINE_BREAK);
+        let lineNumber = 1;
+        lines.forEach(line => {
+            if (this.isContainSearchWord(line)) {
+                let contentText = this.getContent(filePath, lineNumber, line);
+                console.log(contentText);
+                this.insertText(editBuilder, contentText);
+            }
+            lineNumber++;
+        });
+    }
 
 
     /**
