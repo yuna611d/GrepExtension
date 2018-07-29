@@ -6,6 +6,7 @@ import {
 } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as ib from './InputBox';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -23,7 +24,7 @@ export function deactivate() {}
 
 class GrepController {
     public doAction(): void {
-        let inputBox = new SearchWordInputBox();
+        let inputBox = new ib.SearchWordInputBox();
         inputBox.showInputBox(this.callback);
     }
 
@@ -37,30 +38,6 @@ class GrepController {
     }
 }
 
-interface IInputBox {
-    showInputBox(callback: (v: string | undefined) => {}): void;
-}
-
-class InputBoxBase implements IInputBox {
-    protected option: vscode.InputBoxOptions = {
-        prompt: "",
-    };
-    public showInputBox(callback: (v: string | undefined) => {}): void {
-        vscode.window.showInputBox(this.option).then(value => callback(value));
-    }
-}
-
-// class SearchPathInputBox extends InputBoxBase {
-//     option = {
-//         prompt: "Input Search Path (absolute path)",
-//     };
-// }
-
-class SearchWordInputBox extends InputBoxBase {
-    option = {
-        prompt: "Input Word",
-    };
-}
 
 export class GrepSearvice {
     private LINE_BREAK = "\n";
@@ -88,8 +65,7 @@ export class GrepSearvice {
         }
 
         this.editor!.edit(editBuilder => {
-
-        this.insertText(editBuilder, this.getTitle());
+            this.insertText(editBuilder, this.getTitle());
             this.grep(editBuilder);
         });
 
@@ -106,7 +82,6 @@ export class GrepSearvice {
         }
 
         let files = fs.readdirSync(targetDir);
-
 
         (files as Array < string > ).forEach(file => {
 
@@ -160,11 +135,6 @@ export class GrepSearvice {
         return false;
     }
 
-    protected async writeContent(content: string) {
-        await this.editor!.edit((editBuilder) => {
-            this.insertText(editBuilder, content);
-        });
-    }
 
     protected insertText(editBuilder: vscode.TextEditorEdit, content: string) {
         let lineBreakText = content + this.LINE_BREAK;
@@ -178,7 +148,7 @@ export class GrepSearvice {
         };
     }
 
-    // TODO separate functions which are related to content.
+    
     private getTitle() {
         return `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
     }
