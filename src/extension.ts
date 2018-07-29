@@ -4,7 +4,6 @@ import {
     isNullOrUndefined
 } from 'util';
 import * as fs from 'fs';
-import * as readline from 'readline';
 import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -97,7 +96,6 @@ export class GrepSearvice {
      */
     protected grep() {
 
-        // this.writeContent(this.getTitle());
 
         new Promise((resolve, reject) => {
             fs.readdir(this.baseDir, (err, files) => {
@@ -111,66 +109,35 @@ export class GrepSearvice {
         }).then((files) => {
 
 
+            this.editor!.edit(editBuilder => {
 
-            // let grepResults = [""];
-            // let promises: Array <Promise> = [];
+                this.insertText(editBuilder, this.getTitle());
 
-            (files as Array < string > ).forEach(file => {
+                (files as Array < string > ).forEach(file => {
 
-                new Promise((resolve, reject) => {
-
-                    // this.writeContent("TEST: C");
 
                     let filePath = this.baseDir + "/" + file;
                     let stat = fs.statSync(filePath);
-
-
 
                     if (stat.isDirectory()) {
                         // TODO grep file recursively
 
                     } else if (stat.isFile()) {
 
-
-                        let grepResultsInFile: Array < string > = [];
-
-                        let stream = fs.createReadStream(filePath, {
-                            encoding: "utf8"
-                        });
-
-                        let reader = readline.createInterface({
-                            input: stream
-                        });
+                        let contents = fs.readFileSync(filePath, 'utf-8');
+                        let lines = contents.split(this.LINE_BREAK);
                         let lineNumber = 1;
-                        reader.on("line", (data) => {
-
-                            // this.writeContent("TEST: C");
-
-                            if (this.isContainSearchWord(data)) {
-                                let contentText = this.getContent(filePath, lineNumber, data);
-                                // this.grepResults.push(contentText);
-                                grepResultsInFile.push(contentText);
+                        lines.forEach(line => {
+                            if (this.isContainSearchWord(line)) {
+                                let contentText = this.getContent(filePath, lineNumber, line);
                                 console.log(contentText);
-                                // this.writeContent(contentText);
-
-                                // resolve(contentText);
+                                this.insertText(editBuilder, contentText);
                             }
                             lineNumber++;
-
-                            resolve(grepResultsInFile);
                         });
-
-                        // promises.push(promise);
                     }
-                }).then((results) => {
-
-                    this.editor!.edit(editBuilder => {
-                        (results as string[]).forEach(outputText => {
-                            this.insertText(editBuilder, outputText);
-                        });
-                    });
                 });
-
+                
             });
         });
 
@@ -211,7 +178,6 @@ export class GrepSearvice {
             return new vscode.Position(line++, 0);
         };
     }
-
 
     // TODO separate functions which are related to content.
     private getTitle() {
