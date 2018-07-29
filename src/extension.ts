@@ -1,15 +1,11 @@
 'use strict';
 import * as vscode from 'vscode';
 import {
-    isNullOrUndefined,
-    isNull
+    isNullOrUndefined
 } from 'util';
 import * as fs from 'fs';
 import * as readline from 'readline';
 import * as path from 'path';
-import {
-    resolve
-} from 'url';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -167,78 +163,16 @@ export class GrepSearvice {
                         // promises.push(promise);
                     }
                 }).then((results) => {
-                    // let outputText = this.getTitle() + "\n" + (results as Array < string > ).join("\n");
-                    let outputText = (results as Array < string > ).join("\n");
-                    this.writeContent(outputText);
+
+                    this.editor!.edit(editBuilder => {
+                        (results as string[]).forEach(outputText => {
+                            this.insertText(editBuilder, outputText);
+                        });
+                    });
                 });
 
-                // Promise.all(promises)
-                //     .then((results) => {
-                //         let outputText = this.getTitle() + "\n" + (results as Array < string > ).join("\n");
-                //         // let outputText = results.
-                //         this.writeContent(outputText);
-                //     });
-
-                // resolve(grepResults);
             });
         });
-        // }).then((grepResults) => {
-        //     let outputText = this.getTitle() + "\n" + (grepResults as Array<string>).join("\n");
-        //     this.writeContent(outputText);
-        // });
-
-
-        // new Promise((resolve, reject) => {
-
-        //     // this.writeContent("TEST: A");
-
-        //     fs.readdir(this.baseDir, (err, files) => {
-
-        //         // this.writeContent("TEST: B");
-
-        //         let grepResults = [""];
-
-        //         files.forEach(file => {
-
-        //             // this.writeContent("TEST: C");
-
-        //             let filePath = this.baseDir + "/" + file;
-        //             let stat = fs.statSync(filePath);
-        //             if (stat.isDirectory()) {
-        //                 // TODO grep file recursively
-
-        //             } else if (stat.isFile()) {
-        //                 let stream = fs.createReadStream(filePath, {
-        //                     encoding: "utf8"
-        //                 });
-
-        //                 let reader = readline.createInterface({
-        //                     input: stream
-        //                 });
-        //                 let lineNumber = 1;
-        //                 reader.on("line", (data) => {
-
-        //                     // this.writeContent("TEST: C");
-
-        //                     if (this.isContainSearchWord(data)) {
-        //                         let contentText = this.getContent(filePath, lineNumber, data);
-        //                         // this.grepResults.push(contentText);
-        //                         grepResults.push(contentText);
-        //                         console.log(contentText);
-        //                         // this.writeContent(contentText);
-        //                     }
-        //                     lineNumber++;
-        //                 });
-        //             }
-        //         });
-        //         resolve(grepResults);
-        //     });
-        // }).then((results) => {
-        //     let gResults = results as Array<string>;
-
-        //     let outputText = this.getTitle() + "\n" + gResults.join("\n");
-        //     this.writeContent(outputText);
-        // });
 
 
     }
@@ -260,15 +194,15 @@ export class GrepSearvice {
         return false;
     }
 
-    protected writeContent(content: string) {
-        if (!this.editor) {
-            return;
-        }
-
-        this.editor.edit((editBuilder) => {
-            let lineBreakText = content + this.LINE_BREAK;
-            editBuilder.insert(this.position(), lineBreakText);
+    protected async writeContent(content: string) {
+        await this.editor!.edit((editBuilder) => {
+            this.insertText(editBuilder, content);
         });
+    }
+
+    protected insertText(editBuilder: vscode.TextEditorEdit, content: string) {
+        let lineBreakText = content + this.LINE_BREAK;
+        editBuilder.insert(this.position(), lineBreakText);
     }
 
     private getPosition() {
