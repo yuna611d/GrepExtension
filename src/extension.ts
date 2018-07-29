@@ -31,7 +31,7 @@ class GrepController {
     protected callback(v: string | undefined) {
         console.log("Callback is called. Assigned value is " + v);
 
-        let service = new GrepSearvice(v);
+        let service = new GrepService(v);
         service.serve();
 
         return () => {};
@@ -39,7 +39,7 @@ class GrepController {
 }
 
 
-export class GrepSearvice {
+export class GrepService {
     private LINE_BREAK = "\n";
     private position = this.getPosition();
     protected editor = vscode.window.activeTextEditor;
@@ -49,22 +49,32 @@ export class GrepSearvice {
     protected baseDir = "";
 
     constructor(searchWord: string | undefined) {
+
         if (!isNullOrUndefined(searchWord)) {
             this.searchWord = searchWord;
         }
-        if (!isNullOrUndefined(this.editor)) {
-            let openedFilePath = this.editor.document.fileName;
-            this.baseDir = path.dirname(openedFilePath);
+
+        // TOOD in the futre, multi work space should be applye
+        let workspaceForlders = vscode.workspace.workspaceFolders;
+        if (!isNullOrUndefined(workspaceForlders) &&  workspaceForlders.length !== 0) {
+            this.baseDir = workspaceForlders[0].uri.path;
         }
+
+        // TODO create new file, which is outputted result
     }
     public serve() {
 
+        // Get search word
         let searchWord = this.searchWord;
         if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
             vscode.window.showInformationMessage("Sorry, I can't grep this word...");
             return;
         }
 
+        // Create new file, which is outputted results.
+
+
+        // Do grep and output its results.
         this.editor!.edit(editBuilder => {
             this.editBuilder = editBuilder;
             this.insertText(this.getTitle());
