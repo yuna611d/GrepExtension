@@ -42,11 +42,13 @@ class GrepController {
 export class GrepService {
     private LINE_BREAK = "\n";
     private position = this.getPosition();
-    protected editor = vscode.window.activeTextEditor;
-    protected editBuilder: TextEditorEdit | null = null;
+    protected editBuilder: vscode.TextEditorEdit | null = null;
 
     protected searchWord = "";
     protected baseDir = "";
+
+    protected resultFileName = "grepResultFile.grf.txt";
+    protected resultFilePath = "";
 
     constructor(searchWord: string | undefined) {
 
@@ -56,11 +58,13 @@ export class GrepService {
 
         // TOOD in the futre, multi work space should be applye
         let workspaceForlders = vscode.workspace.workspaceFolders;
-        if (!isNullOrUndefined(workspaceForlders) &&  workspaceForlders.length !== 0) {
+        if (!isNullOrUndefined(workspaceForlders) && workspaceForlders.length !== 0) {
             this.baseDir = workspaceForlders[0].uri.path;
+            // create result file
+            this.resultFilePath = this.baseDir + "/" + this.resultFileName;
+            fs.appendFileSync(this.resultFilePath, '', 'utf-8');
         }
 
-        // TODO create new file, which is outputted result
     }
     public serve() {
 
@@ -71,19 +75,25 @@ export class GrepService {
             return;
         }
 
-        // Create new file, which is outputted results.
-
-
-        // Do grep and output its results.
-        this.editor!.edit(editBuilder => {
-            this.editBuilder = editBuilder;
-            this.insertText(this.getTitle());
-            this.grep();
-            vscode.window.showInformationMessage("Grep is finished...");
-            this.editBuilder = null;
-        });
+        // Open result file (fire onDidOpenTextDocument Event)
+        vscode.workspace.openTextDocument(this.resultFilePath)
+            .then(doc => {
+                vscode.window.showTextDocument(doc)
+                    .then(editor => {
+                        // Do grep and output its results.
+                        editor.edit(editBuilder => {
+                            this.editBuilder = editBuilder;
+                            this.insertText(this.getTitle());
+                            this.grep();
+                            vscode.window.showInformationMessage("Grep is finished...");
+                            this.editBuilder = null;
+                        });
+                    });
+            });
 
     }
+
+
 
     /**
      * Read file and 
