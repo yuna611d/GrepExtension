@@ -43,9 +43,10 @@ export class GrepSearvice {
     private LINE_BREAK = "\n";
     private position = this.getPosition();
     protected editor = vscode.window.activeTextEditor;
+    protected editBuilder: TextEditorEdit | null = null;
+
     protected searchWord = "";
     protected baseDir = "";
-    // protected grepResults = [""];
 
     constructor(searchWord: string | undefined) {
         if (!isNullOrUndefined(searchWord)) {
@@ -65,35 +66,41 @@ export class GrepSearvice {
         }
 
         this.editor!.edit(editBuilder => {
-            this.insertText(editBuilder, this.getTitle());
-            this.grep(editBuilder);
+            this.editBuilder = editBuilder;
+            this.insertText(this.getTitle());
+            this.grep();
+            vscode.window.showInformationMessage("Grep is finished...");
+            this.editBuilder = null;
         });
 
     }
 
-    // TODO now implementing
     /**
-     * Search word in current directory and output found result in each.
+     * Read file and 
+     * @param nextTargetDir directory where is next target.
      */
-    protected grep(editBuilder: vscode.TextEditorEdit, nextTargetDir: string | null = null) {
+    protected grep(nextTargetDir: string | null = null) {
+        // Get target directory
         let targetDir = (isNull(nextTargetDir)) ? this.baseDir : nextTargetDir;
         if (isNull(targetDir)) {
             return;
         }
-
+        // Get file or directory names in targetDir
         let files = fs.readdirSync(targetDir);
 
-        (files as Array < string > ).forEach(file => {
+        (files as string[]).forEach(file => {
 
-
+            // Get the file path
             let filePath = targetDir + "/" + file;
+            // Check if the file path is file or directory
             let stat = fs.statSync(filePath);
 
             if (stat.isDirectory()) {
-                this.grep(editBuilder, filePath);
-
+                // if file path is directory, regrep by using filepath as nextTargetDir
+                this.grep(filePath);
             } else if (stat.isFile()) {
-                this.readFileAndInsertText(editBuilder, filePath);
+                // if file path is file, read file and insert grep results to editor
+                this.readFileAndInsertText(filePath);
             }
         });
 
@@ -103,10 +110,9 @@ export class GrepSearvice {
 
     /**
      * Read file and insert text to activeeditor.
-     * @param editBuilder editBuilder
      * @param filePath filePath
      */
-    protected readFileAndInsertText(editBuilder: vscode.TextEditorEdit, filePath: string) {
+    protected readFileAndInsertText(filePath: string) {
         let contents = fs.readFileSync(filePath, 'utf-8');
         let lines = contents.split(this.LINE_BREAK);
         let lineNumber = 1;
@@ -114,7 +120,7 @@ export class GrepSearvice {
             if (this.isContainSearchWord(line)) {
                 let contentText = this.getContent(filePath, lineNumber, line);
                 console.log(contentText);
-                this.insertText(editBuilder, contentText);
+                this.insertText(contentText);
             }
             lineNumber++;
         });
@@ -123,23 +129,36 @@ export class GrepSearvice {
 
     /**
      * Check if line contains search word or not.
-     * @param textLine 
+     * @param targetString 
      */
-    protected isContainSearchWord(textLine: string) {
+    protected isContainSearchWord(targetString: string) {
         // TODO take care of regexp and plain text
         let re = new RegExp(this.searchWord);
-        if (re.test(textLine)) {
+        if (re.test(targetString)) {
             return true;
         }
 
         return false;
     }
 
-
-    protected insertText(editBuilder: vscode.TextEditorEdit, content: string) {
-        let lineBreakText = content + this.LINE_BREAK;
-        editBuilder.insert(this.position(), lineBreakText);
+    protected getTitle() {
+        return `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
     }
+
+    protected getContent(filePath: string, lineNumber: number, line: string) {
+        return `${filePath} : ${lineNumber.toString()} : ${line}`;
+    }
+
+
+
+    private insertText(content: string) {
+        if (isNull(this.editBuilder)) {
+            return;
+        }
+        let lineBreakText = content + this.LINE_BREAK;
+        this.editBuilder.insert(this.position(), lineBreakText);
+    }
+
 
     private getPosition() {
         var line = 0;
@@ -147,15 +166,4 @@ export class GrepSearvice {
             return new vscode.Position(line++, 0);
         };
     }
-
-    
-    private getTitle() {
-        return `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
-    }
-
-    private getContent(filePath: string, lineNumber: number, line: string) {
-        return `${filePath} : ${lineNumber.toString()} : ${line}`;
-    }
-
-
 }
