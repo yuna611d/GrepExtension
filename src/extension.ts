@@ -1,7 +1,8 @@
 'use strict';
 import * as vscode from 'vscode';
 import {
-    isNullOrUndefined
+    isNullOrUndefined,
+    isNull
 } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -86,7 +87,11 @@ export class GrepSearvice {
             return;
         }
 
-        this.grep();
+        this.editor!.edit(editBuilder => {
+
+        this.insertText(editBuilder, this.getTitle());
+            this.grep(editBuilder);
+        });
 
     }
 
@@ -94,40 +99,27 @@ export class GrepSearvice {
     /**
      * Search word in current directory and output found result in each.
      */
-    protected grep() {
+    protected grep(editBuilder: vscode.TextEditorEdit, nextTargetDir: string | null = null) {
+        let targetDir = (isNull(nextTargetDir)) ? this.baseDir : nextTargetDir;
+        if (isNull(targetDir)) {
+            return;
+        }
+
+        let files = fs.readdirSync(targetDir);
 
 
-        new Promise((resolve, reject) => {
-            fs.readdir(this.baseDir, (err, files) => {
-                if (err) {
-                    {
-                        reject(err);
-                    }
-                }
-                resolve(files);
-            });
-        }).then((files) => {
+        (files as Array < string > ).forEach(file => {
 
 
-            this.editor!.edit(editBuilder => {
+            let filePath = targetDir + "/" + file;
+            let stat = fs.statSync(filePath);
 
-                this.insertText(editBuilder, this.getTitle());
+            if (stat.isDirectory()) {
+                this.grep(editBuilder, filePath);
 
-                (files as Array < string > ).forEach(file => {
-
-
-                    let filePath = this.baseDir + "/" + file;
-                    let stat = fs.statSync(filePath);
-
-                    if (stat.isDirectory()) {
-                        // TODO grep file recursively
-
-                    } else if (stat.isFile()) {
-                        this.readFileAndInsertText(editBuilder, filePath);
-                    }
-                });
-                
-            });
+            } else if (stat.isFile()) {
+                this.readFileAndInsertText(editBuilder, filePath);
+            }
         });
 
 
