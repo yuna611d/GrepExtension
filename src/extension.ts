@@ -5,7 +5,6 @@ import {
     isNull
 } from 'util';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as ib from './InputBox';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -47,13 +46,18 @@ export class GrepService {
     protected searchWord = "";
     protected baseDir = "";
 
+    protected encoding = "utf-8";
     protected resultFileName = "grepResultFile.grf.txt";
     protected resultFilePath = "";
+
+    protected isRegExpMode = false;
+    protected regExpOptions = "";
 
     constructor(searchWord: string | undefined) {
 
         if (!isNullOrUndefined(searchWord)) {
             this.searchWord = searchWord;
+            this.setRegExpItemsIfRegExpPattern(searchWord);
         }
 
         // TOOD in the futre, multi work space should be applye
@@ -62,7 +66,8 @@ export class GrepService {
             this.baseDir = workspaceForlders[0].uri.path;
             // create result file
             this.resultFilePath = this.baseDir + "/" + this.resultFileName;
-            fs.appendFileSync(this.resultFilePath, '', 'utf-8');
+            // TODO use encoding which is defined in config file
+            fs.appendFileSync(this.resultFilePath, '', this.encoding);
         }
 
     }
@@ -76,21 +81,18 @@ export class GrepService {
         }
 
         // Open result file (fire onDidOpenTextDocument Event)
-        vscode.workspace.openTextDocument(this.resultFilePath)
-            .then(doc => {
-                vscode.window.showTextDocument(doc)
-                    .then(editor => {
-                        // Do grep and output its results.
-                        editor.edit(editBuilder => {
-                            this.editBuilder = editBuilder;
-                            this.insertText(this.getTitle());
-                            this.grep();
-                            vscode.window.showInformationMessage("Grep is finished...");
-                            this.editBuilder = null;
-                        });
-                    });
+        vscode.workspace.openTextDocument(this.resultFilePath).then(doc => {
+            vscode.window.showTextDocument(doc).then(editor => {
+                // Do grep and output its results.
+                editor.edit(editBuilder => {
+                    this.editBuilder = editBuilder;
+                    this.insertText(this.getTitle());
+                    this.grep();
+                    vscode.window.showInformationMessage("Grep is finished...");
+                    this.editBuilder = null;
+                });
             });
-
+        });
     }
 
 
@@ -123,8 +125,6 @@ export class GrepService {
                 this.readFileAndInsertText(filePath);
             }
         });
-
-
     }
 
 
@@ -152,8 +152,17 @@ export class GrepService {
      * @param targetString 
      */
     protected isContainSearchWord(targetString: string) {
-        // TODO take care of regexp and plain text
-        let re = new RegExp(this.searchWord);
+        let re = null;
+        if (this.isRegExpMode) {
+            re = new RegExp(this.searchWord, this.regExpOptions);
+        } else {
+            re = new RegExp(this.searchWord);
+        }
+
+        if (isNull(re)) {
+            return false;
+        }
+
         if (re.test(targetString)) {
             return true;
         }
@@ -161,12 +170,46 @@ export class GrepService {
         return false;
     }
 
+    protected setRegExpItemsIfRegExpPattern(searchWord: string) {
+        //  re/<pattern>/flags
+        let REGEXP_FORMAT_PREFIX = "re/";
+        let REGEXP_FORMAT_POSTFIX = "/";
+
+
+        let patternStartPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
+        if (patternStartPos === -1) {
+            return;
+        }
+        patternStartPos += + REGEXP_FORMAT_PREFIX.length
+
+
+        let patternEndPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
+        if (patternEndPos === -1 || patternStartPos >= patternEndPos) {
+            return;
+        }
+
+        let pattern = searchWord.substring(patternStartPos, patternEndPos);
+        if (pattern.length === 0) {
+            return;
+        }
+
+        // Configure for regexp
+        this.isRegExpMode = true;
+        this.searchWord = pattern;
+        this.regExpOptions = searchWord.substring(patternEndPos + 1);
+
+    }
+
     protected getTitle() {
-        return `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
+        let title = `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
+        title += "\nRegExpMode: ";
+        title += this.isRegExpMode ? "ON" : "OFF";
+        return title;
     }
 
     protected getContent(filePath: string, lineNumber: number, line: string) {
-        return `${filePath} : ${lineNumber.toString()} : ${line}`;
+        let content = `${filePath} : ${lineNumber.toString()} : ${line}`;
+        return content;
     }
 
 
