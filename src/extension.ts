@@ -87,6 +87,7 @@ export class GrepService {
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
                     this.insertText(this.getTitle());
+                    this.insertText(this.getContent("",0,""));
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -224,9 +225,13 @@ export class GrepService {
     }
 
     protected getContent(filePath: string, lineNumber: number, line: string) {
-        let separator = "\t";
-        let content = [filePath, lineNumber, line].join(separator);
+        let content = this.getFormattedContent(["", filePath, lineNumber.toString(), line]);
         return content;
+    }
+
+    protected getFormattedContent(contents: string[]) {
+        let separator = "\t";
+        return contents.join(separator);
     }
 
 
