@@ -87,7 +87,7 @@ export class GrepService {
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
                     this.insertText(this.getTitle());
-                    this.insertText(this.getContent("",0,""));
+                    this.insertText(this.getContent("filePath","lineNumber","TextLine"));
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -139,7 +139,7 @@ export class GrepService {
         let lineNumber = 1;
         lines.forEach(line => {
             if (this.isContainSearchWord(line)) {
-                let contentText = this.getContent(filePath, lineNumber, line);
+                let contentText = this.getContent(filePath, lineNumber.toString(), line);
                 console.log(contentText);
                 this.insertText(contentText);
             }
@@ -224,8 +224,8 @@ export class GrepService {
         return title;
     }
 
-    protected getContent(filePath: string, lineNumber: number, line: string) {
-        let content = this.getFormattedContent(["", filePath, lineNumber.toString(), line]);
+    protected getContent(filePath: string, lineNumber: string, line: string) {
+        let content = this.getFormattedContent(["", filePath, lineNumber, line]);
         return content;
     }
 
