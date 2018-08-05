@@ -98,7 +98,7 @@ export class GrepService {
 
 
     /**
-     * Read file and 
+     * Read file and check if line contain search word or not.
      * @param nextTargetDir directory where is next target.
      */
     protected grep(nextTargetDir: string | null = null) {
@@ -153,7 +153,7 @@ export class GrepService {
      */
     protected isContainSearchWord(targetString: string) {
         let re = null;
-        if (this.isRegExpMode) {
+        if (this.isRegExpMode && this.regExpOptions.length > 0) {
             re = new RegExp(this.searchWord, this.regExpOptions);
         } else {
             re = new RegExp(this.searchWord);
@@ -170,10 +170,15 @@ export class GrepService {
         return false;
     }
 
+    /**
+     * Set parameters for regulare expression.
+     * @param searchWord: searchWord
+     */
     protected setRegExpItemsIfRegExpPattern(searchWord: string) {
         //  re/<pattern>/flags
         let REGEXP_FORMAT_PREFIX = "re/";
         let REGEXP_FORMAT_POSTFIX = "/";
+        let ALLOWED_OPTIONS = ["i"];
 
 
         let patternStartPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
@@ -193,10 +198,20 @@ export class GrepService {
             return;
         }
 
+        let options = "";
+        let tmpOptions = searchWord.substring(patternEndPos + 1);
+        for (let i = 0; i < tmpOptions.length; i++) {
+            let option = tmpOptions.charAt(i);
+            if (ALLOWED_OPTIONS.indexOf(option) > -1) {
+                options += option;
+            } 
+        }
+
+
         // Configure for regexp
         this.isRegExpMode = true;
         this.searchWord = pattern;
-        this.regExpOptions = searchWord.substring(patternEndPos + 1);
+        this.regExpOptions = options;
 
     }
 
