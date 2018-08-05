@@ -1,6 +1,6 @@
 {
-    "name": "grepextension",
-    "displayName": "grepextension",
+    "name": "grep2file",
+    "displayName": "grep2file",
     "description": "grep word and output result to file",
     "version": "0.0.1",
     "publisher": "yuna611d",
@@ -18,7 +18,7 @@
         "commands": [
             {
                 "command": "extension.grepResult2File",
-                "title": "Grep result to file"
+                "title": "Grep to File"
             }
         ]
     },

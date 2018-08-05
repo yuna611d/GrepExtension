@@ -47,7 +47,7 @@ export class GrepService {
     protected baseDir = "";
 
     protected encoding = "utf-8";
-    protected resultFileName = "grepResultFile.grf.txt";
+    protected resultFileName = "grep2File.g2f.txt";
     protected resultFilePath = "";
 
     protected isRegExpMode = false;
@@ -133,7 +133,7 @@ export class GrepService {
      * @param filePath filePath
      */
     protected readFileAndInsertText(filePath: string) {
-        let contents = fs.readFileSync(filePath, 'utf-8');
+        let contents = fs.readFileSync(filePath, this.encoding);
         let lines = contents.split(this.LINE_BREAK);
         let lineNumber = 1;
         lines.forEach(line => {
@@ -216,14 +216,16 @@ export class GrepService {
     }
 
     protected getTitle() {
-        let title = `Search Dir: ${this.baseDir}\nSearch Word: ${this.searchWord}`;
-        title += "\nRegExpMode: ";
+        let title = `Search Dir: ${this.baseDir}`;
+        title += this.LINE_BREAK + `Search Word: ${this.searchWord}`;
+        title += this.LINE_BREAK + "RegExpMode: ";
         title += this.isRegExpMode ? "ON" : "OFF";
         return title;
     }
 
     protected getContent(filePath: string, lineNumber: number, line: string) {
-        let content = `${filePath} : ${lineNumber.toString()} : ${line}`;
+        let separator = ",";
+        let content = [filePath, lineNumber, line].join(separator);
         return content;
     }
 
