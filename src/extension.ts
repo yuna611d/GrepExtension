@@ -224,7 +224,7 @@ export class GrepService {
     }
 
     protected getContent(filePath: string, lineNumber: number, line: string) {
-        let separator = ",";
+        let separator = "\t";
         let content = [filePath, lineNumber, line].join(separator);
         return content;
     }
