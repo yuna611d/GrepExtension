@@ -5,6 +5,7 @@ import {
     isNull
 } from 'util';
 import * as fs from 'fs';
+import os = require('os');
 import * as ib from './InputBox';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -40,6 +41,7 @@ class GrepController {
 
 export class GrepService {
     private LINE_BREAK = "\n";
+    private DIR_SEPARATPR = "/";
     private position = this.getPosition();
     protected editBuilder: vscode.TextEditorEdit | null = null;
 
@@ -55,6 +57,15 @@ export class GrepService {
 
     constructor(searchWord: string | undefined) {
 
+        // SetDirectorySeparator
+        let osType = os.type();
+        if (osType === 'Windows_NT') {
+            this.DIR_SEPARATPR = "\\";
+        } else {
+            this.DIR_SEPARATPR = "/";
+        }
+
+        // Check search word exisntance and reg exp mode
         if (!isNullOrUndefined(searchWord)) {
             this.searchWord = searchWord;
             this.setRegExpItemsIfRegExpPattern(searchWord);
@@ -63,9 +74,9 @@ export class GrepService {
         // TOOD in the futre, multi work space should be applye
         let workspaceForlders = vscode.workspace.workspaceFolders;
         if (!isNullOrUndefined(workspaceForlders) && workspaceForlders.length !== 0) {
-            this.baseDir = workspaceForlders[0].uri.path;
+            this.baseDir = workspaceForlders[0].uri.fsPath;
             // create result file
-            this.resultFilePath = this.baseDir + "/" + this.resultFileName;
+            this.resultFilePath = this.baseDir + this.DIR_SEPARATPR + this.resultFileName;
             // TODO use encoding which is defined in config file
             fs.appendFileSync(this.resultFilePath, '', this.encoding);
         }
@@ -114,7 +125,7 @@ export class GrepService {
         (files as string[]).forEach(file => {
 
             // Get the file path
-            let filePath = targetDir + "/" + file;
+            let filePath = targetDir + this.DIR_SEPARATPR+ file;
             // Check if the file path is file or directory
             let stat = fs.statSync(filePath);
 
@@ -251,4 +262,25 @@ export class GrepService {
             return new vscode.Position(line++, 0);
         };
     }
+    protected getTargetDir(currentDir: string, nextDir: string): string {
+        let targetDir = currentDir;
+        let separator = "";
+
+        let osType = os.type();
+        if (osType === 'Windows_NT') {
+            separator = "\\";
+        } else {
+            separator = "/";
+        }
+
+        if (!targetDir.endsWith(separator)) {
+            targetDir = targetDir + separator;
+        }
+        if (nextDir !== "") {
+            targetDir = targetDir + nextDir + separator;
+        }
+
+        return targetDir;
+    }
+
 }
