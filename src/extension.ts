@@ -5,8 +5,11 @@ import {
     isNull
 } from 'util';
 import * as fs from 'fs';
-import os = require('os');
+import * as os from 'os';
 import * as ib from './InputBox';
+import * as cu from './ContentUtil';
+
+const CU = cu.ContentUtil;
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -40,7 +43,6 @@ class GrepController {
 
 
 export class GrepService {
-    private LINE_BREAK = "\n";
     private DIR_SEPARATPR = "/";
     private position = this.getPosition();
     protected editBuilder: vscode.TextEditorEdit | null = null;
@@ -97,8 +99,8 @@ export class GrepService {
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
-                    this.insertText(this.getTitle());
-                    this.insertText(this.getContent("filePath","lineNumber","TextLine"));
+                    this.insertText(CU.getTitle(this.baseDir, this.searchWord, this.isRegExpMode));
+                    this.insertText(CU.getContent("filePath","lineNumber","TextLine"));
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -125,7 +127,7 @@ export class GrepService {
         (files as string[]).forEach(file => {
 
             // Get the file path
-            let filePath = targetDir + this.DIR_SEPARATPR+ file;
+            let filePath = targetDir + this.DIR_SEPARATPR + file;
             // Check if the file path is file or directory
             let stat = fs.statSync(filePath);
 
@@ -146,11 +148,11 @@ export class GrepService {
      */
     protected readFileAndInsertText(filePath: string) {
         let contents = fs.readFileSync(filePath, this.encoding);
-        let lines = contents.split(this.LINE_BREAK);
+        let lines = contents.split(CU.LINE_BREAK);
         let lineNumber = 1;
         lines.forEach(line => {
             if (this.isContainSearchWord(line)) {
-                let contentText = this.getContent(filePath, lineNumber.toString(), line);
+                let contentText = CU.getContent(filePath, lineNumber.toString(), line);
                 console.log(contentText);
                 this.insertText(contentText);
             }
@@ -197,7 +199,7 @@ export class GrepService {
         if (patternStartPos === -1) {
             return;
         }
-        patternStartPos += + REGEXP_FORMAT_PREFIX.length
+        patternStartPos += REGEXP_FORMAT_PREFIX.length;
 
 
         let patternEndPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
@@ -227,23 +229,6 @@ export class GrepService {
 
     }
 
-    protected getTitle() {
-        let title = `Search Dir: ${this.baseDir}`;
-        title += this.LINE_BREAK + `Search Word: ${this.searchWord}`;
-        title += this.LINE_BREAK + "RegExpMode: ";
-        title += this.isRegExpMode ? "ON" : "OFF";
-        return title;
-    }
-
-    protected getContent(filePath: string, lineNumber: string, line: string) {
-        let content = this.getFormattedContent(["", filePath, lineNumber, line]);
-        return content;
-    }
-
-    protected getFormattedContent(contents: string[]) {
-        let separator = "\t";
-        return contents.join(separator);
-    }
 
 
 
@@ -251,7 +236,7 @@ export class GrepService {
         if (isNull(this.editBuilder)) {
             return;
         }
-        let lineBreakText = content + this.LINE_BREAK;
+        let lineBreakText = content + CU.LINE_BREAK;
         this.editBuilder.insert(this.position(), lineBreakText);
     }
 
