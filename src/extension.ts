@@ -262,25 +262,4 @@ export class GrepService {
             return new vscode.Position(line++, 0);
         };
     }
-    protected getTargetDir(currentDir: string, nextDir: string): string {
-        let targetDir = currentDir;
-        let separator = "";
-
-        let osType = os.type();
-        if (osType === 'Windows_NT') {
-            separator = "\\";
-        } else {
-            separator = "/";
-        }
-
-        if (!targetDir.endsWith(separator)) {
-            targetDir = targetDir + separator;
-        }
-        if (nextDir !== "") {
-            targetDir = targetDir + nextDir + separator;
-        }
-
-        return targetDir;
-    }
-
 }
