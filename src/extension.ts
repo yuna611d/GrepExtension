@@ -1,13 +1,14 @@
 'use strict';
+import * as ib from './InputBox';
+import * as cu from './ContentUtil';
+import * as fu from './FileUtil';
 import * as vscode from 'vscode';
 import {
     isNullOrUndefined,
     isNull
 } from 'util';
 import * as fs from 'fs';
-import * as os from 'os';
-import * as ib from './InputBox';
-import * as cu from './ContentUtil';
+
 
 const CU = cu.ContentUtil;
 
@@ -34,7 +35,8 @@ class GrepController {
     protected callback(v: string | undefined) {
         console.log("Callback is called. Assigned value is " + v);
 
-        let service = new GrepService(v);
+        let searchWord = v;
+        let service = new GrepService(new fu.FileUtil(), searchWord);
         service.serve();
 
         return () => {};
@@ -43,29 +45,20 @@ class GrepController {
 
 
 export class GrepService {
-    private DIR_SEPARATPR = "/";
+
+    private FU: fu.FileUtil;
+
     private position = this.getPosition();
     protected editBuilder: vscode.TextEditorEdit | null = null;
 
     protected searchWord = "";
-    protected baseDir = "";
 
-    protected encoding = "utf-8";
-    protected resultFileName = "grep2File.g2f.txt";
-    protected resultFilePath = "";
 
     protected isRegExpMode = false;
     protected regExpOptions = "";
 
-    constructor(searchWord: string | undefined) {
-
-        // SetDirectorySeparator
-        let osType = os.type();
-        if (osType === 'Windows_NT') {
-            this.DIR_SEPARATPR = "\\";
-        } else {
-            this.DIR_SEPARATPR = "/";
-        }
+    constructor(fu: fu.FileUtil, searchWord: string | undefined) {
+        this.FU = fu;
 
         // Check search word exisntance and reg exp mode
         if (!isNullOrUndefined(searchWord)) {
@@ -73,18 +66,10 @@ export class GrepService {
             this.setRegExpItemsIfRegExpPattern(searchWord);
         }
 
-        // TOOD in the futre, multi work space should be applye
-        let workspaceForlders = vscode.workspace.workspaceFolders;
-        if (!isNullOrUndefined(workspaceForlders) && workspaceForlders.length !== 0) {
-            this.baseDir = workspaceForlders[0].uri.fsPath;
-            // create result file
-            this.resultFilePath = this.baseDir + this.DIR_SEPARATPR + this.resultFileName;
-            // TODO use encoding which is defined in config file
-            fs.appendFileSync(this.resultFilePath, '', this.encoding);
-        }
 
     }
     public serve() {
+
 
         // Get search word
         let searchWord = this.searchWord;
@@ -93,14 +78,17 @@ export class GrepService {
             return;
         }
 
+        // create file, which is written grep result.
+        this.FU.addNewFile();
+
         // Open result file (fire onDidOpenTextDocument Event)
-        vscode.workspace.openTextDocument(this.resultFilePath).then(doc => {
+        vscode.workspace.openTextDocument(this.FU.resultFilePath).then(doc => {
             vscode.window.showTextDocument(doc).then(editor => {
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
-                    this.insertText(CU.getTitle(this.baseDir, this.searchWord, this.isRegExpMode));
-                    this.insertText(CU.getContent("filePath","lineNumber","TextLine"));
+                    this.insertText(CU.getTitle(this.FU.baseDir, this.searchWord, this.isRegExpMode));
+                    this.insertText(CU.getContent("filePath", "lineNumber", "TextLine"));
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -117,17 +105,18 @@ export class GrepService {
      */
     protected grep(nextTargetDir: string | null = null) {
         // Get target directory
-        let targetDir = (isNull(nextTargetDir)) ? this.baseDir : nextTargetDir;
+        let targetDir = this.FU.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
             return;
         }
+
         // Get file or directory names in targetDir
         let files = fs.readdirSync(targetDir);
 
         (files as string[]).forEach(file => {
 
             // Get the file path
-            let filePath = targetDir + this.DIR_SEPARATPR + file;
+            let filePath = this.FU.getFilePath(targetDir, file);
             // Check if the file path is file or directory
             let stat = fs.statSync(filePath);
 
@@ -147,7 +136,7 @@ export class GrepService {
      * @param filePath filePath
      */
     protected readFileAndInsertText(filePath: string) {
-        let contents = fs.readFileSync(filePath, this.encoding);
+        let contents = fs.readFileSync(filePath, this.FU.encoding);
         let lines = contents.split(CU.LINE_BREAK);
         let lineNumber = 1;
         lines.forEach(line => {
@@ -218,7 +207,7 @@ export class GrepService {
             let option = tmpOptions.charAt(i);
             if (ALLOWED_OPTIONS.indexOf(option) > -1) {
                 options += option;
-            } 
+            }
         }
 
 
@@ -248,3 +237,4 @@ export class GrepService {
         };
     }
 }
+
