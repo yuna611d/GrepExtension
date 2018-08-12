@@ -25,10 +25,16 @@ This extension does grep and output result to a file.
 
 Regular expression format
 
-* re/\<pattern\>/\<flags\>
+* re/{pattern}/{flags}
 
 Examples
 
 * re/LO/i
 
 * re/dolor(|e)/
+
+## Configuration
+
+### Exclude files which have specified extensions
+
+* grep2file.exclude
