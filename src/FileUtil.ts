@@ -1,26 +1,28 @@
-import * as os from 'os';
-import * as vscode from 'vscode';
+import * as fs from 'fs';
 import {
-    isNullOrUndefined,
     isNull
 } from 'util';
-import * as fs from 'fs';
-
+import { Configuration } from './Configuration';
 
 export class FileUtil {
 
-    private _baseDir = "";
+    private _config: Configuration;
+
+    private _baseDir: string = "";
     public get baseDir() {
         return this._baseDir;
     }
 
-    private resultFileName = "grep2File.g2f.txt";
-    private _resultFilePath = "";
+    private _resultFileName: string;
+    private get resultFileName() {
+        return this._resultFileName;
+    }
+    private _resultFilePath: string = this.resultFileName;
     public get resultFilePath() {
-        return this._resultFilePath;
+        return this._resultFilePath = this.baseDir + this.dirSeparator + this.resultFileName;
     }
 
-    private _dirSeparator = "/";
+    private _dirSeparator: string;
     public get dirSeparator() {
         return this._dirSeparator;
     }
@@ -30,39 +32,22 @@ export class FileUtil {
         return this._encoding;
     }
 
-    private _excludeFileExtensions: Array<string> = [""];
+    private _excludeFileExtensions: [string] = [""];
 
-    constructor() {
+    constructor(conf: Configuration) {
+        this._config = conf;
         // SetDirectorySeparator
-        let osType = os.type();
-        if (osType === 'Windows_NT') {
-            this._dirSeparator = "\\";
-        } else {
-            this._dirSeparator = "/";
-        }
+        this._dirSeparator = this._config.getDirSeparator();
+        // configuration for exculueded extensions
+        this._excludeFileExtensions = this._config.getExcludedFileExtension();
+        // configuration for output file name
+        this._resultFileName = this._config.getOuputFileName();
+        // configuration for base directory
+        this._baseDir = this._config.getBaseDir();
 
-        // configuration for exculue
-        let excludeFileExtensions: Array < string > | undefined = vscode.workspace.getConfiguration('grep2file').get('exclude');
-        if (isNullOrUndefined(excludeFileExtensions)) {
-            excludeFileExtensions = [""];
-        }
-        this._excludeFileExtensions = excludeFileExtensions;
-
-
-        this.setBaseDir();
     }
 
-    /**
-     * Determin directory for initial search path and file path for output result
-     */
-    protected setBaseDir() {
-        // TOOD in the futre, multi work space should be applye
-        let workspaceForlders = vscode.workspace.workspaceFolders;
-        if (!isNullOrUndefined(workspaceForlders) && workspaceForlders.length !== 0) {
-            this._baseDir = workspaceForlders[0].uri.fsPath;
-            this._resultFilePath = this.baseDir + this.dirSeparator + this.resultFileName;
-        }
-    }
+
 
     /**
      * 

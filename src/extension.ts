@@ -1,4 +1,5 @@
 'use strict';
+import * as cf from './Configuration';
 import * as ib from './InputBox';
 import * as cu from './ContentUtil';
 import * as fu from './FileUtil';
@@ -9,8 +10,6 @@ import {
 } from 'util';
 import * as fs from 'fs';
 
-
-const CU = cu.ContentUtil;
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -27,6 +26,8 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {}
 
 class GrepController {
+
+
     public doAction(): void {
         let inputBox = new ib.SearchWordInputBox();
         inputBox.showInputBox(this.callback);
@@ -36,7 +37,9 @@ class GrepController {
         console.log("Callback is called. Assigned value is " + v);
 
         let searchWord = v;
-        let service = new GrepService(new fu.FileUtil(), searchWord);
+        let conf = new cf.Configuration();
+        // TODO refactor
+        let service = new GrepService(searchWord, conf, new fu.FileUtil(conf), new cu.ContentUtil(conf));
         service.serve();
 
         return () => {};
@@ -46,7 +49,9 @@ class GrepController {
 
 export class GrepService {
 
-    private FU: fu.FileUtil;
+    private _conf: cf.Configuration;
+    private _fu: fu.FileUtil;
+    private _cu: cu.ContentUtil;
 
     private position = this.getPosition();
     protected editBuilder: vscode.TextEditorEdit | null = null;
@@ -57,15 +62,17 @@ export class GrepService {
     protected isRegExpMode = false;
     protected regExpOptions = "";
 
-    constructor(fu: fu.FileUtil, searchWord: string | undefined) {
-        this.FU = fu;
+    constructor(searchWord: string | undefined,configuration: cf.Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
+        // Set injections
+        this._conf = configuration;
+        this._fu = fu;
+        this._cu = cu;
 
         // Check search word exisntance and reg exp mode
         if (!isNullOrUndefined(searchWord)) {
             this.searchWord = searchWord;
             this.setRegExpItemsIfRegExpPattern(searchWord);
         }
-
 
     }
     public serve() {
@@ -79,16 +86,16 @@ export class GrepService {
         }
 
         // create file, which is written grep result.
-        this.FU.addNewFile();
+        this._fu.addNewFile();
 
         // Open result file (fire onDidOpenTextDocument Event)
-        vscode.workspace.openTextDocument(this.FU.resultFilePath).then(doc => {
+        vscode.workspace.openTextDocument(this._fu.resultFilePath).then(doc => {
             vscode.window.showTextDocument(doc).then(editor => {
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
-                    this.insertText(CU.getTitle(this.FU.baseDir, this.searchWord, this.isRegExpMode));
-                    this.insertText(CU.getContent("filePath", "lineNumber", "TextLine"));
+                    this.insertText(this._cu.getTitle(this._fu.baseDir, this.searchWord, this.isRegExpMode));
+                    this.insertText(this._cu.getContent("filePath", "lineNumber", "TextLine"));
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -105,7 +112,7 @@ export class GrepService {
      */
     protected grep(nextTargetDir: string | null = null) {
         // Get target directory
-        let targetDir = this.FU.getTargetDir(nextTargetDir);
+        let targetDir = this._fu.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
             return;
         }
@@ -115,15 +122,13 @@ export class GrepService {
 
         (files as string[]).forEach(file => {
 
-
             // skip if file extension is out of target
-            if (this.FU.isExcludedFile(file)) {
+            if (this._fu.isExcludedFile(file)) {
                 return;
             }
 
-
             // Get the file path
-            let filePath = this.FU.getFilePath(targetDir, file);
+            let filePath = this._fu.getFilePath(targetDir, file);
             // Check if the file path is file or directory
             let stat = fs.statSync(filePath);
 
@@ -143,12 +148,12 @@ export class GrepService {
      * @param filePath filePath
      */
     protected readFileAndInsertText(filePath: string) {
-        let contents = fs.readFileSync(filePath, this.FU.encoding);
-        let lines = contents.split(CU.LINE_BREAK);
+        let contents = fs.readFileSync(filePath, this._fu.encoding);
+        let lines = contents.split(this._conf.LINE_BREAK);
         let lineNumber = 1;
         lines.forEach(line => {
             if (this.isContainSearchWord(line)) {
-                let contentText = CU.getContent(filePath, lineNumber.toString(), line);
+                let contentText = this._cu.getContent(filePath, lineNumber.toString(), line);
                 console.log(contentText);
                 this.insertText(contentText);
             }
@@ -232,7 +237,11 @@ export class GrepService {
         if (isNull(this.editBuilder)) {
             return;
         }
-        let lineBreakText = content + CU.LINE_BREAK;
+        if (content === "") {
+            return;
+        }
+
+        let lineBreakText = content + this._conf.LINE_BREAK;
         this.editBuilder.insert(this.position(), lineBreakText);
     }
 
