@@ -35,6 +35,28 @@ Examples
 
 ## Configuration
 
-### Exclude files which have specified extensions
+### grep2file.exclude
 
-* grep2file.exclude
+You can exclude files which have specified extensions.
+
+### grep2file.outputFileName
+
+You can change output file name.
+
+### grep2file.outputContentFormat
+
+You can opt following format.
+
+* txt: default format
+
+* csv: csv format
+
+* tsv: tsv format
+
+### grep2file.outputTitle
+
+You can opt following options.
+
+* true: output title which is grep configuration
+
+* false: hide title which is grep configuration

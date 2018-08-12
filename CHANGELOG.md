@@ -13,3 +13,13 @@ All notable changes to the "Grep to File" extension will be documented in this f
 ## 0.1.3
 
 - Added configuration to exclude some files which have specific extension.
+
+## 0.1.4
+
+- Added following configurations
+
+  - Output file name
+
+  - Output file format (txt, csv, tsv)
+
+  - Option not to output title.
