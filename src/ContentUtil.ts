@@ -91,6 +91,10 @@ export class ContentUtilCSV extends ContentUtil {
     }
 
     protected getFormattedContent(contents: string[]) {
+        if (!this._conf.isOutputTitle()) {
+            contents.shift();
+        }
+
         let separator = ",";
         return contents.join(separator);
     }
@@ -99,6 +103,10 @@ export class ContentUtilCSV extends ContentUtil {
 export class ContentUtilTSV extends ContentUtilCSV {
 
     protected getFormattedContent(contents: string[]) {
+        if (!this._conf.isOutputTitle()) {
+            contents.shift();
+        }
+
         let separator = "\t";
         return contents.join(separator);
     }
