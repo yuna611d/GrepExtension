@@ -4,6 +4,19 @@ import {
 } from 'util';
 import { Configuration } from './Configuration';
 
+
+export class FileUtilFactory {
+    private _conf: Configuration;
+
+    constructor(configuration: Configuration) {
+        this._conf = configuration;
+    }
+    public retrieveContentUtil() {
+        let format = this._conf.getOutputContentFormat();
+        return new FileUtil(this._conf, format);
+    }
+}
+
 export class FileUtil {
 
     private _config: Configuration;
@@ -32,16 +45,16 @@ export class FileUtil {
         return this._encoding;
     }
 
-    private _excludeFileExtensions: [string] = [""];
+    private _excludeFileExtensions: string[] = [""];
 
-    constructor(conf: Configuration) {
+    constructor(conf: Configuration, extension: string) {
         this._config = conf;
         // SetDirectorySeparator
         this._dirSeparator = this._config.getDirSeparator();
         // configuration for exculueded extensions
         this._excludeFileExtensions = this._config.getExcludedFileExtension();
         // configuration for output file name
-        this._resultFileName = this._config.getOuputFileName();
+        this._resultFileName = this._config.getOuputFileName() + "." + extension;
         // configuration for base directory
         this._baseDir = this._config.getBaseDir();
 

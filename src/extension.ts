@@ -34,12 +34,11 @@ class GrepController {
     }
 
     protected callback(v: string | undefined) {
-        console.log("Callback is called. Assigned value is " + v);
-
         let searchWord = v;
         let conf = new cf.Configuration();
-        // TODO refactor
-        let service = new GrepService(searchWord, conf, new fu.FileUtil(conf), new cu.ContentUtil(conf));
+        let cfFactory = new cu.ContentUtilFactory(conf);
+        let ffFactory = new fu.FileUtilFactory(conf);
+        let service = new GrepService(searchWord, conf, ffFactory.retrieveContentUtil(), cfFactory.retrieveContentUtil());
         service.serve();
 
         return () => {};
@@ -77,7 +76,6 @@ export class GrepService {
     }
     public serve() {
 
-
         // Get search word
         let searchWord = this.searchWord;
         if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
@@ -94,8 +92,9 @@ export class GrepService {
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
-                    this.insertText(this._cu.getTitle(this._fu.baseDir, this.searchWord, this.isRegExpMode));
-                    this.insertText(this._cu.getContent("filePath", "lineNumber", "TextLine"));
+                    this._cu.setGrepConf(this._fu.baseDir, this.searchWord, this.isRegExpMode);
+                    this.insertText(this._cu.getTitle());
+                    this.insertText(this._cu.getContentTitle());
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
                     this.editBuilder = null;
@@ -154,7 +153,6 @@ export class GrepService {
         lines.forEach(line => {
             if (this.isContainSearchWord(line)) {
                 let contentText = this._cu.getContent(filePath, lineNumber.toString(), line);
-                console.log(contentText);
                 this.insertText(contentText);
             }
             lineNumber++;

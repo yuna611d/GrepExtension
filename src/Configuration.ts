@@ -30,7 +30,7 @@ export class Configuration {
         // configuration for output file name
         let outputFileName: string | undefined = vscode.workspace.getConfiguration('grep2file').get('outputFileName');
         if (isNullOrUndefined(outputFileName)) {
-            outputFileName = "grep2File.g2f.txt";
+            outputFileName = "grep2File.g2f";
         }
         return outputFileName;
     }
@@ -46,9 +46,9 @@ export class Configuration {
     }
 
     public getOutputContentFormat(): string {
-        let defaultFormat = "tsv";
+        let defaultFormat = "txt";
         // TOOD json format will be impelemented in the future
-        let allowedContentFormats = ["tsv", "csv", "json"]
+        let allowedContentFormats = ["txt", "tsv", "csv", "json"]
         let outputContentFormat: string | undefined = vscode.workspace.getConfiguration('grep2file').get('outputContentFormat');
         if (isNullOrUndefined(outputContentFormat)) {
             return defaultFormat;

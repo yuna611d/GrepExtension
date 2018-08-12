@@ -30,12 +30,12 @@
                 },
                 "grep2file.outputFileName": {
                     "type": "string",
-                    "default": "grep2File.g2f.txt",
+                    "default": "grep2File.g2f",
                     "description": "File name that is outputted grep result."
                 },
                 "grep2file.outputContentFormat": {
                     "type": "string",
-                    "default": "tsv",
+                    "default": "txt",
                     "description": "File type format of content that is outputted grep result."
                 },
                 "grep2file.outputTitle": {
