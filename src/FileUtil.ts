@@ -30,6 +30,8 @@ export class FileUtil {
         return this._encoding;
     }
 
+    private _excludeFileExtensions: Array<string> = [""];
+
     constructor() {
         // SetDirectorySeparator
         let osType = os.type();
@@ -38,6 +40,14 @@ export class FileUtil {
         } else {
             this._dirSeparator = "/";
         }
+
+        // configuration for exculue
+        let excludeFileExtensions: Array < string > | undefined = vscode.workspace.getConfiguration('grep2file').get('exclude');
+        if (isNullOrUndefined(excludeFileExtensions)) {
+            excludeFileExtensions = [""];
+        }
+        this._excludeFileExtensions = excludeFileExtensions;
+
 
         this.setBaseDir();
     }
@@ -54,13 +64,26 @@ export class FileUtil {
         }
     }
 
+    /**
+     * 
+     * @param fileNmae fileNmae
+     */
+    public isExcludedFile(fileNmae: string): boolean {
+        let fileInfos = fileNmae.split('.');
+        let extension = fileInfos[fileInfos.length -1];
+        if (this._excludeFileExtensions.indexOf(extension) >= 0) {
+            return true;
+        }
+        return false;
+    }
+
     public addNewFile() {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
     }
 
-    public getFilePath(targetDir:string, fileName: string) {
+    public getFilePath(targetDir: string, fileName: string) {
         return targetDir + this.dirSeparator + fileName;
     }
 

@@ -115,6 +115,13 @@ export class GrepService {
 
         (files as string[]).forEach(file => {
 
+
+            // skip if file extension is out of target
+            if (this.FU.isExcludedFile(file)) {
+                return;
+            }
+
+
             // Get the file path
             let filePath = this.FU.getFilePath(targetDir, file);
             // Check if the file path is file or directory
