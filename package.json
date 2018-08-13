@@ -15,17 +15,26 @@
     ],
     "main": "./out/extension",
     "contributes": {
-        "commands": [{
-            "command": "extension.grepResult2File",
-            "title": "Grep to File"
-        }],
+        "commands": [
+            {
+                "command": "extension.grepResult2File",
+                "title": "Grep to File"
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "Excluded File Extensions",
             "properties": {
                 "grep2file.exclude": {
-                    "type": ["string", "null"],
-                    "default": ["bin", "dll", "sln"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "default": [
+                        "bin",
+                        "dll",
+                        "sln"
+                    ],
                     "description": "List up file extensions that you don't want to do grep."
                 },
                 "grep2file.outputFileName": {

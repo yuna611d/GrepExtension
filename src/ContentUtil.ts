@@ -22,7 +22,7 @@ export class ContentUtilFactory {
                 break;
             case "json":
                 // TODO implement in the futrue
-                return new ContentUtilJson(this._conf);
+                return new ContentUtilJSON(this._conf);
             default:
                 return new ContentUtil(this._conf);
                 break;
@@ -112,6 +112,6 @@ export class ContentUtilTSV extends ContentUtilCSV {
     }
 }
 
-export class ContentUtilJson extends ContentUtil {
+export class ContentUtilJSON extends ContentUtil {
     // TODO implment in the future
 }
