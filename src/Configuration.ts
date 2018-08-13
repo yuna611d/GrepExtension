@@ -9,8 +9,8 @@ export class Configuration {
     public LINE_BREAK = "\n";
 
     //TODO create stock variable if called multi times
-    public getExcludedFileExtension(): [string] {
-        let excludeFileExtensions: [string] | undefined = vscode.workspace.getConfiguration('grep2file').get('exclude');
+    public getExcludedFileExtension(): string[] {
+        let excludeFileExtensions: string[] | undefined = vscode.workspace.getConfiguration('grep2file').get('exclude');
         if (isNullOrUndefined(excludeFileExtensions)) {
             excludeFileExtensions = [""];
         }
