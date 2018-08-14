@@ -82,12 +82,14 @@ export class GrepService {
             return;
         }
 
-        // create file, which is written grep result.
-        this._fu.addNewFile();
 
         // Open result file (fire onDidOpenTextDocument Event)
         vscode.workspace.openTextDocument(this._fu.resultFilePath).then(doc => {
             vscode.window.showTextDocument(doc).then(editor => {
+
+                // create file, which is written grep result.
+                this._fu.addNewFile(editor);
+
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
                     this.editBuilder = editBuilder;
