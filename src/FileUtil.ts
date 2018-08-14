@@ -87,14 +87,12 @@ export class FileUtil {
         return false;
     }
 
-    public addNewFile() {
+    public addNewFile(editor: vscode.TextEditor) {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
-
-        // get last line number of result file.
-        let contents = fs.readFileSync(this.resultFilePath,this.encoding);
-        this.lastLineNumber = contents.split(this._config.LINE_BREAK).length;
+        // set last line number
+        this.lastLineNumber = editor.document.lineCount;
     }
 
     public getFilePath(targetDir: string, fileName: string) {
