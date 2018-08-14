@@ -38,7 +38,7 @@ class GrepController {
         let conf = new cf.Configuration();
         let cfFactory = new cu.ContentUtilFactory(conf);
         let ffFactory = new fu.FileUtilFactory(conf);
-        let service = new GrepService(searchWord, conf, ffFactory.retrieveContentUtil(), cfFactory.retrieveContentUtil());
+        let service = new GrepService(searchWord, conf, ffFactory.retrieve(), cfFactory.retrieve());
         service.serve();
 
         return () => {};

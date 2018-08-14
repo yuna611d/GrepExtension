@@ -11,7 +11,7 @@ export class FileUtilFactory {
     constructor(configuration: Configuration) {
         this._conf = configuration;
     }
-    public retrieveContentUtil() {
+    public retrieve() {
         let format = this._conf.getOutputContentFormat();
         return new FileUtil(this._conf, format);
     }

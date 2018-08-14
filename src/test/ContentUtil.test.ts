@@ -13,9 +13,9 @@ suite("ContentUtil Factory Tests", function () {
         stub.getOutputContentFormat.returns('txt');
 
         let sut = new myExtension.ContentUtilFactory(stub);
-        let obj = sut.retrieveContentUtil();
+        let obj = sut.retrieve();
         let actual = obj.constructor.name;
-        let expected = 'ContentUtil'
+        let expected = 'ContentUtil';
         stub.getOutputContentFormat.restore();
 
         assert.equal(actual, expected);
@@ -29,9 +29,9 @@ suite("ContentUtil Factory Tests", function () {
         stub.getOutputContentFormat.returns('csv');
 
         let sut = new myExtension.ContentUtilFactory(stub);
-        let obj = sut.retrieveContentUtil();
+        let obj = sut.retrieve();
         let actual = obj.constructor.name;
-        let expected = 'ContentUtilCSV'
+        let expected = 'ContentUtilCSV';
         stub.getOutputContentFormat.restore();
 
         assert.equal(actual, expected);
@@ -45,9 +45,9 @@ suite("ContentUtil Factory Tests", function () {
         stub.getOutputContentFormat.returns('tsv');
 
         let sut = new myExtension.ContentUtilFactory(stub);
-        let obj = sut.retrieveContentUtil();
+        let obj = sut.retrieve();
         let actual = obj.constructor.name;
-        let expected = 'ContentUtilTSV'
+        let expected = 'ContentUtilTSV';
         stub.getOutputContentFormat.restore();
 
         assert.equal(actual, expected);
@@ -61,12 +61,100 @@ suite("ContentUtil Factory Tests", function () {
         stub.getOutputContentFormat.returns('json');
 
         let sut = new myExtension.ContentUtilFactory(stub);
-        let obj = sut.retrieveContentUtil();
+        let obj = sut.retrieve();
         let actual = obj.constructor.name;
-        let expected = 'ContentUtilJSON'
+        let expected = 'ContentUtilJSON';
         stub.getOutputContentFormat.restore();
 
         assert.equal(actual, expected);
 
     });
+
+    test("Factory for not alowed format", () => {
+        
+        let instance = new Configuration();
+        let stub = sinon.stub(instance);
+        stub.getOutputContentFormat.returns('Not Allowed Format');
+
+        let sut = new myExtension.ContentUtilFactory(stub);
+        let obj = sut.retrieve();
+        let actual = obj.constructor.name;
+        let expected = 'ContentUtil';
+        stub.getOutputContentFormat.restore();
+
+        assert.equal(actual, expected);
+
+    });
+
 });
+
+suite("GetContent Test", () => {
+
+    let baseDir = "/tmp/";
+    let searchWord = "test";
+    let isRegExpMode = false;
+
+    let filePath = baseDir + "samplefile.txt";
+    let lineNumber = 1;
+    let line = "This is test text";
+
+
+    test("GetContent when normal search of txt", () => {
+        let instance = new Configuration();
+        let stub = sinon.stub(instance);
+        stub.getOutputContentFormat.returned('txt');
+        stub.isOutputTitle.returned(false);
+
+        let factory = new myExtension.ContentUtilFactory(stub);
+        let sut = factory.retrieve();
+        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+
+        let actual = sut.getContent(filePath, lineNumber.toString(), line);
+        let expected = ["", filePath, lineNumber.toString(), line].join("\t");
+
+        stub.getOutputContentFormat.restore();
+        stub.isOutputTitle.restore();
+
+        assert.equal(actual, expected);
+    });
+
+    test("GetContent when normal search of csv", () => {
+
+        let instance = new Configuration();
+        let stub = sinon.stub(instance);
+        stub.getOutputContentFormat.returns('csv');
+
+        let factory = new myExtension.ContentUtilFactory(stub);
+        let sut = factory.retrieve();
+        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+
+        let actual = sut.getContent(filePath, lineNumber.toString(), line);
+        let expected = [filePath, lineNumber.toString(), line].join(",");
+
+        stub.getOutputContentFormat.restore();
+        stub.isOutputTitle.restore();
+
+        assert.equal(actual, expected);
+    });
+
+    test("GetContent when normal search of tsv", () => {
+
+        let instance = new Configuration();
+        let stub = sinon.stub(instance);
+        stub.getOutputContentFormat.returns('tsv');
+
+        let factory = new myExtension.ContentUtilFactory(stub);
+        let sut = factory.retrieve();
+        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+
+        let actual = sut.getContent(filePath, lineNumber.toString(), line);
+        let expected = [filePath, lineNumber.toString(), line].join("\t");
+
+        stub.getOutputContentFormat.restore();
+        stub.isOutputTitle.restore();
+
+        assert.equal(actual, expected);
+    });
+
+});
+

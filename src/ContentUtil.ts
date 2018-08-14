@@ -8,7 +8,7 @@ export class ContentUtilFactory {
     constructor(configuration: Configuration) {
         this._conf = configuration;
     }
-    public retrieveContentUtil() {
+    public retrieve() {
         let format = this._conf.getOutputContentFormat();
         switch (format) {
             case "txt":
@@ -86,7 +86,7 @@ export class ContentUtilCSV extends ContentUtil {
     }
 
     protected getFormatedTitle(titleItems: string[]) {
-        let separator = " | "
+        let separator = " | ";
         return titleItems.join(separator);
     }
 
