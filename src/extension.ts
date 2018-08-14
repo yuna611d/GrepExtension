@@ -52,7 +52,6 @@ export class GrepService {
     private _fu: fu.FileUtil;
     private _cu: cu.ContentUtil;
 
-    private position = this.getPosition();
     protected editBuilder: vscode.TextEditorEdit | null = null;
 
     protected searchWord = "";
@@ -97,7 +96,6 @@ export class GrepService {
                     this.insertText(this._cu.getContentTitle());
                     this.grep();
                     vscode.window.showInformationMessage("Grep is finished...");
-                    this.editBuilder = null;
                 });
             });
         });
@@ -228,27 +226,11 @@ export class GrepService {
 
     }
 
-
-
-
     private insertText(content: string) {
-        if (isNull(this.editBuilder)) {
+        if (isNullOrUndefined(this.editBuilder)) {
             return;
         }
-        if (content === "") {
-            return;
-        }
-
-        let lineBreakText = content + this._conf.LINE_BREAK;
-        this.editBuilder.insert(this.position(), lineBreakText);
-    }
-
-
-    private getPosition() {
-        var line = 0;
-        return () => {
-            return new vscode.Position(line++, 0);
-        };
+        this._fu.insertText(this.editBuilder, content);
     }
 }
 

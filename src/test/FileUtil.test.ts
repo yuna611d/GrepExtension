@@ -51,8 +51,18 @@ suite("FileUtil Tests", function () {
         assert.equal(actual, expected);
         actual = sut.isExcludedFile("sample.sln");
         assert.equal(actual, expected);
+    });
 
+    test("result file is excluded by dfault Test", () => {
+        
+        let instance = new Configuration();
+        let factory = new myExtension.FileUtilFactory(instance);
+        let sut = factory.retrieve();
 
+        let expected = true;
+
+        let actual = sut.isExcludedFile("grep2File.g2f.txt");
+        assert.equal(actual, expected);
     });
 
 });

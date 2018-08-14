@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as vscode from 'vscode';
 import {
     isNull
 } from 'util';
@@ -35,6 +36,8 @@ export class FileUtil {
         return this._resultFilePath = this.baseDir + this.dirSeparator + this.resultFileName;
     }
 
+    private lastLineNumber = 0;
+
     private _dirSeparator: string;
     public get dirSeparator() {
         return this._dirSeparator;
@@ -46,6 +49,7 @@ export class FileUtil {
     }
 
     private _excludeFileExtensions: string[] = [""];
+
 
     constructor(conf: Configuration, extension: string) {
         this._config = conf;
@@ -66,12 +70,20 @@ export class FileUtil {
      * 
      * @param fileNmae fileNmae
      */
-    public isExcludedFile(fileNmae: string): boolean {
-        let fileInfos = fileNmae.split('.');
+    public isExcludedFile(fileName: string): boolean {
+        let fileInfos = fileName.split('.');
         let extension = fileInfos[fileInfos.length -1];
+
+        // don't read files which have extension specified
         if (this._excludeFileExtensions.indexOf(extension) >= 0) {
             return true;
         }
+
+        // don't read result file.
+        if (fileName.startsWith(this._resultFileName)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -79,6 +91,10 @@ export class FileUtil {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
+
+        // get last line number of result file.
+        let contents = fs.readFileSync(this.resultFilePath,this.encoding);
+        this.lastLineNumber = contents.split(this._config.LINE_BREAK).length;
     }
 
     public getFilePath(targetDir: string, fileName: string) {
@@ -87,5 +103,21 @@ export class FileUtil {
 
     public getTargetDir(nextTargetDir: string | null) {
         return (isNull(nextTargetDir)) ? this.baseDir : nextTargetDir;
+    }
+
+    public getPosition() {
+        return new vscode.Position(this.lastLineNumber++, 0);
+    }
+
+    public insertText(editBuilder:vscode.TextEditorEdit, content: string) {
+        if (isNull(editBuilder)) {
+            return;
+        }
+        if (content === "") {
+            return;
+        }
+
+        let lineBreakText = content + this._config.LINE_BREAK;
+        editBuilder.insert(this.getPosition(), lineBreakText);
     }
 }
