@@ -60,7 +60,7 @@ export class GrepService {
     protected isRegExpMode = false;
     protected regExpOptions = "";
 
-    constructor(searchWord: string | undefined,configuration: cf.Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
+    constructor(searchWord: string | undefined, configuration: cf.Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
         // Set injections
         this._conf = configuration;
         this._fu = fu;
@@ -82,13 +82,15 @@ export class GrepService {
             return;
         }
 
+        // create file, which is written grep result.
+        this._fu.addNewFile();
 
         // Open result file (fire onDidOpenTextDocument Event)
         vscode.workspace.openTextDocument(this._fu.resultFilePath).then(doc => {
             vscode.window.showTextDocument(doc).then(editor => {
 
-                // create file, which is written grep result.
-                this._fu.addNewFile(editor);
+                // set LastLine
+                this._fu.resetLastLine(editor);
 
                 // Do grep and output its results.
                 editor.edit(editBuilder => {
@@ -235,4 +237,3 @@ export class GrepService {
         this._fu.insertText(this.editBuilder, content);
     }
 }
-

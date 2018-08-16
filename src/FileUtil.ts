@@ -87,10 +87,13 @@ export class FileUtil {
         return false;
     }
 
-    public addNewFile(editor: vscode.TextEditor) {
+    public addNewFile() {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
+    }
+
+    public resetLastLine(editor: vscode.TextEditor) {
         // set last line number
         this.lastLineNumber = editor.document.lineCount;
     }
