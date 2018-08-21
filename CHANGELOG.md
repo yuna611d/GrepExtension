@@ -2,6 +2,10 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.1.8
+
+- Bug fix that extension can't create new result file.
+
 ## 0.1.7
 
 - Added following functionality

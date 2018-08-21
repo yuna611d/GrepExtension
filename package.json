@@ -2,7 +2,7 @@
     "name": "grep2file",
     "displayName": "grep2file",
     "description": "grep word and output result to file",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "publisher": "yuna611d",
     "engines": {
         "vscode": "^1.25.0"
@@ -43,7 +43,7 @@
                     "description": "File name that is outputted grep result."
                 },
                 "grep2file.outputContentFormat": {
-                    "type": "string",
+                    "type": ["txt", "csv", "tsv"],
                     "default": "txt",
                     "description": "File type format of content that is outputted grep result."
                 },
@@ -51,6 +51,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Specification whether to output the title to the result file."
+                },
+                "grep2file.linkToFile": {
+                    "type": ["No Link", "Link to File", "Link To Point"],
+                    "default": "No Link",
+                    "description": "Link type to jump file which has search word"
                 }
             }
         }
