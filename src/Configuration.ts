@@ -69,5 +69,13 @@ export class Configuration {
         return isOutputTitle;
     }
 
+    public getLinkType():string {
+        let linkType: string | undefined = vscode.workspace.getConfiguration('grep2file').get('linkToFile');
+        if (isNullOrUndefined(linkType)) {
+            linkType = "No Link";
+        }
+        return linkType;
+    }
+
 
 }
