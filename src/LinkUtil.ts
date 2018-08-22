@@ -1,6 +1,4 @@
-import {
-    Configuration
-} from "./Configuration";
+import { Configuration } from "./Configuration";
 
 export class LinkUtilFactory {
     private _conf: Configuration;
@@ -35,9 +33,16 @@ export class LinkUtil {
         this._conf = configuration;
     }
 
+    public getFilePath(filePath: string): string {
+        return filePath;
+    }
+
 }
 
 export class LinkUtilFile extends LinkUtil {
+    public getFilePath(filePath: string): string {
+        return "file://" + filePath;
+    }
 }
 
 export class LinkUtilPoint extends LinkUtil {

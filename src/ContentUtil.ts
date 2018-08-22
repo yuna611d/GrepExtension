@@ -1,6 +1,9 @@
 import {
     Configuration
 } from "./Configuration";
+import {
+    LinkUtil, LinkUtilFactory
+} from "./LinkUtil";
 
 export class ContentUtilFactory {
     private _conf: Configuration;
@@ -33,6 +36,7 @@ export class ContentUtilFactory {
 export class ContentUtil {
 
     protected _conf: Configuration;
+    protected _linkUtil: LinkUtil;
     protected _contentTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConfText: string = "";
     protected LINE_BREAK = "";
@@ -40,6 +44,7 @@ export class ContentUtil {
     constructor(configuration: Configuration) {
         this._conf = configuration;
         this.LINE_BREAK = this._conf.LINE_BREAK;
+        this._linkUtil = new LinkUtilFactory(configuration).retrieve();
     }
 
     public setGrepConf(baseDir: string, searchWord: string, isRegExpMode: boolean) {
@@ -62,7 +67,8 @@ export class ContentUtil {
     }
 
     public getContent(filePath: string, lineNumber: string, line: string) {
-        let content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
+        let path = this._linkUtil.getFilePath(filePath);
+        let content = this.getFormattedContent([this._grepConfText, path, lineNumber, line]);
         return content;
     }
 
@@ -95,8 +101,14 @@ export class ContentUtilCSV extends ContentUtil {
             contents.shift();
         }
 
+        let replacedContents = new Array<string>();
+        contents.forEach(value => {
+            value = `"${value.replace('"', '""')}"`;
+            replacedContents.push(value);
+        });
+
         let separator = ",";
-        return contents.join(separator);
+        return replacedContents.join(separator);
     }
 }
 

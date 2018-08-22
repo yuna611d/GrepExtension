@@ -129,7 +129,7 @@ suite("GetContent Test", () => {
         sut.setGrepConf(baseDir, searchWord, isRegExpMode);
 
         let actual = sut.getContent(filePath, lineNumber.toString(), line);
-        let expected = [filePath, lineNumber.toString(), line].join(",");
+        let expected = [`"${filePath}"`, `"${lineNumber.toString()}"`, `"${line}"`].join(",");
 
         stub.getOutputContentFormat.restore();
         stub.isOutputTitle.restore();

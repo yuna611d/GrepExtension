@@ -43,7 +43,7 @@
                     "description": "File name that is outputted grep result."
                 },
                 "grep2file.outputContentFormat": {
-                    "type": ["txt", "csv", "tsv"],
+                    "type": "string",
                     "default": "txt",
                     "description": "File type format of content that is outputted grep result."
                 },
@@ -53,7 +53,7 @@
                     "description": "Specification whether to output the title to the result file."
                 },
                 "grep2file.linkToFile": {
-                    "type": ["No Link", "Link to File", "Link To Point"],
+                    "type": "string",
                     "default": "No Link",
                     "description": "Link type to jump file which has search word"
                 }
