@@ -67,7 +67,6 @@ export class ContentUtil {
     }
 
     protected getFormatedTitle(titleItems: string[]) {
-        titleItems[0] = "";
         return titleItems.join(this.LINE_BREAK);
     }
 
