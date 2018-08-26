@@ -1,5 +1,5 @@
 'use strict';
-import * as cf from './Configuration';
+import { Configuration } from './Configuration';
 import * as ib from './InputBox';
 import * as cu from './ContentUtil';
 import * as fu from './FileUtil';
@@ -35,7 +35,7 @@ class GrepController {
 
     protected callback(v: string | undefined) {
         let searchWord = v;
-        let conf = new cf.Configuration();
+        let conf = new Configuration();
         let cfFactory = new cu.ContentUtilFactory(conf);
         let ffFactory = new fu.FileUtilFactory(conf);
         let service = new GrepService(searchWord, conf, ffFactory.retrieve(), cfFactory.retrieve());
@@ -47,12 +47,9 @@ class GrepController {
 
 
 export class GrepService {
-
-    private _conf: cf.Configuration;
+    private _conf: Configuration;
     private _fu: fu.FileUtil;
     private _cu: cu.ContentUtil;
-
-    protected editBuilder: vscode.TextEditorEdit | null = null;
 
     protected searchWord = "";
 
@@ -60,9 +57,9 @@ export class GrepService {
     protected isRegExpMode = false;
     protected regExpOptions = "";
 
-    constructor(searchWord: string | undefined, configuration: cf.Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
+    constructor(searchWord: string | undefined, conf: Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
         // Set injections
-        this._conf = configuration;
+        this._conf = conf;
         this._fu = fu;
         this._cu = cu;
 
@@ -87,20 +84,17 @@ export class GrepService {
 
         // Open result file (fire onDidOpenTextDocument Event)
         vscode.workspace.openTextDocument(this._fu.resultFilePath).then(doc => {
-            vscode.window.showTextDocument(doc).then(editor => {
+            vscode.window.showTextDocument(doc).then(async editor => {
 
-                // set LastLine
-                this._fu.resetLastLine(editor);
+                // set Configuration
+                this._cu.setGrepConf(this._fu.baseDir, this.searchWord, this.isRegExpMode);
 
+                // Write Title
+                await this._fu.insertText(editor, this._cu.getTitle());
+                await this._fu.insertText(editor, this._cu.getContentTitle());
                 // Do grep and output its results.
-                editor.edit(editBuilder => {
-                    this.editBuilder = editBuilder;
-                    this._cu.setGrepConf(this._fu.baseDir, this.searchWord, this.isRegExpMode);
-                    this.insertText(this._cu.getTitle());
-                    this.insertText(this._cu.getContentTitle());
-                    this.grep();
-                    vscode.window.showInformationMessage("Grep is finished...");
-                });
+                await this.directorySeekAndInsertText(editor);
+                vscode.window.showInformationMessage("Grep is finished...");
             });
         });
     }
@@ -111,7 +105,7 @@ export class GrepService {
      * Read file and check if line contain search word or not.
      * @param nextTargetDir directory where is next target.
      */
-    protected grep(nextTargetDir: string | null = null) {
+    protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {
         // Get target directory
         let targetDir = this._fu.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
@@ -121,11 +115,10 @@ export class GrepService {
         // Get file or directory names in targetDir
         let files = fs.readdirSync(targetDir);
 
-        (files as string[]).forEach(file => {
-
+        for (let file of files) {
             // skip if file extension is out of target
             if (this._fu.isExcludedFile(file)) {
-                return;
+                continue;
             }
 
             // Get the file path
@@ -135,30 +128,30 @@ export class GrepService {
 
             if (stat.isDirectory()) {
                 // if file path is directory, regrep by using filepath as nextTargetDir
-                this.grep(filePath);
+                this.directorySeekAndInsertText(editor, filePath);
             } else if (stat.isFile()) {
                 // if file path is file, read file and insert grep results to editor
-                this.readFileAndInsertText(filePath);
+                await this.readFileAndInsertText(editor, filePath);
             }
-        });
-    }
+        }
 
+    }
 
     /**
      * Read file and insert text to activeeditor.
      * @param filePath filePath
      */
-    protected readFileAndInsertText(filePath: string) {
+    protected async readFileAndInsertText(editor: vscode.TextEditor, filePath: string) {
         let contents = fs.readFileSync(filePath, this._fu.encoding);
         let lines = contents.split(this._conf.LINE_BREAK);
-        let lineNumber = 1;
-        lines.forEach(line => {
+        for (let i = 0; i < lines.length - 1; i++) {
+            let line = lines[i];
+            let lineNumber = i + 1;
             if (this.isContainSearchWord(line)) {
                 let contentText = this._cu.getContent(filePath, lineNumber.toString(), line);
-                this.insertText(contentText);
+                await this._fu.insertText(editor, contentText);
             }
-            lineNumber++;
-        });
+        }
     }
 
 
@@ -228,12 +221,5 @@ export class GrepService {
         this.searchWord = pattern;
         this.regExpOptions = options;
 
-    }
-
-    private insertText(content: string) {
-        if (isNullOrUndefined(this.editBuilder)) {
-            return;
-        }
-        this._fu.insertText(this.editBuilder, content);
     }
 }

@@ -36,8 +36,6 @@ export class FileUtil {
         return this._resultFilePath = this.baseDir + this.dirSeparator + this.resultFileName;
     }
 
-    private lastLineNumber = 0;
-
     private _dirSeparator: string;
     public get dirSeparator() {
         return this._dirSeparator;
@@ -63,8 +61,6 @@ export class FileUtil {
         this._baseDir = this._config.getBaseDir();
 
     }
-
-
 
     /**
      * 
@@ -93,11 +89,6 @@ export class FileUtil {
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
     }
 
-    public resetLastLine(editor: vscode.TextEditor) {
-        // set last line number
-        this.lastLineNumber = editor.document.lineCount;
-    }
-
     public getFilePath(targetDir: string, fileName: string) {
         return targetDir + this.dirSeparator + fileName;
     }
@@ -106,19 +97,21 @@ export class FileUtil {
         return (isNull(nextTargetDir)) ? this.baseDir : nextTargetDir;
     }
 
-    public getPosition() {
-        return new vscode.Position(this.lastLineNumber++, 0);
+    protected getPosition(editor: vscode.TextEditor) {
+        let lastLine = editor.document.lineCount;
+        let position = new vscode.Position(lastLine, 0);
+        return position;
     }
 
-    public insertText(editBuilder:vscode.TextEditorEdit, content: string) {
-        if (isNull(editBuilder)) {
-            return;
-        }
-        if (content === "") {
-            return;
-        }
-
-        let lineBreakText = content + this._config.LINE_BREAK;
-        editBuilder.insert(this.getPosition(), lineBreakText);
+    public async insertText(editor: vscode.TextEditor, content: string) {
+        await editor.edit(editBuilder => {
+            if (content === "") {
+                return;
+            }
+    
+            let lineBreakText = content + this._config.LINE_BREAK;
+            let position = this.getPosition(editor);
+            editBuilder.insert(position, lineBreakText);
+        });
     }
 }
