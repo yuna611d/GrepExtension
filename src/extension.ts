@@ -1,5 +1,5 @@
 'use strict';
-import * as cf from './Configuration';
+import { Configuration } from './Configuration';
 import * as ib from './InputBox';
 import * as cu from './ContentUtil';
 import * as fu from './FileUtil';
@@ -9,7 +9,7 @@ import {
     isNull
 } from 'util';
 import * as fs from 'fs';
-import * as readline from 'readline';
+
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -35,10 +35,10 @@ class GrepController {
 
     protected callback(v: string | undefined) {
         let searchWord = v;
-        let conf = new cf.Configuration();
+        let conf = new Configuration();
         let cfFactory = new cu.ContentUtilFactory(conf);
         let ffFactory = new fu.FileUtilFactory(conf);
-        let service = new GrepService(searchWord, ffFactory.retrieve(), cfFactory.retrieve());
+        let service = new GrepService(searchWord, conf, ffFactory.retrieve(), cfFactory.retrieve());
         service.serve();
 
         return () => {};
@@ -47,6 +47,7 @@ class GrepController {
 
 
 export class GrepService {
+    private _conf: Configuration;
     private _fu: fu.FileUtil;
     private _cu: cu.ContentUtil;
 
@@ -56,8 +57,9 @@ export class GrepService {
     protected isRegExpMode = false;
     protected regExpOptions = "";
 
-    constructor(searchWord: string | undefined, fu: fu.FileUtil, cu: cu.ContentUtil) {
+    constructor(searchWord: string | undefined, conf: Configuration, fu: fu.FileUtil, cu: cu.ContentUtil) {
         // Set injections
+        this._conf = conf;
         this._fu = fu;
         this._cu = cu;
 
@@ -141,7 +143,7 @@ export class GrepService {
      */
     protected async readFileAndInsertText(editor: vscode.TextEditor, filePath: string) {
         let contents = fs.readFileSync(filePath, this._fu.encoding);
-        let lines = contents.split("\n");
+        let lines = contents.split(this._conf.LINE_BREAK);
         for (let i = 0; i < lines.length - 1; i++) {
             let line = lines[i];
             let lineNumber = i + 1;

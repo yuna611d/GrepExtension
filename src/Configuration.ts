@@ -6,7 +6,7 @@ import * as os from 'os';
 
 export class Configuration {
 
-    public LINE_BREAK = "\n";
+    public readonly LINE_BREAK = "\n";
 
     //TODO create stock variable if called multi times
     public getExcludedFileExtension(): string[] {
