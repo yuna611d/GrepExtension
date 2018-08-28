@@ -60,3 +60,11 @@ You can opt following options.
 * true: output title which is grep configuration
 
 * false: hide title which is grep configuration
+
+### grep2file.ignoreHiddenFile
+
+You can ignore hidden file from search target
+
+* true: ignore hidden file from search
+
+* false: include hidden file in search target
