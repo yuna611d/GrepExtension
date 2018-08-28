@@ -2,6 +2,13 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.2.0
+
+- Behavior is changed
+
+  - Insert text when search word is found
+
+
 ## 0.1.7
 
 - Added following functionality
