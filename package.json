@@ -37,6 +37,11 @@
                     ],
                     "description": "List up file extensions that you don't want to do grep."
                 },
+                "grep2file.ignoreHiddenFile": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Hidden files are not checked if true is specified"
+                },
                 "grep2file.outputFileName": {
                     "type": "string",
                     "default": "grep2File.g2f",

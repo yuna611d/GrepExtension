@@ -54,9 +54,9 @@ export class FileUtil {
         // SetDirectorySeparator
         this._dirSeparator = this._config.getDirSeparator();
         // configuration for exculueded extensions
-        this._excludeFileExtensions = this._config.getExcludedFileExtension();
+        this._excludeFileExtensions = this._config.getExcludedFileExtensions();
         // configuration for output file name
-        this._resultFileName = this._config.getOuputFileName() + "." + extension;
+        this._resultFileName = this._config.getOutputFileName() + "." + extension;
         // configuration for base directory
         this._baseDir = this._config.getBaseDir();
 
