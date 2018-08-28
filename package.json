@@ -2,7 +2,7 @@
     "name": "grep2file",
     "displayName": "grep2file",
     "description": "grep word and output result to file",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "publisher": "yuna611d",
     "engines": {
         "vscode": "^1.25.0"
@@ -36,6 +36,11 @@
                         "sln"
                     ],
                     "description": "List up file extensions that you don't want to do grep."
+                },
+                "grep2file.ignoreHiddenFile": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Hidden files are not checked if true is specified"
                 },
                 "grep2file.outputFileName": {
                     "type": "string",

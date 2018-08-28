@@ -1,5 +1,7 @@
 'use strict';
-import { Configuration } from './Configuration';
+import {
+    Configuration
+} from './Configuration';
 import * as ib from './InputBox';
 import * as cu from './ContentUtil';
 import * as fu from './FileUtil';
@@ -91,9 +93,11 @@ export class GrepService {
 
                 // Write Title
                 await this._fu.insertText(editor, this._cu.getTitle());
+                // Write Content Title
                 await this._fu.insertText(editor, this._cu.getContentTitle());
                 // Do grep and output its results.
                 await this.directorySeekAndInsertText(editor);
+                // Notify finish
                 vscode.window.showInformationMessage("Grep is finished...");
             });
         });
@@ -116,8 +120,9 @@ export class GrepService {
         let files = fs.readdirSync(targetDir);
 
         for (let file of files) {
-            // skip if file extension is out of target
-            if (this._fu.isExcludedFile(file)) {
+
+            // Skip if file name is ignored file or directory
+            if (this.isIgnoredFileOrDirectory(file)) {
                 continue;
             }
 
@@ -178,6 +183,19 @@ export class GrepService {
         return false;
     }
 
+
+    protected isIgnoredFileOrDirectory(file: string): boolean {
+        // skip if file extension is out of target
+        if (this._fu.isExcludedFile(file)) {
+            return true;
+        }
+        // skip if hidden file or directory.
+        if (this._conf.ignoreHiddenFile() && file.startsWith(".")) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Set parameters for regulare expression.
      * @param searchWord: searchWord
@@ -222,4 +240,6 @@ export class GrepService {
         this.regExpOptions = options;
 
     }
+
+
 }

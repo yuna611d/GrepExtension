@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
-    isNullOrUndefined
+    isNullOrUndefined,
+    isNull
 } from 'util';
 import * as os from 'os';
 
@@ -8,33 +9,97 @@ export class Configuration {
 
     public readonly LINE_BREAK = "\n";
 
-    //TODO create stock variable if called multi times
-    public getExcludedFileExtension(): string[] {
-        let excludeFileExtensions: string[] | undefined = vscode.workspace.getConfiguration('grep2file').get('exclude');
-        if (isNullOrUndefined(excludeFileExtensions)) {
-            excludeFileExtensions = [""];
-        }
-        return excludeFileExtensions;
-    }
 
+    /**
+     * Get file extensions which should be ignored when file search.
+     */
+    public getExcludedFileExtensions(): string[] {
+        if (isNull(this._excludedFileExtensions)) {
+            return this._excludedFileExtensions = this.getSettingValue('exclude',['']);
+        }
+        return this._excludedFileExtensions;
+    }
+    private _excludedFileExtensions: string[] | null = null;
+
+
+    /**
+     * Get the separator of file. 
+     */
     public getDirSeparator(): string {
-        let osType = os.type();
-        if (osType === 'Windows_NT') {
-            return "\\";
-        } else {
-            return "/";
+        if (isNull(this._dirSeparator)) {
+            let osType = os.type();
+            if (osType === 'Windows_NT') {
+                return this._dirSeparator =  "\\";
+            } else {
+                return this._dirSeparator = "/";
+            }
         }
+        return this._dirSeparator;
     }
+    private _dirSeparator: string | null = null;
 
-    public getOuputFileName():string {
-        // configuration for output file name
-        let outputFileName: string | undefined = vscode.workspace.getConfiguration('grep2file').get('outputFileName');
-        if (isNullOrUndefined(outputFileName)) {
-            outputFileName = "grep2File.g2f";
+    /**
+     * output file name.
+     */
+    public getOutputFileName(): string {
+        if (isNull(this._outputFileName)) {
+            let defaultFileName = 'grep2File.g2f';
+            // configuration for output file name
+            return this._outputFileName = this.getSettingValue('outputFileName', defaultFileName);    
         }
-        return outputFileName;
+        return this._outputFileName;
     }
+    private _outputFileName: string | null = null;
 
+
+    /**
+     * Get the output content format.
+     * You can opt from txt, tsv, csv.
+     */
+    public getOutputContentFormat(): string {
+        if (isNull(this._outputContentFormat)) {
+            let defaultFormat = "txt";
+            // TOOD json format will be impelemented in the future
+            let allowedContentFormats = ["txt", "tsv", "csv", "json"];
+    
+            let outputContentFormat: string = this.getSettingValue('outputContentFormat', defaultFormat);
+            if (allowedContentFormats.indexOf(outputContentFormat) === -1) {
+                return this._outputContentFormat = defaultFormat;
+            } else {
+                return this._outputContentFormat = outputContentFormat;
+            }
+        }
+        return this._outputContentFormat;
+    }
+    private _outputContentFormat: string | null = null;
+
+    /**
+     * You shouldn't output title of content if true is returned.
+     */
+    public isOutputTitle(): boolean {
+        if (isNull(this._isOutputTitle)) {
+            let isOutputTitle: boolean = this.getSettingValue('outputTitle', true);
+            return this._isOutputTitle = isOutputTitle;    
+        }
+        return this._isOutputTitle;
+    }
+    private _isOutputTitle: boolean | null = null;
+
+    /**
+     * You should ignore hidden file when file seek.
+     */
+    public ignoreHiddenFile(): boolean {
+        if (isNull(this._ignoreHiddenFile)) {
+            let ignoreHiddenFile: boolean = this.getSettingValue('ignoreHiddenFile', true);
+            return this._ignoreHiddenFile = ignoreHiddenFile;    
+        }
+        return this._ignoreHiddenFile;
+    }
+    private _ignoreHiddenFile: boolean | null = null;
+
+    /**
+     * Get current workspace folder path
+     */
     public getBaseDir(): string {
         // TOOD in the futre, multi work space should be apply
         let baseDir = "";
@@ -45,29 +110,20 @@ export class Configuration {
         return baseDir;
     }
 
-    public getOutputContentFormat(): string {
-        let defaultFormat = "txt";
-        // TOOD json format will be impelemented in the future
-        let allowedContentFormats = ["txt", "tsv", "csv", "json"]
-        let outputContentFormat: string | undefined = vscode.workspace.getConfiguration('grep2file').get('outputContentFormat');
-        if (isNullOrUndefined(outputContentFormat)) {
-            return defaultFormat;
-        } else {
-            if(allowedContentFormats.indexOf(outputContentFormat) === -1) {
-                return defaultFormat;
-            } else {
-                return outputContentFormat;
-            }
-        }
+
+    private getSettingValue(key: string, defaultValue: boolean): boolean;
+    private getSettingValue(key: string, defaultValue: string): string;
+    private getSettingValue(key: string, defaultValue: string[]): string[];
+
+    /**
+     * Gets the setting value. Type of returned value is determined by type of defualt value
+     * @param key 
+     * @param defaultValue 
+     */
+    private getSettingValue(key: string, defaultValue: any): any {
+        // Get the value from setting.json
+        let value = vscode.workspace.getConfiguration('grep2file').get(key);
+        // If any value is configured in setting.json, passed defualt value is returned.
+        return isNullOrUndefined(value) ? defaultValue : value;
     }
-
-    public isOutputTitle(): boolean {
-        let isOutputTitle: boolean | undefined = vscode.workspace.getConfiguration('grep2file').get('outputTitle');
-        if (isNullOrUndefined(isOutputTitle)) {
-            isOutputTitle = true;
-        }
-        return isOutputTitle;
-    }
-
-
 }
