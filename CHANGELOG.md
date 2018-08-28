@@ -2,12 +2,17 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.3.0
+
+- Added following configurations
+
+  - Ignore hidden file by default
+
 ## 0.2.0
 
 - Behavior is changed
 
   - Insert text when search word is found
-
 
 ## 0.1.7
 
@@ -23,7 +28,7 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
   - Output file format (txt, csv, tsv)
 
-  - Option not to output title.
+  - Option not to output title
 
 ## 0.1.3
 
@@ -36,4 +41,3 @@ All notable changes to the "Grep to File" extension will be documented in this f
 ## 0.0.1
 
 - Initial release
-
