@@ -6,20 +6,21 @@ import {
 import * as os from 'os';
 
 export class Configuration {
+    
+    public _dao = new SettingDAO();
 
     public readonly LINE_BREAK = "\n";
-
 
     /**
      * Get file extensions which should be ignored when file search.
      */
     public getExcludedFileExtensions(): string[] {
         if (isNull(this._excludedFileExtensions)) {
-            return this._excludedFileExtensions = this.getSettingValue('exclude',['']);
+            return this._excludedFileExtensions = this._dao.getSettingValue('exclude',['']);
         }
         return this._excludedFileExtensions;
     }
-    private _excludedFileExtensions: string[] | null = null;
+    public _excludedFileExtensions: string[] | null = null;
 
 
     /**
@@ -36,7 +37,7 @@ export class Configuration {
         }
         return this._dirSeparator;
     }
-    private _dirSeparator: string | null = null;
+    public _dirSeparator: string | null = null;
 
     /**
      * output file name.
@@ -45,11 +46,11 @@ export class Configuration {
         if (isNull(this._outputFileName)) {
             let defaultFileName = 'grep2File.g2f';
             // configuration for output file name
-            return this._outputFileName = this.getSettingValue('outputFileName', defaultFileName);    
+            return this._outputFileName = this._dao.getSettingValue('outputFileName', defaultFileName);    
         }
         return this._outputFileName;
     }
-    private _outputFileName: string | null = null;
+    public _outputFileName: string | null = null;
 
 
     /**
@@ -62,7 +63,7 @@ export class Configuration {
             // TOOD json format will be impelemented in the future
             let allowedContentFormats = ["txt", "tsv", "csv", "json"];
     
-            let outputContentFormat: string = this.getSettingValue('outputContentFormat', defaultFormat);
+            let outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
             if (allowedContentFormats.indexOf(outputContentFormat) === -1) {
                 return this._outputContentFormat = defaultFormat;
             } else {
@@ -71,31 +72,31 @@ export class Configuration {
         }
         return this._outputContentFormat;
     }
-    private _outputContentFormat: string | null = null;
+    public _outputContentFormat: string | null = null;
 
     /**
      * You shouldn't output title of content if true is returned.
      */
     public isOutputTitle(): boolean {
         if (isNull(this._isOutputTitle)) {
-            let isOutputTitle: boolean = this.getSettingValue('outputTitle', true);
+            let isOutputTitle: boolean = this._dao.getSettingValue('outputTitle', true);
             return this._isOutputTitle = isOutputTitle;    
         }
         return this._isOutputTitle;
     }
-    private _isOutputTitle: boolean | null = null;
+    public _isOutputTitle: boolean | null = null;
 
     /**
      * You should ignore hidden file when file seek.
      */
     public ignoreHiddenFile(): boolean {
         if (isNull(this._ignoreHiddenFile)) {
-            let ignoreHiddenFile: boolean = this.getSettingValue('ignoreHiddenFile', true);
+            let ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
             return this._ignoreHiddenFile = ignoreHiddenFile;    
         }
         return this._ignoreHiddenFile;
     }
-    private _ignoreHiddenFile: boolean | null = null;
+    public _ignoreHiddenFile: boolean | null = null;
 
     /**
      * Get current workspace folder path
@@ -110,17 +111,19 @@ export class Configuration {
         return baseDir;
     }
 
+}
 
-    private getSettingValue(key: string, defaultValue: boolean): boolean;
-    private getSettingValue(key: string, defaultValue: string): string;
-    private getSettingValue(key: string, defaultValue: string[]): string[];
+class SettingDAO {
+    public getSettingValue(key: string, defaultValue: boolean): boolean;
+    public getSettingValue(key: string, defaultValue: string): string;
+    public getSettingValue(key: string, defaultValue: string[]): string[];
 
     /**
      * Gets the setting value. Type of returned value is determined by type of defualt value
      * @param key 
      * @param defaultValue 
      */
-    private getSettingValue(key: string, defaultValue: any): any {
+    public getSettingValue(key: string, defaultValue: any): any {
         // Get the value from setting.json
         let value = vscode.workspace.getConfiguration('grep2file').get(key);
         // If any value is configured in setting.json, passed defualt value is returned.
