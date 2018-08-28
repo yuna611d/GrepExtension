@@ -149,7 +149,7 @@ export class GrepService {
     protected async readFileAndInsertText(editor: vscode.TextEditor, filePath: string) {
         let contents = fs.readFileSync(filePath, this._fu.encoding);
         let lines = contents.split(this._conf.LINE_BREAK);
-        for (let i = 0; i < lines.length - 1; i++) {
+        for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             let lineNumber = i + 1;
             if (this.isContainSearchWord(line)) {
