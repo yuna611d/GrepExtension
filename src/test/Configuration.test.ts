@@ -1,5 +1,4 @@
 import * as assert from 'assert';
-import * as os from 'os';
 import * as myExtension from '../Configuration';
 
 suite("Configuration Tests", function () {
@@ -45,20 +44,4 @@ suite("Configuration Tests", function () {
 
         assert.equal(actual, expected);
     });
-
-    test("Directory separator", () => {
-        let sut = new myExtension.Configuration();
-        let actual = sut.getDirSeparator();
-
-        let expected = "";
-        let osType = os.type();
-        if (osType === 'Windows_NT') {
-            expected = "\\";
-        } else {
-            expected = "/";
-        }
-
-        assert.equal(actual, expected);
-    });
-    
 });
