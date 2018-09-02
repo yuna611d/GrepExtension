@@ -2,15 +2,6 @@ import * as vscode from 'vscode';
 
 export class DecorationService {
 
-    constructor (editor: vscode.TextEditor, searchWord: string, isRegExpMode: boolean) {
-        this._editor = editor;
-        this._searchWord = searchWord;
-        this._isRegExpMode = isRegExpMode;
-    }
-    private _editor: vscode.TextEditor;
-    private _searchWord: string;
-    private _isRegExpMode: boolean;
-
     private decorationTheme = vscode.window.createTextEditorDecorationType({
         'borderWidth': '1px',
         'borderStyle': 'solid',
@@ -26,13 +17,7 @@ export class DecorationService {
         }
     });
 
-    public setDecorations() {
-
-        // let startPos = editor.document.positionAt(0);
-        // let endPos = editor.document.positionAt(editor.document.getText().length - 1);
-        // let range = new vscode.Range(startPos, endPos);
-
-
-        // this._editor.setDecorations(this.decorationTheme, [ranges]);
+    public decorate(editor: vscode.TextEditor, ranges: Array<vscode.Range>) {
+        editor.setDecorations(this.decorationTheme, ranges);
     }
 }

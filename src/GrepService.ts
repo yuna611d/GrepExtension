@@ -65,10 +65,10 @@ export class GrepService {
                 vscode.window.showInformationMessage("Grep is finished...");
 
                 // Pickup positions found word in result file.
-                const ranges = this._wordFindService.findWordsWithRange(this._util.FileUtil.resultFilePath);
+                const ranges = await this._wordFindService.findWordsWithRange(editor);
 
                 // Decorate found word
-                // new DecorationService(editor, this._wordFindConfig).setDecorations();
+                new DecorationService().decorate(editor, ranges);
             });
         });
     }
@@ -103,7 +103,7 @@ export class GrepService {
 
             if (stat.isDirectory()) {
                 // if file path is directory, regrep by using filepath as nextTargetDir
-                this.directorySeekAndInsertText(editor, filePath);
+                await this.directorySeekAndInsertText(editor, filePath);
             } else if (stat.isFile()) {
                 // if file path is file, read file and insert grep results to editor
                 await this._wordFindService.readFileAndInsertText(editor, filePath);
