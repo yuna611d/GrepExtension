@@ -4,7 +4,7 @@ import { ContentUtil } from './Utilities/ContentUtil';
 import { FileUtil } from './Utilities/FileUtil';
 import { Configuration } from './Configuration';
 import {
-    isNull
+    isNull, isNullOrUndefined
 } from 'util';
 
 export class WordFindService {
@@ -17,17 +17,29 @@ export class WordFindService {
     };
 
     private _regExp: RegExp | null = null;
-    private get regExp(): RegExp {
+    private getRegExp(isGlobal?: boolean): RegExp {
+        let isRegExpMode = this._wordFindConfig.isRegExpMode;
+        let options = this._wordFindConfig.regExpOptions;
+
+        if (isGlobal) {
+            options += "g";
+            return new RegExp(this._wordFindConfig.searchWord, options);
+        }
 
         if (isNull(this._regExp)) {
-            if (this._wordFindConfig.isRegExpMode && this._wordFindConfig.regExpOptions.length > 0) {
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
+            if (isRegExpMode) {
+                if (options.length > 0) {
+                    return this._regExp = new RegExp(this._wordFindConfig.searchWord, options);
+                } else {
+                    return this._regExp = new RegExp(this._wordFindConfig.searchWord);
+                }
             } else {
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord);
+                return this._regExp = new RegExp(this._wordFindConfig.searchWord, "i");
             }
-        } else {
-            return this._regExp;
-        }
+        } 
+
+
+        return this._regExp;
     }
 
     constructor(conf: Configuration, 
@@ -49,7 +61,7 @@ export class WordFindService {
      */
     public async readFileAndInsertText(editor: vscode.TextEditor, filePath: string) {
         const util = this._util;
-        const isContainSearchWord = this.isContainSearchWord.bind(undefined, this.regExp);
+        const isContainSearchWord = this.isContainSearchWord.bind(undefined, this.getRegExp());
 
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
             if (isContainSearchWord(foundWordInfo.lineText)) {
@@ -64,11 +76,25 @@ export class WordFindService {
 
     public async findWordsWithRange(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {
         let ranges = new Array();
-        const getFindWordRange = this.getFindWordRange.bind(undefined, this.regExp);
+
+        const contentIndex = this._util.ContentUtil.columnInfo.content;
+        const contentSeparator = this._util.ContentUtil.SEPARATOR;
+        const getFindWordRange = this.getFindWordRange.bind(undefined, this.getRegExp(true));
 
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
+            const lineText = foundWordInfo.lineText;
+            const splittedTexts = lineText.split(contentSeparator);
+            let searchStartPos = 0;
+            for (let i = 0; i < contentIndex; i++) {
+                let splittedText = splittedTexts[i]; 
+                if (isNullOrUndefined(splittedText)) {
+                    break;
+                }
+                searchStartPos += splittedText.length;
+            }
+
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = await getFindWordRange(foundWordInfo.lineText, lineNumber);
+            const range = await getFindWordRange(lineText, lineNumber, searchStartPos);
             if (!isNull(range)) {
                 ranges.push(range);
             }
@@ -107,14 +133,27 @@ export class WordFindService {
      * Return Range object if search word is found in targetString in a specified line.
      * The null is retruned if search word is not found.
      */
-    protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number): vscode.Range | null {
-        const result = re.exec(targetString);
+    protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
+        let result = re.exec(targetString);
         if (isNull(result)) {
             return null;
         }
 
-        const startPosition = new vscode.Position(lineNumber, result.index);
-        const endPosition = new vscode.Position(lineNumber, (result.index + result[0].length));
+        let startIndex = result.index;
+        let endIndex = startIndex + result[0].length;
+
+        while ((result = re.exec(targetString)) !== null) {
+            if (result.index >= searchStartPos) {
+                startIndex = result.index;
+                endIndex = startIndex + result[0].length;
+                break;
+            }
+        }
+
+
+
+        const startPosition = new vscode.Position(lineNumber, startIndex);
+        const endPosition = new vscode.Position(lineNumber, endIndex);
         return new vscode.Range(startPosition, endPosition);
     }
 

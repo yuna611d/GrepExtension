@@ -6,8 +6,8 @@ export class DecorationService {
         'borderWidth': '1px',
         'borderStyle': 'solid',
         'light': {
-            'backgroundColor': 'rgba(204, 255, 255, 0.3)',
-            'borderColor': 'rgba(204, 255, 255, 0.4)',
+            'backgroundColor': 'rgba(124,77, 255, 0.3)',
+            'borderColor': 'rgba(124,77, 255, 0.4)',
             'color': 'rgba(255, 0, 0, 1.0)'
         },
         'dark': {

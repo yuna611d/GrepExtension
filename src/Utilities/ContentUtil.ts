@@ -30,6 +30,21 @@ export class ContentUtil extends UtilBase {
     protected _contentTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConfText: string = "";
     protected LINE_BREAK = this._conf.LINE_BREAK;
+    
+    public get columnInfo() {
+        return {
+            title: 0,
+            filePath: this._conf.isOutputTitle() ? 1 : 0,
+            lineNumber: this._conf.isOutputTitle() ? 2 : 1,
+            content: this._conf.isOutputTitle() ? 3 : 2    
+        };
+    }
+
+    public get SEPARATOR() {
+        return this._separator;
+    }
+    protected _separator: string = "\t";
+
 
 
     public setGrepConf(baseDir: string, wordFindConfig: {searchWord: string; isRegExpMode: boolean; }) {        
@@ -62,20 +77,21 @@ export class ContentUtil extends UtilBase {
 
     protected getFormattedContent(contents: string[]) {
         contents[0] = "";
-        let separator = "\t";
-        return contents.join(separator);
+        return contents.join(this.SEPARATOR);
     }
 
 }
 
 export class ContentUtilCSV extends ContentUtil {
 
+    protected _separator: string = ",";
+
     public getTitle() {
         return "";
     }
 
     protected getFormatedTitle(titleItems: string[]) {
-        let separator = " | ";
+        const separator = " | ";
         return titleItems.join(separator);
     }
 
@@ -84,20 +100,20 @@ export class ContentUtilCSV extends ContentUtil {
             contents.shift();
         }
 
-        let separator = ",";
-        return contents.join(separator);
+        return contents.join(this.SEPARATOR);
     }
 }
 
 export class ContentUtilTSV extends ContentUtilCSV {
+
+    protected _separator: string = "\t";
 
     protected getFormattedContent(contents: string[]) {
         if (!this._conf.isOutputTitle()) {
             contents.shift();
         }
 
-        let separator = "\t";
-        return contents.join(separator);
+        return contents.join(this.SEPARATOR);
     }
 }
 
