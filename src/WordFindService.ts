@@ -18,23 +18,16 @@ export class WordFindService {
 
     private _regExp: RegExp | null = null;
     private getRegExp(isGlobal?: boolean): RegExp {
-        let isRegExpMode = this._wordFindConfig.isRegExpMode;
-        let options = this._wordFindConfig.regExpOptions;
 
-        if (isGlobal) {
-            options += "g";
-            return new RegExp(this._wordFindConfig.searchWord, options);
-        }
 
-        if (isNull(this._regExp)) {
-            if (isRegExpMode) {
-                if (options.length > 0) {
-                    return this._regExp = new RegExp(this._wordFindConfig.searchWord, options);
-                } else {
-                    return this._regExp = new RegExp(this._wordFindConfig.searchWord);
-                }
+        if (isNull(this._regExp) || isGlobal) {
+            const gOption = isGlobal ? 'g' : '';
+
+            if (this._wordFindConfig.isRegExpMode) {
+                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + gOption);
             } else {
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, "i");
+                this._wordFindConfig.regExpOptions += (this._wordFindConfig.regExpOptions.indexOf('i') === -1) ? 'i': '';
+                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + gOption);
             }
         } 
 
@@ -74,7 +67,7 @@ export class WordFindService {
         await this.findWord(content, action);
     }
 
-    public async findWordsWithRange(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {
+    public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
         let ranges = new Array();
 
         const contentIndex = this._util.ContentUtil.columnInfo.content;
@@ -101,15 +94,16 @@ export class WordFindService {
         };
 
         const content = editor.document.getText();
-        await this.findWord(content, action);
+        await this.findWord(content, action, startLine);
 
         return ranges;
     }
 
 
-    protected async findWord (content: string, action: Function) {
+    protected async findWord (content: string, action: Function, startLine?: number) {
+        const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(this._conf.LINE_BREAK);
-        for (let i = 0; i < lines.length; i++) {
+        for (let i = start; i < lines.length; i++) {
             let line = lines[i];
             let lineNumber = i + 1;
             let foundWordInfo = {lineText: line, lineNumber: lineNumber};
@@ -156,5 +150,7 @@ export class WordFindService {
         const endPosition = new vscode.Position(lineNumber, endIndex);
         return new vscode.Range(startPosition, endPosition);
     }
+
+
 
 }

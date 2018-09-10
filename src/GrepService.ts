@@ -65,7 +65,7 @@ export class GrepService {
                 vscode.window.showInformationMessage("Grep is finished...");
 
                 // Pickup positions found word in result file.
-                const ranges = await this._wordFindService.findWordsWithRange(editor);
+                const ranges = await this._wordFindService.findWordsWithRange(editor, this._util.FileUtil.initialLastLine);
 
                 // Decorate found word
                 new DecorationService().decorate(editor, ranges);
@@ -130,7 +130,7 @@ export class GrepService {
      */
     protected setSearchWordConfig (searchWord: string) {
         // Set Inital  Configuration
-        this._wordFindConfig.searchWord = searchWord;
+        this._wordFindConfig.searchWord = this.escapeRegExpWord(searchWord);
         this._wordFindConfig.isRegExpMode = false;
         this._wordFindConfig.regExpOptions = '';
 
@@ -172,6 +172,10 @@ export class GrepService {
         this._wordFindConfig.searchWord = pattern;
         this._wordFindConfig.isRegExpMode = true;
         this._wordFindConfig.regExpOptions = options;
+    }
+
+        private escapeRegExpWord(word: string): string {
+        return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
     }
 
 

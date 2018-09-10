@@ -54,6 +54,10 @@ export class FileUtil extends UtilBase {
     }
     private _encoding = "utf-8";
 
+    public get initialLastLine() {
+        return this._initailLastLine;
+    }
+    private _initailLastLine = 0;
 
 
     private _excludeFileExtensions: string[] = [""];
@@ -105,9 +109,11 @@ export class FileUtil extends UtilBase {
     }
 
     protected getPosition(editor: vscode.TextEditor) {
-        let lastLine = editor.document.lineCount;
-        let position = new vscode.Position(lastLine, 0);
-        return position;
+        const lastLine = editor.document.lineCount;
+        if (this._initailLastLine === 0) {
+            this._initailLastLine = lastLine;
+        }
+        return new vscode.Position(lastLine, 0);
     }
 
     public async insertText(editor: vscode.TextEditor, content: string) {
