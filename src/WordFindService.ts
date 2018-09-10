@@ -19,15 +19,16 @@ export class WordFindService {
     private _regExp: RegExp | null = null;
     private getRegExp(isGlobal?: boolean): RegExp {
 
+        if (isGlobal) {
+            return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + 'g');
+        }
 
         if (isNull(this._regExp) || isGlobal) {
-            const gOption = isGlobal ? 'g' : '';
-
             if (this._wordFindConfig.isRegExpMode) {
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + gOption);
+                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
             } else {
                 this._wordFindConfig.regExpOptions += (this._wordFindConfig.regExpOptions.indexOf('i') === -1) ? 'i': '';
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + gOption);
+                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
             }
         } 
 
@@ -128,6 +129,7 @@ export class WordFindService {
      * The null is retruned if search word is not found.
      */
     protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
+        re.lastIndex = 0;
         let result = re.exec(targetString);
         if (isNull(result)) {
             return null;
