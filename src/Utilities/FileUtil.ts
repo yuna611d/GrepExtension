@@ -116,7 +116,8 @@ export class FileUtil extends UtilBase {
         return new vscode.Position(lastLine, 0);
     }
 
-    public async insertText(editor: vscode.TextEditor, content: string) {
+    public async insertText(editor: vscode.TextEditor, content: string): Promise<number> {
+        const insertedLine = () => { const lineCount = editor.document.lineCount; return lineCount === 0 ? 0 : lineCount - 1;};
         await editor.edit(editBuilder => {
             if (content === "") {
                 return;
@@ -125,6 +126,8 @@ export class FileUtil extends UtilBase {
             let lineBreakText = content + this._conf.LINE_BREAK;
             let position = this.getPosition(editor);
             editBuilder.insert(position, lineBreakText);
+            return insertedLine();
         });
+        return insertedLine();
     }
 }

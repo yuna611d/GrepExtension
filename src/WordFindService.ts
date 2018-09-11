@@ -23,7 +23,7 @@ export class WordFindService {
             return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + 'g');
         }
 
-        if (isNull(this._regExp) || isGlobal) {
+        if (isNull(this._regExp)) {
             if (this._wordFindConfig.isRegExpMode) {
                 return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
             } else {
@@ -78,17 +78,11 @@ export class WordFindService {
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
             const lineText = foundWordInfo.lineText;
             const splittedTexts = lineText.split(contentSeparator);
-            let searchStartPos = 0;
-            for (let i = 0; i < contentIndex; i++) {
-                let splittedText = splittedTexts[i]; 
-                if (isNullOrUndefined(splittedText)) {
-                    break;
-                }
-                searchStartPos += splittedText.length;
-            }
+            const contentText = (splittedTexts.length >= contentIndex) ? splittedTexts[contentIndex] : "";
+            const searchStartPos = splittedTexts.map(x => x.length).reduce((a, v, i) => (i < contentIndex) ? a + v + contentSeparator.length : a) + contentSeparator.length;
 
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = await getFindWordRange(lineText, lineNumber, searchStartPos);
+            const range = await getFindWordRange(contentText, lineNumber, searchStartPos);
             if (!isNull(range)) {
                 ranges.push(range);
             }
@@ -135,18 +129,8 @@ export class WordFindService {
             return null;
         }
 
-        let startIndex = result.index;
+        let startIndex = searchStartPos + result.index;
         let endIndex = startIndex + result[0].length;
-
-        while ((result = re.exec(targetString)) !== null) {
-            if (result.index >= searchStartPos) {
-                startIndex = result.index;
-                endIndex = startIndex + result[0].length;
-                break;
-            }
-        }
-
-
 
         const startPosition = new vscode.Position(lineNumber, startIndex);
         const endPosition = new vscode.Position(lineNumber, endIndex);

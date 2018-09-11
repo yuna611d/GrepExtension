@@ -58,14 +58,14 @@ export class GrepService {
                 // Write Title
                 await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getTitle());
                 // Write Content Title
-                await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getContentTitle());
+                const contentTitleLineNumber = await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getContentTitle());
                 // Do grep and output its results.
                 await this.directorySeekAndInsertText(editor);
                 // Notify finish
                 vscode.window.showInformationMessage("Grep is finished...");
 
                 // Pickup positions found word in result file.
-                const ranges = await this._wordFindService.findWordsWithRange(editor, this._util.FileUtil.initialLastLine);
+                const ranges = await this._wordFindService.findWordsWithRange(editor, contentTitleLineNumber);
 
                 // Decorate found word
                 new DecorationService().decorate(editor, ranges);
