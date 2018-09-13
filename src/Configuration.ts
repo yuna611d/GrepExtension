@@ -3,7 +3,6 @@ import {
     isNullOrUndefined,
     isNull
 } from 'util';
-import * as os from 'os';
 
 export class Configuration {
     
@@ -22,22 +21,6 @@ export class Configuration {
     }
     public _excludedFileExtensions: string[] | null = null;
 
-
-    /**
-     * Get the separator of file. 
-     */
-    public getDirSeparator(): string {
-        if (isNull(this._dirSeparator)) {
-            let osType = os.type();
-            if (osType === 'Windows_NT') {
-                return this._dirSeparator =  "\\";
-            } else {
-                return this._dirSeparator = "/";
-            }
-        }
-        return this._dirSeparator;
-    }
-    public _dirSeparator: string | null = null;
 
     /**
      * output file name.

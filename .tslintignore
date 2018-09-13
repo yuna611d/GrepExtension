@@ -1,2 +1,2 @@
-out/**/*.js
-node_modules/**/*.js
+out/
+node_modules/

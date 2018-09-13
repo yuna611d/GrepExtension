@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import * as myExtension from '../ContentUtil';
+import * as myExtension from '../Utilities/ContentUtil';
 import { Configuration } from '../Configuration';
 
 suite("ContentUtil Factory Tests", function () {
@@ -93,6 +93,8 @@ suite("GetContent Test", () => {
     let baseDir = "/tmp/";
     let searchWord = "test";
     let isRegExpMode = false;
+    let wordFindConfig = {searchWord: searchWord, isRegExpMode: isRegExpMode};
+
 
     let filePath = baseDir + "samplefile.txt";
     let lineNumber = 1;
@@ -107,7 +109,7 @@ suite("GetContent Test", () => {
 
         let factory = new myExtension.ContentUtilFactory(stub);
         let sut = factory.retrieve();
-        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+        sut.setGrepConf(baseDir, wordFindConfig);
 
         let actual = sut.getContent(filePath, lineNumber.toString(), line);
         let expected = ["", filePath, lineNumber.toString(), line].join("\t");
@@ -126,7 +128,7 @@ suite("GetContent Test", () => {
 
         let factory = new myExtension.ContentUtilFactory(stub);
         let sut = factory.retrieve();
-        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+        sut.setGrepConf(baseDir, wordFindConfig);
 
         let actual = sut.getContent(filePath, lineNumber.toString(), line);
         let expected = [filePath, lineNumber.toString(), line].join(",");
@@ -145,7 +147,7 @@ suite("GetContent Test", () => {
 
         let factory = new myExtension.ContentUtilFactory(stub);
         let sut = factory.retrieve();
-        sut.setGrepConf(baseDir, searchWord, isRegExpMode);
+        sut.setGrepConf(baseDir, wordFindConfig);
 
         let actual = sut.getContent(filePath, lineNumber.toString(), line);
         let expected = [filePath, lineNumber.toString(), line].join("\t");
