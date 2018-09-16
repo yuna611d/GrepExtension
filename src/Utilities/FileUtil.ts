@@ -82,8 +82,11 @@ export class FileUtil extends UtilBase {
         let extension = fileInfos[fileInfos.length -1];
 
         // don't read files which have extension specified
-        if (this._excludeFileExtensions.indexOf(extension) >= 0) {
-            return true;
+        for (let ext of this._excludeFileExtensions) {
+            const re = new RegExp(ext, "i");
+            if (re.test(extension)) {
+                return true;
+            }
         }
 
         // don't read result file.
