@@ -105,7 +105,6 @@ export class GrepService {
                 // if file path is directory, regrep by using filepath as nextTargetDir
                 await this.directorySeekAndInsertText(editor, filePath);
             } else if (stat.isFile()) {
-
                 // if file path is file, read file and insert grep results to editor
                 await this._wordFindService.readFileAndInsertText(editor, filePath);
             }

@@ -2,6 +2,12 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.4.1
+
+- Fixed following bug
+
+  - Binary files are searched
+
 ## 0.4.0
 
 - Added following feature

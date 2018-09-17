@@ -2,7 +2,7 @@
     "name": "grep2file",
     "displayName": "grep2file",
     "description": "grep word and output result to file",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "publisher": "yuna611d",
     "engines": {
         "vscode": "^1.25.0"
