@@ -130,4 +130,5 @@ export class FileUtil extends UtilBase {
         });
         return insertedLine();
     }
+
 }

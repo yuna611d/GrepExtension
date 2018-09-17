@@ -64,7 +64,12 @@ export class WordFindService {
             }   
         };
 
-        const content = fs.readFileSync(filePath, this._util.FileUtil.encoding);
+        const buff = fs.readFileSync(filePath, null);
+        if (this.seemsBinary(buff)) {
+            return;
+        }
+
+        const content = buff.toString(this._util.FileUtil.encoding);
         await this.findWord(content, action);
     }
 
@@ -138,5 +143,21 @@ export class WordFindService {
     }
 
 
+    /**
+     * Check if passed file is binary or not.
+     * This is a cheap implementation to determine if passed file is binary or not.
+     * This function determine passed file as binary if file contains code under the ascii 08.
+     * @param bufer
+     */
+    public seemsBinary(buffer: Buffer): boolean {
+        const controls = [0,1,2,3,4,5,6,7,8];
+        for (let i = 0; i < 512; i++) {
+            const c = buffer[i];
+            if (controls.indexOf(c) > -1) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
