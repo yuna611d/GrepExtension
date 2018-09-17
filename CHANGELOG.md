@@ -2,6 +2,16 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.4.0
+
+- Added following feature
+
+  - Hilight found word
+
+- Fixed following bugs
+
+  - Ignore case when normal grep
+
 ## 0.3.0
 
 - Added following configurations
