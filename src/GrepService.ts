@@ -31,7 +31,7 @@ export class GrepService {
     };
 
     // TODO time cousuming features should be separated.
-    private _timeConsumingLimit = 500;
+    private _timeConsumingLimit = 10000;
     private _countConfirmedCancellation = 0;
     private _timeConsumingStart = 0;
     private _isCancelled = false;
