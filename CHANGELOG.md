@@ -2,6 +2,12 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.5.0
+
+- Added following feature
+
+  - Functionality to cancel grep
+
 ## 0.4.0
 
 - Added following feature
