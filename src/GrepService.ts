@@ -10,11 +10,15 @@ import {
 } from 'util';
 import * as fs from 'fs';
 import { WordFindService } from './WordFindService';
+const { performance } = require('perf_hooks');
+
 
 
 export class GrepService {
     private _conf: Configuration;
     private _util: {FileUtil: FileUtil; ContentUtil: ContentUtil; };
+    private _timeConsumingLimit = 5000;
+    private _timeConsuming = 0;
 
     private _wordFindService: WordFindService;
     private _wordFindConfig = {
@@ -37,6 +41,8 @@ export class GrepService {
 
     }
     public serve() {
+        // Rest time consuming
+        this._timeConsuming = 0;
 
         // Get search word
         const searchWord = this._wordFindConfig.searchWord;
@@ -90,7 +96,8 @@ export class GrepService {
         let files = fs.readdirSync(targetDir);
 
         for (let file of files) {
-
+            performance.mark('aGrepCycleStart');
+    
             // Skip if file name is ignored file or directory
             if (this.isIgnoredFileOrDirectory(file)) {
                 continue;
@@ -108,8 +115,15 @@ export class GrepService {
                 // if file path is file, read file and insert grep results to editor
                 await this._wordFindService.readFileAndInsertText(editor, filePath);
             }
-        }
 
+            performance.mark('aGrepCycleEnd');
+            performance.measure('aGrepCycle', 'aGrepCycleStart', 'aGrepCycleEnd');
+            const measure = performance.getEntriesByName('aGrepCycle');
+            this._timeConsuming = measure.reduce((a: number, c: any) => a + c.duration, 0);
+            if (this._timeConsuming > this._timeConsumingLimit) {
+                vscode.window.showInformationMessage("Measure: " + this._timeConsuming);
+            }
+        }
     }
 
     protected isIgnoredFileOrDirectory(file: string): boolean {
