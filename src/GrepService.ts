@@ -1,25 +1,41 @@
 'use strict';
-import { Configuration } from './Configuration';
-import { ContentUtil } from './Utilities/ContentUtil';
-import { FileUtil } from './Utilities/FileUtil';
-import { DecorationService } from './DecorationService';
+import {
+    Configuration
+} from './Configuration';
+import {
+    ContentUtil
+} from './Utilities/ContentUtil';
+import {
+    FileUtil
+} from './Utilities/FileUtil';
+import {
+    DecorationService
+} from './DecorationService';
 import * as vscode from 'vscode';
 import {
     isNullOrUndefined,
     isNull
 } from 'util';
 import * as fs from 'fs';
-import { WordFindService } from './WordFindService';
-const { performance } = require('perf_hooks');
+import {
+    WordFindService
+} from './WordFindService';
+const {
+    performance
+} = require('perf_hooks');
 
 export class GrepService {
     private _conf: Configuration;
-    private _util: {FileUtil: FileUtil; ContentUtil: ContentUtil; };
-    
+    private _util: {
+        FileUtil: FileUtil;ContentUtil: ContentUtil;
+    };
+
     // TODO time cousuming features should be separated.
-    private _timeConsumingLimit = 5000;
-    private _timeConsumingStart = 0;
+    private _timeConsumingLimit = 500;
     private _countConfirmedCancellation = 0;
+    private _timeConsumingStart = 0;
+    private _isCancelled = false;
+
 
     private _wordFindService: WordFindService;
     private _wordFindConfig = {
@@ -28,10 +44,12 @@ export class GrepService {
         regExpOptions: ''
     };
 
-    constructor(searchWord: string | undefined, conf: Configuration, util: {FileUtil: FileUtil; ContentUtil: ContentUtil; }) {
+    constructor(searchWord: string | undefined, conf: Configuration, util: {
+        FileUtil: FileUtil;ContentUtil: ContentUtil;
+    }) {
         // Set injections
         this._conf = conf;
-        this._util= util;
+        this._util = util;
 
         // Check search word exisntance and reg exp mode
         if (!isNullOrUndefined(searchWord)) {
@@ -67,10 +85,11 @@ export class GrepService {
                 // Write Content Title
                 const contentTitleLineNumber = await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getContentTitle());
                 // Do grep and output its results.
-                await this.directorySeekAndInsertText(editor);
+                await this.directorySeekAndInsertText(editor)
+                    .catch((err) => vscode.window.showInformationMessage('Grep is cancelled')); // Notify cancellation
+                
                 // Notify finish
-                vscode.window.showInformationMessage("Grep is finished...");
-
+                vscode.window.showInformationMessage("Grep is finished...");    
                 // Pickup positions found word in result file.
                 const ranges = await this._wordFindService.findWordsWithRange(editor, contentTitleLineNumber);
 
@@ -87,6 +106,11 @@ export class GrepService {
      * @param nextTargetDir directory where is next target.
      */
     protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {
+        // If cancelled, Do nothing
+        if (this._isCancelled) {
+            throw new Error('GrepInterruptionError');
+        }
+        
         // Get target directory
         let targetDir = this._util.FileUtil.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
@@ -96,7 +120,7 @@ export class GrepService {
         // Get file or directory names in targetDir
         let files = fs.readdirSync(targetDir);
 
-        for (let file of files) {    
+        for (let file of files) {
             // Skip if file name is ignored file or directory
             if (this.isIgnoredFileOrDirectory(file)) {
                 continue;
@@ -116,9 +140,15 @@ export class GrepService {
             }
 
             // End performance measure
-            const measure = performance.now() -  this._timeConsumingStart;            
+            const measure = performance.now() - this._timeConsumingStart;            
             if (this._countConfirmedCancellation === 0 && measure > this._timeConsumingLimit) {
-                vscode.window.showWarningMessage("Grep may need long time. Do you continue?");
+                vscode.window.showQuickPick(["Continue", "Cancel"],  {'placeHolder': 'Grep may need long time. Do you continue?' })
+                    .then(r => {
+                        if (r === 'Cancel') {
+                            this._isCancelled = true;
+                        }
+                    }                
+                );
                 this._countConfirmedCancellation++;
             }
         }
@@ -140,7 +170,7 @@ export class GrepService {
      * Set parameters for regulare expression.
      * @param searchWord: searchWord
      */
-    protected setSearchWordConfig (searchWord: string) {
+    protected setSearchWordConfig(searchWord: string) {
         // Set Inital  Configuration
         this._wordFindConfig.searchWord = this.escapeRegExpWord(searchWord);
         this._wordFindConfig.isRegExpMode = false;
@@ -186,9 +216,8 @@ export class GrepService {
         this._wordFindConfig.regExpOptions = options;
     }
 
-        private escapeRegExpWord(word: string): string {
+    private escapeRegExpWord(word: string): string {
         return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
     }
-
 
 }
