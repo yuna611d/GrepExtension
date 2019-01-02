@@ -1,61 +1,38 @@
+import { Common } from "../Commons/Common";
+import { BaseModel } from "../Interface/IModel";
+import { isNull } from "util";
 
-import { UtilFactory, UtilBase } from "./UtilBase";
 
-export class ContentUtilFactory extends UtilFactory {
-
-    public retrieve() {
-        let format = this._conf.getOutputContentFormat();
-        switch (format) {
-            case "txt":
-                return new ContentUtil(this._conf);
-                break;
-            case "tsv":
-                return new ContentUtilTSV(this._conf);
-                break;
-            case "csv":
-                return new ContentUtilCSV(this._conf);
-                break;
-            case "json":
-                // TODO implement in the futrue
-                return new ContentUtilJSON(this._conf);
-            default:
-                return new ContentUtil(this._conf);
-                break;
-        }
-    }
-}
-
-export class ContentUtil extends UtilBase {
+export class ContentModel extends BaseModel {
 
     protected _contentTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConfText: string = "";
-    protected LINE_BREAK = this._conf.LINE_BREAK;
-    
+    protected _separator: string = "\t";
+
+
     public get columnInfo() {
         return {
-            title: 0,
-            filePath: this._conf.isOutputTitle() ? 1 : 0,
-            lineNumber: this._conf.isOutputTitle() ? 2 : 1,
-            content: this._conf.isOutputTitle() ? 3 : 2    
+            title:                             0,       // column[0]               : Title
+            filePath:   this.hasOutputTitle() ? 1 : 0,  // column[1] or coulumn[2] : filePath
+            lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or coulumn[1] : lineNumber
+            content:    this.hasOutputTitle() ? 3 : 2   // column[3] or coulumn[2] : pickedLineText
         };
     }
+
 
     public get SEPARATOR() {
         return this._separator;
     }
-    protected _separator: string = "\t";
-
-
 
     public setGrepConf(baseDir: string, wordFindConfig: {searchWord: string; isRegExpMode: boolean; }) {        
-        let searchDirText = `Search Dir: ${baseDir}`;
+        let searchDirText =  `Search Dir: ${baseDir}`;
         let searchWordText = `Search Word: ${wordFindConfig.searchWord}`;
         let regExpModeText = "RegExpMode: " + (wordFindConfig.isRegExpMode ? "ON" : "OFF");
         this._grepConfText= this.getFormatedTitle([searchDirText, searchWordText, regExpModeText]);
     }
 
     public getTitle() {
-        if (!this._conf.isOutputTitle()) {
+        if (!this.hasOutputTitle()) {
             return "";
         }
         return this._grepConfText;
@@ -71,8 +48,9 @@ export class ContentUtil extends UtilBase {
         return content;
     }
 
+
     protected getFormatedTitle(titleItems: string[]) {
-        return titleItems.join(this.LINE_BREAK);
+        return titleItems.join(Common.LINE_BREAK);
     }
 
     protected getFormattedContent(contents: string[]) {
@@ -80,9 +58,22 @@ export class ContentUtil extends UtilBase {
         return contents.join(this.SEPARATOR);
     }
 
+
+    /**
+     * You shouldn't output title of content if true is returned.
+     */
+    protected hasOutputTitle(): boolean {
+        if (isNull(this._hasOutputTitle)) {
+            return this._hasOutputTitle = this._dao.getSettingValue('outputTitle', true);   
+        }
+        return this._hasOutputTitle;
+    }
+    protected _hasOutputTitle: boolean | null = null;
+ 
+
 }
 
-export class ContentUtilCSV extends ContentUtil {
+export class ContentCSVModel extends ContentModel {
 
     protected _separator: string = ",";
 
@@ -96,27 +87,24 @@ export class ContentUtilCSV extends ContentUtil {
     }
 
     protected getFormattedContent(contents: string[]) {
-        if (!this._conf.isOutputTitle()) {
+        if (!this.hasOutputTitle()) {
             contents.shift();
         }
-
         return contents.join(this.SEPARATOR);
     }
 }
 
-export class ContentUtilTSV extends ContentUtilCSV {
-
+export class ContentTSVModel extends ContentCSVModel {
     protected _separator: string = "\t";
 
     protected getFormattedContent(contents: string[]) {
-        if (!this._conf.isOutputTitle()) {
+        if (!this.hasOutputTitle()) {
             contents.shift();
         }
-
         return contents.join(this.SEPARATOR);
     }
 }
 
-export class ContentUtilJSON extends ContentUtil {
+export class ContentJSONModel extends ContentModel {
     // TODO implment in the future
 }
