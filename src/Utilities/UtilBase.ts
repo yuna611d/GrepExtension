@@ -1,4 +1,4 @@
-import { Configuration } from '../Configuration';
+import { Configuration } from '../Configurations/Configuration';
 
 export abstract class UtilFactory {
     protected _conf: Configuration;

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import * as myExtension from '../Configuration';
+import * as myExtension from '../Configurations/Configuration';
 
 suite("Configuration Tests", function () {
 

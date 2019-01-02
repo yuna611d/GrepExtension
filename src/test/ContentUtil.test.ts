@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 import * as myExtension from '../Utilities/ContentUtil';
-import { Configuration } from '../Configuration';
+import { Configuration } from '../Configurations/Configuration';
 
 suite("ContentUtil Factory Tests", function () {
 

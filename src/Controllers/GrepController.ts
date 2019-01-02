@@ -1,9 +1,9 @@
 'use strict';
-import { Configuration } from './Configuration';
-import { ContentUtilFactory } from './Utilities/ContentUtil';
-import { FileUtilFactory } from './Utilities/FileUtil';
-import { GrepService } from './GrepService';
-import * as ib from './InputBox';
+import { Configuration } from '../Configurations/Configuration';
+import { ContentUtilFactory } from '../Utilities/ContentUtil';
+import { FileUtilFactory } from '../Utilities/FileUtil';
+import { GrepService } from '../Services/GrepService';
+import * as ib from '../InteractionItems/InputBox';
 
 
 export class GrepController {

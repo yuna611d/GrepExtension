@@ -1,13 +1,13 @@
 'use strict';
 import {
     Configuration
-} from './Configuration';
+} from '../Configurations/Configuration';
 import {
     ContentUtil
-} from './Utilities/ContentUtil';
+} from '../Utilities/ContentUtil';
 import {
     FileUtil
-} from './Utilities/FileUtil';
+} from '../Utilities/FileUtil';
 import {
     DecorationService
 } from './DecorationService';

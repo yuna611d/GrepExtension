@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { ContentUtil } from './Utilities/ContentUtil';
-import { FileUtil } from './Utilities/FileUtil';
-import { Configuration } from './Configuration';
+import { ContentUtil } from '../Utilities/ContentUtil';
+import { FileUtil } from '../Utilities/FileUtil';
+import { Configuration } from '../Configurations/Configuration';
 import {
     isNull, isNullOrUndefined
 } from 'util';

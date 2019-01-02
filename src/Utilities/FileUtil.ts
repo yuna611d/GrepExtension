@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import {
     isNull
 } from 'util';
-import { Configuration } from '../Configuration';
+import { Configuration } from '../Configurations/Configuration';
 import { UtilFactory, UtilBase } from './UtilBase';
 
 
@@ -29,9 +29,8 @@ export class FileUtil extends UtilBase {
     private _resultFileName: string;
 
     public get resultFilePath() {
-        return this._resultFilePath = this.baseDir + this.dirSeparator + this.resultFileName;
+        return this.baseDir + this.dirSeparator + this.resultFileName;
     }
-    private _resultFilePath: string = this.resultFileName;
 
     /**
      * Get the separator of file. 
