@@ -1,28 +1,15 @@
 'use strict';
-import {
-    Configuration
-} from '../Configurations/Configuration';
-import {
-    ContentUtil
-} from '../Utilities/ContentUtil';
-import {
-    FileUtil
-} from '../Utilities/FileUtil';
-import {
-    DecorationService
-} from './DecorationService';
+import { Configuration } from '../Configurations/Configuration';
+import { ContentUtil } from '../Utilities/ContentUtil';
+import { FileUtil } from '../Utilities/FileUtil';
 import * as vscode from 'vscode';
 import {
     isNullOrUndefined,
     isNull
 } from 'util';
 import * as fs from 'fs';
-import {
-    WordFindService
-} from './WordFindService';
-const {
-    performance
-} = require('perf_hooks');
+import { WordFindService } from './WordFindService';
+const { performance } = require('perf_hooks');
 
 export class GrepService {
     private _conf: Configuration;
@@ -44,9 +31,9 @@ export class GrepService {
         regExpOptions: ''
     };
 
-    constructor(searchWord: string | undefined, conf: Configuration, util: {
-        FileUtil: FileUtil;ContentUtil: ContentUtil;
-    }) {
+    constructor(searchWord: string | undefined, 
+                conf: Configuration, 
+                util: {FileUtil: FileUtil;ContentUtil: ContentUtil;}) {
         // Set injections
         this._conf = conf;
         this._util = util;
@@ -59,44 +46,43 @@ export class GrepService {
         this._wordFindService = new WordFindService(conf, util, this._wordFindConfig);
 
     }
-    public serve() {
-        // Reset time consuming
-        this._timeConsumingStart = performance.now();
 
+    private isValidSearchWord(): boolean {
         // Get search word
         const searchWord = this._wordFindConfig.searchWord;
         if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
             vscode.window.showInformationMessage("Sorry, I can't grep this word...");
-            return;
+            return false;
         }
+        return true;
+    }
 
-        // create file, which is written grep result.
-        this._util.FileUtil.addNewFile();
+    public prepareGrep(): boolean {
+        if (!this.isValidSearchWord()) {
+            return false;
+        }
+        // Reset time consuming
+        this._timeConsumingStart = performance.now();
+        // set Configuration
+        this._util.ContentUtil.setGrepConf(this._util.FileUtil.baseDir, this._wordFindConfig);
+        return true;
+    }
 
-        // Open result file (fire onDidOpenTextDocument Event)
-        vscode.workspace.openTextDocument(this._util.FileUtil.resultFilePath).then(doc => {
-            vscode.window.showTextDocument(doc).then(async editor => {
+    public async grep(editor: vscode.TextEditor, resultFilePath: string): Promise<Array<vscode.Range>> {
 
-                // set Configuration
-                this._util.ContentUtil.setGrepConf(this._util.FileUtil.baseDir, this._wordFindConfig);
+        // Write Title
+        await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getTitle());
+        // Write Content Title
+        const contentTitleLineNumber = await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getContentTitle());
+        // Do grep and output its results.
+        await this.directorySeekAndInsertText(editor)
+            .catch((err) => vscode.window.showInformationMessage('Grep is cancelled')); // Notify cancellation
+        
+        // Notify finish
+        vscode.window.showInformationMessage("Grep is finished...");    
 
-                // Write Title
-                await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getTitle());
-                // Write Content Title
-                const contentTitleLineNumber = await this._util.FileUtil.insertText(editor, this._util.ContentUtil.getContentTitle());
-                // Do grep and output its results.
-                await this.directorySeekAndInsertText(editor)
-                    .catch((err) => vscode.window.showInformationMessage('Grep is cancelled')); // Notify cancellation
-                
-                // Notify finish
-                vscode.window.showInformationMessage("Grep is finished...");    
-                // Pickup positions found word in result file.
-                const ranges = await this._wordFindService.findWordsWithRange(editor, contentTitleLineNumber);
-
-                // Decorate found word
-                new DecorationService().decorate(editor, ranges);
-            });
-        });
+        // Pickup positions found word in result file.
+        return await this._wordFindService.findWordsWithRange(editor, contentTitleLineNumber);
     }
 
 

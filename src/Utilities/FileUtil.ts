@@ -96,10 +96,11 @@ export class FileUtil extends UtilBase {
         return false;
     }
 
-    public addNewFile() {
+    public addNewFile(): string {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.resultFilePath, '', this.encoding);
+        return this.resultFilePath;
     }
 
     public getFilePath(targetDir: string, fileName: string) {
