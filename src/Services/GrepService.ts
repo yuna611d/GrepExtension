@@ -9,7 +9,7 @@ import {
 } from 'util';
 import * as fs from 'fs';
 import { WordFindService } from './WordFindService';
-const { performance } = require('perf_hooks');
+import { TimeKeeper } from '../Utilities/TimeKeeper';
 
 export class GrepService {
     private _conf: Configuration;
@@ -17,19 +17,14 @@ export class GrepService {
         FileUtil: FileUtil;ContentUtil: ContentUtil;
     };
 
-    // TODO time cousuming features should be separated.
-    private _timeConsumingLimit = 10000;
-    private _countConfirmedCancellation = 0;
-    private _timeConsumingStart = 0;
-    private _isCancelled = false;
-
-
     private _wordFindService: WordFindService;
     private _wordFindConfig = {
         searchWord: '',
         isRegExpMode: false,
         regExpOptions: ''
     };
+
+    private timeKeeper = new TimeKeeper();
 
     constructor(searchWord: string | undefined, 
                 conf: Configuration, 
@@ -61,8 +56,9 @@ export class GrepService {
         if (!this.isValidSearchWord()) {
             return false;
         }
-        // Reset time consuming
-        this._timeConsumingStart = performance.now();
+        // Start time consuming count
+        this.timeKeeper.countStart();
+
         // set Configuration
         this._util.ContentUtil.setGrepConf(this._util.FileUtil.baseDir, this._wordFindConfig);
         return true;
@@ -93,7 +89,7 @@ export class GrepService {
      */
     protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {
         // If cancelled, Do nothing
-        if (this._isCancelled) {
+        if (this.timeKeeper.isConfirmationTime()) {
             throw new Error('GrepInterruptionError');
         }
         
@@ -126,17 +122,7 @@ export class GrepService {
             }
 
             // End performance measure
-            const measure = performance.now() - this._timeConsumingStart;            
-            if (this._countConfirmedCancellation === 0 && measure > this._timeConsumingLimit) {
-                vscode.window.showQuickPick(["Continue", "Cancel"],  {'placeHolder': 'Grep may need long time. Do you continue?' })
-                    .then(r => {
-                        if (r === 'Cancel') {
-                            this._isCancelled = true;
-                        }
-                    }                
-                );
-                this._countConfirmedCancellation++;
-            }
+            this.timeKeeper.checkConsumedTime();
         }
     }
 
