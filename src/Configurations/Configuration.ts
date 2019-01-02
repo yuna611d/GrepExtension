@@ -19,7 +19,7 @@ export class Configuration {
         }
         return this._excludedFileExtensions;
     }
-    public _excludedFileExtensions: string[] | null = null;
+    protected _excludedFileExtensions: string[] | null = null;
 
 
     /**
@@ -33,7 +33,7 @@ export class Configuration {
         }
         return this._outputFileName;
     }
-    public _outputFileName: string | null = null;
+    protected _outputFileName: string | null = null;
 
 
     /**
@@ -55,7 +55,7 @@ export class Configuration {
         }
         return this._outputContentFormat;
     }
-    public _outputContentFormat: string | null = null;
+    protected _outputContentFormat: string | null = null;
 
     /**
      * You shouldn't output title of content if true is returned.
@@ -67,7 +67,7 @@ export class Configuration {
         }
         return this._isOutputTitle;
     }
-    public _isOutputTitle: boolean | null = null;
+    protected _isOutputTitle: boolean | null = null;
 
     /**
      * You should ignore hidden file when file seek.
@@ -79,7 +79,7 @@ export class Configuration {
         }
         return this._ignoreHiddenFile;
     }
-    public _ignoreHiddenFile: boolean | null = null;
+    protected _ignoreHiddenFile: boolean | null = null;
 
     /**
      * Get current workspace folder path

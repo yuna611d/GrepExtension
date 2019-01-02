@@ -1,17 +1,21 @@
 import * as assert from 'assert';
-import * as sinon from 'sinon';
+// import * as sinon from 'sinon';
 import * as myExtension from '../../Utilities/FileUtil';
 import { Configuration } from '../../Configurations/Configuration';
+// import { ConfigurationStub as Configuration } from '../Configurations/ConfigurationStub';
+
 
 suite("FileUtil Factory Tests", function () {
 
     // Defines a Mocha unit test
     test("Factory Test", () => {
         
-        let instance = new Configuration();
-        let stub = sinon.stub(instance);
+        // let instance = new Configuration();
+        // let stub = sinon.stub(instance);
+        const stub = new Configuration();
         let sut = new myExtension.FileUtilFactory(stub);
         let obj = sut.retrieve();
+
 
         let actual = obj.constructor.name;
         let expected = 'FileUtil';
