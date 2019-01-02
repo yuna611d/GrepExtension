@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import * as myExtension from '../Utilities/FileUtil';
-import { Configuration } from '../Configurations/Configuration';
+import * as myExtension from '../../Utilities/FileUtil';
+import { Configuration } from '../../Configurations/Configuration';
 
 suite("FileUtil Factory Tests", function () {
 

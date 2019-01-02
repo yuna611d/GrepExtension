@@ -3,7 +3,7 @@ import { Configuration } from '../Configurations/Configuration';
 import { ContentUtilFactory } from '../Utilities/ContentUtil';
 import { FileUtilFactory } from '../Utilities/FileUtil';
 import { GrepService } from '../Services/GrepService';
-import { DecorationService} from '../Services/DecorationService'
+import { DecorationService} from '../Services/DecorationService';
 import * as ib from '../InteractionItems/InputBox';
 import * as vscode from 'vscode';
 
