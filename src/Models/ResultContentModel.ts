@@ -3,27 +3,29 @@ import { BaseModel } from "../Interface/IModel";
 import { isNull } from "util";
 
 
-export class ContentModel extends BaseModel {
+export class ResultContentModel extends BaseModel {
 
-    protected _contentTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
+    protected _columnTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConfText: string = "";
     protected _separator: string = "\t";
 
+    // ------ Meta informations ------
+    public get SEPARATOR() {
+        return this._separator;
+    }
 
-    public get columnInfo() {
+    public get columnPosition() {
         return {
-            title:                             0,       // column[0]               : Title
+            title:                              0,      // column[0]               : Title
             filePath:   this.hasOutputTitle() ? 1 : 0,  // column[1] or coulumn[2] : filePath
             lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or coulumn[1] : lineNumber
             content:    this.hasOutputTitle() ? 3 : 2   // column[3] or coulumn[2] : pickedLineText
         };
     }
+    // ------ Meta informations ------
 
 
-    public get SEPARATOR() {
-        return this._separator;
-    }
-
+    //------ Contents ------
     public setGrepConf(baseDir: string, wordFindConfig: {searchWord: string; isRegExpMode: boolean; }) {        
         let searchDirText =  `Search Dir: ${baseDir}`;
         let searchWordText = `Search Word: ${wordFindConfig.searchWord}`;
@@ -31,22 +33,31 @@ export class ContentModel extends BaseModel {
         this._grepConfText= this.getFormatedTitle([searchDirText, searchWordText, regExpModeText]);
     }
 
-    public getTitle() {
+
+    public get Title() {
         if (!this.hasOutputTitle()) {
             return "";
         }
         return this._grepConfText;
     }
 
-    public getContentTitle() {
-        let contentTitle = this.getFormattedContent(this._contentTitle);
+    public get ColumnTitle() {
+        let contentTitle = this.getFormattedContent(this._columnTitle);
         return contentTitle;
     }
-
-    public getContent(filePath: string, lineNumber: string, line: string): string {
+    
+    /**
+     * Contents which are in a line.
+     * @param filePath 
+     * @param lineNumber 
+     * @param line 
+     */
+    public getContentInOneLine(filePath: string, lineNumber: string, line: string): string {
         let content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
         return content;
     }
+
+    //------ Contents ------
 
 
     protected getFormatedTitle(titleItems: string[]) {
@@ -57,7 +68,6 @@ export class ContentModel extends BaseModel {
         contents[0] = "";
         return contents.join(this.SEPARATOR);
     }
-
 
     /**
      * You shouldn't output title of content if true is returned.
@@ -73,11 +83,11 @@ export class ContentModel extends BaseModel {
 
 }
 
-export class ContentCSVModel extends ContentModel {
+export class ResultContentCSVModel extends ResultContentModel {
 
     protected _separator: string = ",";
 
-    public getTitle() {
+    public get Title() {
         return "";
     }
 
@@ -94,7 +104,7 @@ export class ContentCSVModel extends ContentModel {
     }
 }
 
-export class ContentTSVModel extends ContentCSVModel {
+export class ResultContentTSVModel extends ResultContentCSVModel {
     protected _separator: string = "\t";
 
     protected getFormattedContent(contents: string[]) {
@@ -105,6 +115,6 @@ export class ContentTSVModel extends ContentCSVModel {
     }
 }
 
-export class ContentJSONModel extends ContentModel {
+export class ResultContentJSONModel extends ResultContentModel {
     // TODO implment in the future
 }

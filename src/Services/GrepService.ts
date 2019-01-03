@@ -7,16 +7,16 @@ import {
 import * as fs from 'fs';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/ResultFileModel';
-import { ContentModel } from '../Models/ContentModel';
+import { ResultContentModel } from '../Models/ResultContentModel';
 import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/SeekedFileModel';
-import { ContentModelFactory } from '../ModelFactories/ContentModelFactory';
+import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 
 export class GrepService {
 
     private resultFile: ResultFileModel;
-    private content: ContentModel;
+    private content: ResultContentModel;
     private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
     private _wordFindConfig = {
         searchWord: '',
@@ -32,7 +32,7 @@ export class GrepService {
             this.setSearchWordConfig(searchWord);
         }
         this.resultFile = resultFile;
-        this.content = new ContentModelFactory(resultFile).retrieve();
+        this.content = new ResultContentModelFactory(resultFile).retrieve();
     }
 
     private isValidSearchWord(): boolean {
@@ -60,9 +60,9 @@ export class GrepService {
     public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {
 
         // Write Title
-        await this.resultFile.insertText(editor, this.content.getTitle());
+        await this.resultFile.insertText(editor, this.content.Title);
         // Write Content Title
-        const contentTitleLineNumber = await this.resultFile.insertText(editor, this.content.getContentTitle());
+        const contentTitleLineNumber = await this.resultFile.insertText(editor, this.content.ColumnTitle);
 
         // Do grep and output its results.
         await this.directorySeekAndInsertText(editor)
@@ -131,7 +131,7 @@ export class GrepService {
         const content = this.content;        
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
             if (isContainSearchWord(foundWordInfo.lineText)) {
-                const foundResult = content.getContent(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
+                const foundResult = content.getContentInOneLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
                 await resultFile.insertText(editor, foundResult);     
             }   
         };
@@ -162,7 +162,7 @@ export class GrepService {
     public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
         let ranges = new Array();
 
-        const contentIndex = this.content.columnInfo.content;
+        const contentIndex = this.content.columnPosition.content;
         const contentSeparator = this.content.SEPARATOR;
         const getFindWordRange = this.getFindWordRange.bind(undefined, this.getRegExp(true));
 

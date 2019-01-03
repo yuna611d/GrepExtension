@@ -1,80 +1,80 @@
 import * as assert from 'assert';
-import { ContentModelFactory } from '../../ModelFactories/ContentModelFactory';
+import { ResultContentModelFactory } from '../../ModelFactories/ResultContentModelFactory';
 import { FileModelFactory } from '../../ModelFactories/FileModelFactory';
 import { TestUtility } from '../TestUtility';
 
-suite("ContentModel Factory Tests", function () {
+suite("ResultContentModel Factory Tests", function () {
 
     // Defines a Mocha unit test
-    test("Factory should return ContentModel when specified FileExtension is txt", () => {
+    test("Factory should return ResultContentModel when specified FileExtension is txt", () => {
         
         TestUtility.setupDao();
         TestUtility.Settings.outputContentFormat = "txt";
         const stub = new FileModelFactory().retrieve();
 
-        const sut = new ContentModelFactory(stub);
+        const sut = new ResultContentModelFactory(stub);
         const obj = sut.retrieve();
         const actual = obj.constructor.name;
-        const expected = 'ContentModel';
+        const expected = 'ResultContentModel';
 
         assert.equal(actual, expected);
 
     });
 
-    test("Factory should return ContentCSVModel when specified FileExtension is csv" , () => {
+    test("Factory should return ResultContentCSVModel when specified FileExtension is csv" , () => {
         
         TestUtility.setupDao();
         TestUtility.Settings.outputContentFormat = "csv";
         const stub = new FileModelFactory().retrieve();
 
-        const sut = new ContentModelFactory(stub);
+        const sut = new ResultContentModelFactory(stub);
         const obj = sut.retrieve();
         const actual = obj.constructor.name;
-        const expected = 'ContentCSVModel';
+        const expected = 'ResultContentCSVModel';
 
         assert.equal(actual, expected);
 
     });
 
-    test("Factory should return ContentTSVModel when specified FileExtension is tsv", () => {
+    test("Factory should return ResultContentTSVModel when specified FileExtension is tsv", () => {
         
         TestUtility.setupDao();
         TestUtility.Settings.outputContentFormat = "tsv";
         const stub = new FileModelFactory().retrieve();
 
-        const sut = new ContentModelFactory(stub);
+        const sut = new ResultContentModelFactory(stub);
         const obj = sut.retrieve();
         const actual = obj.constructor.name;
-        const expected = 'ContentTSVModel';
+        const expected = 'ResultContentTSVModel';
 
         assert.equal(actual, expected);
 
     });
 
-    test("Factory should return ContentJSONModel when specified FileExtension is json", () => {
+    test("Factory should return ResultContentJSONModel when specified FileExtension is json", () => {
 
         TestUtility.setupDao();
         TestUtility.Settings.outputContentFormat = "json";
         const stub = new FileModelFactory().retrieve();
 
-        const sut = new ContentModelFactory(stub);
+        const sut = new ResultContentModelFactory(stub);
         const obj = sut.retrieve();
         const actual = obj.constructor.name;
-        const expected = 'ContentJSONModel';
+        const expected = 'ResultContentJSONModel';
 
         assert.equal(actual, expected);
 
     });
 
-    test("Factory should return ContentModel when not allowed FileExtension is passed", () => {
+    test("Factory should return ResultContentModel when not allowed FileExtension is passed", () => {
         TestUtility.setupDao();
         TestUtility.Settings.outputContentFormat = "Not allowed format";
         const stub = new FileModelFactory().retrieve();
 
-        const sut = new ContentModelFactory(stub);
+        const sut = new ResultContentModelFactory(stub);
         const obj = sut.retrieve();
         const actual = obj.constructor.name;
-        const expected = 'ContentModel';
+        const expected = 'ResultContentModel';
 
         assert.equal(actual, expected);
 
@@ -82,7 +82,64 @@ suite("ContentModel Factory Tests", function () {
 
 });
 
+suite("ResultContentModel Content Title Tests", () => {
+
+    const baseDir = "/tmp/";
+    const searchWord = "test";
+    const isRegExpMode = false;
+    const wordFindConfig = {searchWord: searchWord, isRegExpMode: isRegExpMode};
+
+    test("Contents Title should be outputted by default", () => {
+
+        TestUtility.setupDao();
+        const stub = new FileModelFactory().retrieve();  //just a dummy object but say stub
+
+        const sut = new ResultContentModelFactory(stub).retrieve();
+        sut.setGrepConf(baseDir, wordFindConfig);
+
+        const actual = sut.Title;
+        const expected = 
+`Search Dir: /tmp/
+Search Word: test
+RegExpMode: OFF`;
+        assert.equal(actual, expected);
+    });
+    test("Contents Title should not be outputted if true is specified", () => {
+
+        TestUtility.setupDao();
+        TestUtility.Settings.outputTitle = true;
+        const stub = new FileModelFactory().retrieve();
+
+        const sut = new ResultContentModelFactory(stub).retrieve();
+        sut.setGrepConf(baseDir, wordFindConfig);
+
+        const actual = sut.Title;
+        const expected = 
+`Search Dir: /tmp/
+Search Word: test
+RegExpMode: OFF`;
+        assert.equal(actual, expected);
+    });
+    test("Contents Title should not be outputted if false is specified", () => {
+
+        TestUtility.setupDao();
+        TestUtility.Settings.outputTitle = false;
+        const stub = new FileModelFactory().retrieve();
+
+        const sut = new ResultContentModelFactory(stub).retrieve();
+        sut.setGrepConf(baseDir, wordFindConfig);
+
+        const actual = sut.Title;
+        const expected = "";
+        assert.equal(actual, expected);
+    });
+});
+
+
+
 // suite("GetContent Test", () => {
+
+
 
 //     let baseDir = "/tmp/";
 //     let searchWord = "test";
