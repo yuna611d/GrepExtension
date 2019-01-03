@@ -47,11 +47,17 @@ export class SeekedFileModel extends FileModel {
 
     protected getFileNameAndExtension() {
         const fileInfos = this.FileNameWithExtension.split('.');
+        // file.txt => file, txt / dir => dir
+        if (fileInfos.length < 2) {
+            // return directory name and empty sring as extension
+            const dirName = fileInfos[0];
+            return [dirName, ""];
+        }
 
         const fileExtension = fileInfos[fileInfos.length -1];
         const fileNameAndDirs = fileInfos[fileInfos.length -2].split(Common.DIR_SEPARATOR);
         const fileName = fileNameAndDirs[fileNameAndDirs.length - 1];
-
+        // return filename and extension
         return [fileName, fileExtension];
     }
 

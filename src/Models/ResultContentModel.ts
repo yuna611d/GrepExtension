@@ -1,9 +1,22 @@
 import { Common } from "../Commons/Common";
 import { BaseModel } from "../Interface/IModel";
 import { isNull } from "util";
+import { ResultFileModel } from "./ResultFileModel";
+import { BaseDAO } from "../DAO/BaseDAO";
+import { TextEdit } from "vscode";
+import { ContentInformation } from "./ContentInformation";
+import { ContentInfomationFactory } from "../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {
+
+    constructor(dao: BaseDAO, resultFileModel: ResultFileModel) {
+        super(dao);
+        this._resultFileModel = resultFileModel;
+        this._contentFactory = new ContentInfomationFactory();
+    }
+    private _resultFileModel: ResultFileModel;
+    private _contentFactory: ContentInfomationFactory;
 
     protected _columnTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConfText: string = "";
@@ -21,6 +34,10 @@ export class ResultContentModel extends BaseModel {
             lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or coulumn[1] : lineNumber
             content:    this.hasOutputTitle() ? 3 : 2   // column[3] or coulumn[2] : pickedLineText
         };
+    }
+
+    public set editor(editor: TextEdit) {
+
     }
     // ------ Meta informations ------
 
@@ -56,8 +73,43 @@ export class ResultContentModel extends BaseModel {
         let content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
         return content;
     }
-
     //------ Contents ------
+
+
+    contentInfomations: Array<ContentInformation> = new Array<ContentInformation>();
+
+
+    //------ Operation of ResultFile (Interact with Service) ------
+    public async addTitle() {
+        const content = this.Title;
+        // Insert result to file and stack content.
+        return await this.insertAndStackContent(content);
+    }
+    public async addColumnTitle() {
+        const content = this.ColumnTitle;
+        // Insert result to file and stack content.
+        return await this.insertAndStackContent(content);
+    }
+
+    public async addLine(filePath: string, lineNumber: string, line: string) {
+        // Get formated content
+        const content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
+        // Insert result to file and stack content.
+        return await this.insertAndStackContent(content);
+    }
+
+    private async insertAndStackContent(content: string) {
+        // Insert result
+        const insertedLineNumber = await this._resultFileModel.insertText(content);
+        // Stack ContentInfomation
+        const contentInfo = this._contentFactory.retrieve(content, insertedLineNumber);
+        this.contentInfomations.push(contentInfo);
+
+        // return inserted line number
+        return insertedLineNumber;
+    }
+    //------ Operation  of ResultFile (Interact with Service) ------
+
 
 
     protected getFormatedTitle(titleItems: string[]) {
@@ -66,7 +118,7 @@ export class ResultContentModel extends BaseModel {
 
     protected getFormattedContent(contents: string[]) {
         contents[0] = "";
-        return contents.join(this.SEPARATOR);
+        return contents.join(this.SEPARATOR) + Common.LINE_BREAK;
     }
 
     /**

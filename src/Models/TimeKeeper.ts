@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 export class TimeKeeper {
 
-    protected _timeConsumingLimit = 10000;
+    protected _timeConsumingLimit = 3000;
     protected _countConfirmedCancellation = 0;
     protected _timeConsumingStart = 0;
     protected _isCancelled = false;

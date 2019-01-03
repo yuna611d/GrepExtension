@@ -16,7 +16,7 @@ import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 export class GrepService {
 
     private resultFile: ResultFileModel;
-    private content: ResultContentModel;
+    private resultContent: ResultContentModel;
     private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
     private _wordFindConfig = {
         searchWord: '',
@@ -32,7 +32,7 @@ export class GrepService {
             this.setSearchWordConfig(searchWord);
         }
         this.resultFile = resultFile;
-        this.content = new ResultContentModelFactory(resultFile).retrieve();
+        this.resultContent = new ResultContentModelFactory(resultFile).retrieve();
     }
 
     private isValidSearchWord(): boolean {
@@ -53,16 +53,18 @@ export class GrepService {
         this.timeKeeper.countStart();
 
         // set Configuration
-        this.content.setGrepConf(Common.BASE_DIR, this._wordFindConfig);
+        this.resultContent.setGrepConf(Common.BASE_DIR, this._wordFindConfig);
         return true;
     }
 
-    public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {
+    public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {        
+        //
+        this.resultFile.editor = editor;
 
         // Write Title
-        await this.resultFile.insertText(editor, this.content.Title);
+        await this.resultContent.addTitle();
         // Write Content Title
-        const contentTitleLineNumber = await this.resultFile.insertText(editor, this.content.ColumnTitle);
+        const columnTitleLineNumber = await this.resultContent.addColumnTitle();
 
         // Do grep and output its results.
         await this.directorySeekAndInsertText(editor)
@@ -72,7 +74,7 @@ export class GrepService {
         vscode.window.showInformationMessage("Grep is finished...");    
 
         // Pickup positions found word in result file.
-        return await this.findWordsWithRange(editor, contentTitleLineNumber);
+        return await this.findWordsWithRange(editor, columnTitleLineNumber);
     }
 
 
@@ -127,12 +129,11 @@ export class GrepService {
         const isContainSearchWord = this.isContainSearchWord.bind(undefined, this.getRegExp());
 
         // Action when search word is found
-        const resultFile = this.resultFile;
-        const content = this.content;        
+        const resultContent = this.resultContent;        
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
             if (isContainSearchWord(foundWordInfo.lineText)) {
-                const foundResult = content.getContentInOneLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
-                await resultFile.insertText(editor, foundResult);     
+                // const foundResult = content.getContentInOneLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
+                await resultContent.addLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
             }   
         };
 
@@ -162,8 +163,8 @@ export class GrepService {
     public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
         let ranges = new Array();
 
-        const contentIndex = this.content.columnPosition.content;
-        const contentSeparator = this.content.SEPARATOR;
+        const contentIndex = this.resultContent.columnPosition.content;
+        const contentSeparator = this.resultContent.SEPARATOR;
         const getFindWordRange = this.getFindWordRange.bind(undefined, this.getRegExp(true));
 
         // Action when search word is found
