@@ -2,6 +2,7 @@ import * as os from 'os';
 import { isNullOrUndefined, isNull } from "util";
 import * as vscode from 'vscode';
 import { BaseDAO } from '../DAO/BaseDAO';
+import { SettingDAO } from '../DAO/SettingDAO';
 
 export class Common {
     public static readonly LINE_BREAK = "\n";
@@ -35,6 +36,9 @@ export class Common {
     private static _dirSeparator: string | null = null;
 
     public static get DAO(): BaseDAO {
+        if (isNullOrUndefined(this._dao)) {
+            this._dao = new SettingDAO();
+        }
         return this._dao;
     }
     public static set DAO(dao: BaseDAO) {

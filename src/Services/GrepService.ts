@@ -8,16 +8,16 @@ import * as fs from 'fs';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/ResultFileModel';
 import { ContentModel } from '../Models/ContentModel';
-import { SeekedModelFactory } from '../ModelFactories/SeekedFileModelFactory';
 import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/SeekedFileModel';
 import { ContentModelFactory } from '../ModelFactories/ContentModelFactory';
+import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 
 export class GrepService {
 
     private resultFile: ResultFileModel;
     private content: ContentModel;
-    private seekedFileModelFactory: SeekedModelFactory = new SeekedModelFactory();
+    private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
     private _wordFindConfig = {
         searchWord: '',
         isRegExpMode: false,

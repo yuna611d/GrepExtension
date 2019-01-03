@@ -22,7 +22,7 @@ export class SeekedFileModel extends FileModel {
         if (isNullOrUndefined(this._fileName)) {
             const fileInfo = this.getFileNameAndExtension();
             this._fileName = fileInfo[0];
-            this._fileExtension = fileInfo[1];
+            this._fileExtension = fileInfo[1];            
         }
         return this._fileName;
     }
@@ -49,7 +49,8 @@ export class SeekedFileModel extends FileModel {
         const fileInfos = this.FileNameWithExtension.split('.');
 
         const fileExtension = fileInfos[fileInfos.length -1];
-        const fileName = fileInfos[0].split(Common.DIR_SEPARATOR)[fileInfos[0].length - 1];
+        const fileNameAndDirs = fileInfos[fileInfos.length -2].split(Common.DIR_SEPARATOR);
+        const fileName = fileNameAndDirs[fileNameAndDirs.length - 1];
 
         return [fileName, fileExtension];
     }

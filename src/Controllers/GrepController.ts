@@ -3,10 +3,9 @@ import { GrepService } from '../Services/GrepService';
 import { DecorationService} from '../Services/DecorationService';
 import * as ib from '../InteractionItems/InputBox';
 import * as vscode from 'vscode';
-import { ResultFileModelFactory } from '../ModelFactories/ResultFileModelFactory';
 import { SettingDAO } from '../DAO/SettingDAO';
 import { Common } from '../Commons/Common';
-
+import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 
 export class GrepController {
 
@@ -23,7 +22,7 @@ export class GrepController {
         const searchWord = v;
 
         // Prepare configuration and utilitites
-        const resultFile = new ResultFileModelFactory().retrieve();
+        const resultFile = new FileModelFactory().retrieve();
 
         // Prepare services to be used
         const grepService = new GrepService(resultFile, searchWord);
