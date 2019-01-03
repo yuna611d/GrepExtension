@@ -1,7 +1,9 @@
 import * as assert from 'assert';
 import { FileModelFactory } from '../../ModelFactories/FileModelFactory';
+import { TestUtility } from '../TestUtility';
 
 suite("File Factory Tests", function () {
+
 
     // Defines a Mocha unit test
     test("Factory should return ResultFileModel when no parameter is passed.", () => {
@@ -34,6 +36,89 @@ suite("File Factory Tests", function () {
         assert.equal(obj.FilePath, "dir1/file1.txt", "FilePath is checked");
     });
 });
+
+suite("ResultFileModel Tests", function() {
+
+    // beforeEach(() => {
+    //     resetSettingStub();
+    // });
+
+
+    // file format
+    test("resultFile format should be txt by default", () => {
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        const expected = "txt";
+        assert.equal(actual, expected);
+    });
+    test("txt should be allowed format", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "txt";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        const expected = "txt";
+        assert.equal(actual, expected,   "txt is default allowed format");
+    });
+    test("csv should be allowed format", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "csv";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        const expected = "csv";
+        assert.equal(actual, expected,   "csv is allowed format");
+    });
+    test("tsv should be allowed format", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "tsv";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        const expected = "tsv";        
+        assert.equal(actual, expected,   "tsv is allowed format");
+    });
+    test("json should be allowed format", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "json";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        assert.equal(actual, "json",  "json is allowed format");
+    });
+    test("xxx should not be allowed format", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "xxx";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileExtension;
+        const expected = "xxx";
+        assert.notEqual(actual, expected,  "xxx is not allowed format");
+    });
+
+    // file name
+    test("default file name should be grep2File.g2f.txt", () => {
+        TestUtility.setupDao();
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileNameWithExtension;
+        const expected = "grep2File.g2f.txt";
+        assert.equal(actual, expected);
+    });
+    test("file name should be grep2File.g2f.txt if specified file name is empty", () => {
+        TestUtility.setupDao();
+        TestUtility.Settings.outputFileName = "";
+
+        const sut = new FileModelFactory().retrieve();
+        const actual = sut.FileNameWithExtension;
+        const expected = "grep2File.g2f.txt";
+        assert.equal(actual, expected);
+    });
+
+    // TODO operational functionality test will be implemented.
+
+});
+
 
 // suite("FileUtil Tests", function () {
 

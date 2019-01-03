@@ -21,13 +21,7 @@
 //         assert.equal(actual, expected);
 //     });
 
-//     test("Default configuration of outputContentFormat", () => {
-//         let sut = new myExtension.Configuration();
-//         let actual = sut.getOutputContentFormat();
-//         let expected = "txt";
 
-//         assert.equal(actual, expected);
-//     });
 
 //     test("Default configuration of outputTitle", () => {
 //         let sut = new myExtension.Configuration();

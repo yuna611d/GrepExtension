@@ -1,22 +1,16 @@
 import * as assert from 'assert';
-import { ResultFileModel } from '../../Models/ResultFileModel';
 import { ContentModelFactory } from '../../ModelFactories/ContentModelFactory';
 import { FileModelFactory } from '../../ModelFactories/FileModelFactory';
-import { Common } from '../../Commons/Common';
+import { TestUtility } from '../TestUtility';
 
 suite("ContentModel Factory Tests", function () {
-
-    // Setup
-    class ResultFileModelStub extends ResultFileModel {
-        _fileExtension: string = "txt";
-        _fileName: string = "result" + "." + this._fileExtension;
-    }
 
     // Defines a Mocha unit test
     test("Factory should return ContentModel when specified FileExtension is txt", () => {
         
-        const stub = new ResultFileModelStub(Common.DAO);
-        stub._fileExtension = "txt";
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "txt";
+        const stub = new FileModelFactory().retrieve();
 
         const sut = new ContentModelFactory(stub);
         const obj = sut.retrieve();
@@ -29,8 +23,9 @@ suite("ContentModel Factory Tests", function () {
 
     test("Factory should return ContentCSVModel when specified FileExtension is csv" , () => {
         
-        const stub = new FileModelFactory().retrieve() as ResultFileModelStub;
-        stub._fileExtension = 'csv';
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "csv";
+        const stub = new FileModelFactory().retrieve();
 
         const sut = new ContentModelFactory(stub);
         const obj = sut.retrieve();
@@ -43,8 +38,9 @@ suite("ContentModel Factory Tests", function () {
 
     test("Factory should return ContentTSVModel when specified FileExtension is tsv", () => {
         
-        const stub = new FileModelFactory().retrieve() as ResultFileModelStub;
-        stub._fileExtension = 'tsv';
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "tsv";
+        const stub = new FileModelFactory().retrieve();
 
         const sut = new ContentModelFactory(stub);
         const obj = sut.retrieve();
@@ -57,8 +53,9 @@ suite("ContentModel Factory Tests", function () {
 
     test("Factory should return ContentJSONModel when specified FileExtension is json", () => {
 
-        const stub = new FileModelFactory().retrieve() as ResultFileModelStub;
-        stub._fileExtension = 'json';
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "json";
+        const stub = new FileModelFactory().retrieve();
 
         const sut = new ContentModelFactory(stub);
         const obj = sut.retrieve();
@@ -70,9 +67,9 @@ suite("ContentModel Factory Tests", function () {
     });
 
     test("Factory should return ContentModel when not allowed FileExtension is passed", () => {
-        
-        const stub = new FileModelFactory().retrieve() as ResultFileModelStub;
-        stub._fileExtension = 'Not Allowed Format';
+        TestUtility.setupDao();
+        TestUtility.Settings.outputContentFormat = "Not allowed format";
+        const stub = new FileModelFactory().retrieve();
 
         const sut = new ContentModelFactory(stub);
         const obj = sut.retrieve();
