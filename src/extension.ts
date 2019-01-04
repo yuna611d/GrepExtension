@@ -1,5 +1,5 @@
 'use strict';
-import { GrepController } from './GrepController';
+import { GrepController } from './Controllers/GrepController';
 import * as vscode from 'vscode';
 
 
