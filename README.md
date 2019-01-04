@@ -15,13 +15,9 @@ This extension does grep and output result to a file.
 
 ## Usage
 
-### Normal Grep
-
 ![Usage](images/demo001.gif)
 
 ### Regular Expression
-
-![Usage](images/demo002.gif)
 
 Regular expression format
 
