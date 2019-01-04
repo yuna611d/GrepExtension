@@ -66,12 +66,15 @@ export class GrepService {
         // Write Column Title
         const columnTitleLineNumber = await this.resultContent.addColumnTitle();
         // Do grep and write its found result.
-        await this.directorySeekAndInsertText(editor)
-            .catch((err) => vscode.window.showInformationMessage('Grep is cancelled')); // Notify cancellation
+        try {
+            await this.directorySeekAndInsertText(editor);
+            // Notify finish
+            vscode.window.showInformationMessage("Grep is finished...");    
+        } catch (e) {
+             // Notify cancellation
+            vscode.window.showInformationMessage('Grep is cancelled');
+        }
         
-        // Notify finish
-        vscode.window.showInformationMessage("Grep is finished...");    
-
         // Pickup positions found word in result file.
         return await this.findWordsWithRange(editor, columnTitleLineNumber);
     }
