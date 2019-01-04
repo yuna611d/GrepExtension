@@ -93,7 +93,7 @@ export class GrepService {
         }
         
         // Get target directory
-        let targetDir = this.getTargetDir(nextTargetDir);
+        const targetDir = this.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
             return;
         }
@@ -152,9 +152,9 @@ export class GrepService {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(Common.LINE_BREAK);
         for (let i = start; i < lines.length; i++) {
-            let line = lines[i];
-            let lineNumber = i + 1;
-            let foundWordInfo = {lineText: line, lineNumber: lineNumber};
+            const line = lines[i];
+            const lineNumber = i + 1;
+            const foundWordInfo = {lineText: line, lineNumber: lineNumber};
 
             // Do passed action.
             await action(foundWordInfo);
@@ -163,7 +163,7 @@ export class GrepService {
     }
 
     public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
-        let ranges = new Array();
+        const ranges = new Array();
 
         const contentIndex = this.resultContent.columnPosition.content;
         const contentSeparator = this.resultContent.SEPARATOR;
@@ -196,13 +196,13 @@ export class GrepService {
      */
     protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
         re.lastIndex = 0;
-        let result = re.exec(targetString);
+        const result = re.exec(targetString);
         if (isNull(result)) {
             return null;
         }
 
-        let startIndex = searchStartPos + result.index;
-        let endIndex = startIndex + result[0].length;
+        const startIndex = searchStartPos + result.index;
+        const endIndex = startIndex + result[0].length;
 
         const startPosition = new vscode.Position(lineNumber, startIndex);
         const endPosition = new vscode.Position(lineNumber, endIndex);
@@ -234,9 +234,9 @@ export class GrepService {
 
 
         //  re/<pattern>/flags
-        let REGEXP_FORMAT_PREFIX = "re/";
-        let REGEXP_FORMAT_POSTFIX = "/";
-        let ALLOWED_OPTIONS = ["i"];
+        const REGEXP_FORMAT_PREFIX = "re/";
+        const REGEXP_FORMAT_POSTFIX = "/";
+        const ALLOWED_OPTIONS = ["i"];
 
 
         let patternStartPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
@@ -246,20 +246,20 @@ export class GrepService {
         patternStartPos += REGEXP_FORMAT_PREFIX.length;
 
 
-        let patternEndPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
+        const patternEndPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
         if (patternEndPos === -1 || patternStartPos >= patternEndPos) {
             return;
         }
 
-        let pattern = searchWord.substring(patternStartPos, patternEndPos);
+        const pattern = searchWord.substring(patternStartPos, patternEndPos);
         if (pattern.length === 0) {
             return;
         }
 
         let options = "";
-        let tmpOptions = searchWord.substring(patternEndPos + 1);
+        const tmpOptions = searchWord.substring(patternEndPos + 1);
         for (let i = 0; i < tmpOptions.length; i++) {
-            let option = tmpOptions.charAt(i);
+            const option = tmpOptions.charAt(i);
             if (ALLOWED_OPTIONS.indexOf(option) > -1) {
                 options += option;
             }
