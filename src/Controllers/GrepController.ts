@@ -36,7 +36,7 @@ export class GrepController {
                     // Grep word
                     const ranges = await grepService.grep(editor);
                     // Decorate found word
-                    await decorationService.decorate(editor, filePath, ranges);
+                    await decorationService.decorate(editor, ranges);
                 });
             });    
         }

@@ -17,7 +17,12 @@ export class DecorationService {
         }
     });
 
-    public decorate(editor: vscode.TextEditor, resultFilePath: string, ranges: Array<vscode.Range>) {
+    /**
+     * Decorate specified ranges
+     * @param editor 
+     * @param ranges words you found
+     */
+    public decorate(editor: vscode.TextEditor, ranges: Array<vscode.Range>) {
         editor.setDecorations(this.decorationTheme, ranges);
     }
 }
