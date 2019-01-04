@@ -2,6 +2,16 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.5.3
+
+- Comments of configuration are updated.
+
+## 0.5.1 and 0.5.2
+
+- Fixed following bug
+
+  - Decorate after cancellation
+
 ## 0.5.0
 
 - Added following feature

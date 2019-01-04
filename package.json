@@ -2,7 +2,7 @@
     "name": "grep2file",
     "displayName": "grep2file",
     "description": "grep word and output result to file",
-    "version": "0.5.0",
+    "version": "0.5.3",
     "publisher": "yuna611d",
     "engines": {
         "vscode": "^1.25.0"
@@ -23,7 +23,7 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "Excluded File Extensions",
+            "title": "Grep2File",
             "properties": {
                 "grep2file.exclude": {
                     "type": [
@@ -35,27 +35,27 @@
                         "dll",
                         "sln"
                     ],
-                    "description": "List up file extensions that you don't want to do grep."
+                    "description": "Files which has file extensions listed up here are ignored."
                 },
                 "grep2file.ignoreHiddenFile": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Hidden files are not checked if true is specified"
+                    "description": "Hidden files whose file name starts with period are ignored if checked"
                 },
                 "grep2file.outputFileName": {
                     "type": "string",
                     "default": "grep2File.g2f",
-                    "description": "File name that is outputted grep result."
+                    "description": "Name of result file"
                 },
                 "grep2file.outputContentFormat": {
                     "type": "string",
                     "default": "txt",
-                    "description": "File type format of content that is outputted grep result."
+                    "description": "File format of result file. You can opt from txt, csv or tsv."
                 },
                 "grep2file.outputTitle": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Specification whether to output the title to the result file."
+                    "description": "Search configuration is outputted if checked."
                 }
             }
         }
