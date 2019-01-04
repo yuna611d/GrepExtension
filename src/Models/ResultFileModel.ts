@@ -1,4 +1,4 @@
-import { isNull, isNullOrUndefined } from "util";
+import { isNull } from "util";
 import { Common } from "../Commons/Common";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
@@ -84,22 +84,16 @@ export class ResultFileModel extends FileModel {
 
 
     public async insertText(content: string): Promise<number> ;
-    public async insertText(content: string, editor: vscode.TextEditor): Promise<number> ;
 
-
-    public async insertText(content: string, editor?: vscode.TextEditor): Promise<number> {
-
-        if (!isNullOrUndefined(editor)) {
-            this._editor = editor;
-        }
-
-        const insertedLine = () => { const lineCount = this._editor!.document.lineCount; return lineCount === 0 ? 0 : lineCount - 1;};
-        await this._editor!.edit(editBuilder => {
+    public async insertText(content: string): Promise<number> {
+        const editor = this._editor;
+        const insertedLine = () => { const lineCount = editor!.document.lineCount; return lineCount === 0 ? 0 : lineCount - 1;};
+        await editor!.edit(editBuilder => {
             if (content === "") {
                 return;
             }
     
-            let position = this.getPosition(this._editor!);
+            let position = this.getPosition(editor!);
             editBuilder.insert(position, content);
             return insertedLine();
         });

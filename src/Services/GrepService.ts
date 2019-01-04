@@ -58,15 +58,14 @@ export class GrepService {
     }
 
     public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {        
-        //
+        // Set editor to resultFile
         this.resultFile.editor = editor;
 
         // Write Title
         await this.resultContent.addTitle();
-        // Write Content Title
+        // Write Column Title
         const columnTitleLineNumber = await this.resultContent.addColumnTitle();
-
-        // Do grep and output its results.
+        // Do grep and write its found result.
         await this.directorySeekAndInsertText(editor)
             .catch((err) => vscode.window.showInformationMessage('Grep is cancelled')); // Notify cancellation
         
