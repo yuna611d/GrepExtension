@@ -95,7 +95,7 @@ suite("ResultContentModel Content Title Tests", () => {
         const stub = new FileModelFactory().retrieve();  //just a dummy object but say stub
 
         const sut = new ResultContentModelFactory(stub).retrieve();
-        sut.setGrepConf(baseDir, wordFindConfig);
+        sut.setGrepConditionText(baseDir, wordFindConfig);
 
         const actual = sut.Title;
         const expected = 
@@ -111,7 +111,7 @@ RegExpMode: OFF`;
         const stub = new FileModelFactory().retrieve();
 
         const sut = new ResultContentModelFactory(stub).retrieve();
-        sut.setGrepConf(baseDir, wordFindConfig);
+        sut.setGrepConditionText(baseDir, wordFindConfig);
 
         const actual = sut.Title;
         const expected = 
@@ -127,7 +127,7 @@ RegExpMode: OFF`;
         const stub = new FileModelFactory().retrieve();
 
         const sut = new ResultContentModelFactory(stub).retrieve();
-        sut.setGrepConf(baseDir, wordFindConfig);
+        sut.setGrepConditionText(baseDir, wordFindConfig);
 
         const actual = sut.Title;
         const expected = "";

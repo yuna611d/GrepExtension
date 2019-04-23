@@ -11,10 +11,10 @@ export class Common {
      * Get current workspace folder path
      */
     public static get BASE_DIR(): string {
-        // TOOD in the futre, multi work space should be apply
-        const workspaceForlders = vscode.workspace.workspaceFolders;
-        if (!isNullOrUndefined(workspaceForlders) && workspaceForlders.length !== 0) {
-            return workspaceForlders[0].uri.fsPath;
+        // TODO in the future, multi work space should be apply
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!isNullOrUndefined(workspaceFolders) && workspaceFolders.length !== 0) {
+            return workspaceFolders[0].uri.fsPath;
         }
         return "";
     }

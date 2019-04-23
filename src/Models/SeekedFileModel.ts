@@ -17,7 +17,7 @@ export class SeekedFileModel extends FileModel {
         this._resultFile = resultFile;
     }
 
-    //--- Overide Functions ---
+    //--- Override Functions ---
     public get FileName() {
         if (isNullOrUndefined(this._fileName)) {
             const fileInfo = this.getFileNameAndExtension();
@@ -40,16 +40,16 @@ export class SeekedFileModel extends FileModel {
 
     public readonly FileNameWithExtension: string;
 
-    public get FilePath() {
+    public get FullPath() {
         return this.TargetDir + Common.DIR_SEPARATOR + this.FileNameWithExtension;
     }
-    //--- Overide Functions ---
+    //--- Override Functions ---
 
     protected getFileNameAndExtension() {
         const fileInfos = this.FileNameWithExtension.split('.');
         // file.txt => file, txt / dir => dir
         if (fileInfos.length < 2) {
-            // return directory name and empty sring as extension
+            // return directory name and empty string as extension
             const dirName = fileInfos[0];
             return [dirName, ""];
         }
@@ -71,16 +71,12 @@ export class SeekedFileModel extends FileModel {
 
     protected get BufferContent(): Buffer {
         if (isNullOrUndefined(this._bufferContent)) {
-            this._bufferContent = fs.readFileSync(this.FilePath, null);
+            this._bufferContent = fs.readFileSync(this.FullPath, null);
         }
         return this._bufferContent;
     }
     protected _bufferContent: Buffer | undefined;
 
-    /**
-     * 
-     * @param fileNmae fileNmae
-     */
     public isExcludedFile(): boolean {
         // don't read files which have extension specified
         for (let ext of this.ExcludedFileExtensions) {
@@ -120,7 +116,7 @@ export class SeekedFileModel extends FileModel {
         return this.stat.isDirectory();
     }
     protected get stat() {
-        return fs.statSync(this.FilePath);
+        return fs.statSync(this.FullPath);
     }
 
      /**
@@ -153,7 +149,6 @@ export class SeekedFileModel extends FileModel {
      * Check if passed file is binary or not.
      * This is a cheap implementation to determine if passed file is binary or not.
      * This function determine passed file as binary if file contains code under the ascii 08.
-     * @param bufer
      */
     public get seemsBinary(): boolean {
         const buffer = this.BufferContent;

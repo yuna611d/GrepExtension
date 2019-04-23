@@ -1,4 +1,4 @@
-# grepextension README
+# README
 
 This extension does grep and output result to a file.
 

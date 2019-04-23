@@ -4,7 +4,7 @@ export abstract class BaseDAO {
     public abstract getSettingValue(key: string, defaultValue: string[]): string[];
 
     /**
-     * Gets the setting value. Type of returned value is determined by type of defualt value
+     * Gets the setting value. Type of returned value is determined by type of default value
      * @param key 
      * @param defaultValue 
      */

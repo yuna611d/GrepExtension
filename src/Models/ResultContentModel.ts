@@ -5,7 +5,7 @@ import { ResultFileModel } from "./ResultFileModel";
 import { BaseDAO } from "../DAO/BaseDAO";
 import { TextEdit } from "vscode";
 import { ContentInformation } from "./ContentInformation";
-import { ContentInfomationFactory } from "../ModelFactories/ContentInfomationFactory";
+import { ContentInformationFactory as ContentInformationFactory } from "../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {
@@ -13,41 +13,41 @@ export class ResultContentModel extends BaseModel {
     constructor(dao: BaseDAO, resultFileModel: ResultFileModel) {
         super(dao);
         this._resultFileModel = resultFileModel;
-        this._contentFactory = new ContentInfomationFactory();
+        this._contentFactory = new ContentInformationFactory();
     }
     private _resultFileModel: ResultFileModel;
-    private _contentFactory: ContentInfomationFactory;
+    private _contentFactory: ContentInformationFactory;
 
     protected _columnTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
-    protected _grepConfText: string = "";
+    protected _grepConditionText: string = "";
     protected _separator: string = "\t";
 
-    // ------ Meta informations ------
+    // ------ Meta information ------
     public get SEPARATOR() {
         return this._separator;
     }
 
     public get columnPosition() {
         return {
-            title:                              0,      // column[0]               : Title
-            filePath:   this.hasOutputTitle() ? 1 : 0,  // column[1] or coulumn[2] : filePath
-            lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or coulumn[1] : lineNumber
-            content:    this.hasOutputTitle() ? 3 : 2   // column[3] or coulumn[2] : pickedLineText
+            title:                              0,      // column[0]              : Title
+            filePath:   this.hasOutputTitle() ? 1 : 0,  // column[1] or column[2] : filePath
+            lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or column[1] : lineNumber
+            content:    this.hasOutputTitle() ? 3 : 2   // column[3] or column[2] : pickedLineText
         };
     }
 
     public set editor(editor: TextEdit) {
 
     }
-    // ------ Meta informations ------
+    // ------ Meta information ------
 
 
     //------ Contents ------
-    public setGrepConf(baseDir: string, wordFindConfig: {searchWord: string; isRegExpMode: boolean; }) {        
-        let searchDirText =  `Search Dir: ${baseDir}`;
-        let searchWordText = `Search Word: ${wordFindConfig.searchWord}`;
-        let regExpModeText = "RegExpMode: " + (wordFindConfig.isRegExpMode ? "ON" : "OFF");
-        this._grepConfText= this.getFormatedTitle([searchDirText, searchWordText, regExpModeText]);
+    public setGrepConditionText(baseDir: string, wordFindConfig: {searchWord: string; isRegExpMode: boolean; }) {        
+        const searchDirText =  `Search Dir: ${baseDir}`;
+        const searchWordText = `Search Word: ${wordFindConfig.searchWord}`;
+        const regExpModeText = "RegExpMode: " + (wordFindConfig.isRegExpMode ? "ON" : "OFF");
+        this._grepConditionText = this.getFormatedTitle([searchDirText, searchWordText, regExpModeText]);
     }
 
 
@@ -55,7 +55,7 @@ export class ResultContentModel extends BaseModel {
         if (!this.hasOutputTitle()) {
             return "";
         }
-        return this._grepConfText;
+        return this._grepConditionText;
     }
 
     public get ColumnTitle() {
@@ -70,13 +70,13 @@ export class ResultContentModel extends BaseModel {
      * @param line 
      */
     public getContentInOneLine(filePath: string, lineNumber: string, line: string): string {
-        let content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
+        let content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         return content;
     }
     //------ Contents ------
 
 
-    contentInfomations: Array<ContentInformation> = new Array<ContentInformation>();
+    contentInformations: Array<ContentInformation> = new Array<ContentInformation>();
 
 
     //------ Operation of ResultFile (Interact with Service) ------
@@ -93,7 +93,7 @@ export class ResultContentModel extends BaseModel {
 
     public async addLine(filePath: string, lineNumber: string, line: string) {
         // Get formated content
-        const content = this.getFormattedContent([this._grepConfText, filePath, lineNumber, line]);
+        const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         // Insert result to file and stack content.
         return await this.insertAndStackContent(content);
     }
@@ -101,9 +101,9 @@ export class ResultContentModel extends BaseModel {
     private async insertAndStackContent(content: string) {
         // Insert result
         const insertedLineNumber = await this._resultFileModel.insertText(content);
-        // Stack ContentInfomation
+        // Stack ContentInformation
         const contentInfo = this._contentFactory.retrieve(content, insertedLineNumber);
-        this.contentInfomations.push(contentInfo);
+        this.contentInformations.push(contentInfo);
 
         // return inserted line number
         return insertedLineNumber;
@@ -168,5 +168,5 @@ export class ResultContentTSVModel extends ResultContentCSVModel {
 }
 
 export class ResultContentJSONModel extends ResultContentModel {
-    // TODO implment in the future
+    // TODO implement in the future
 }

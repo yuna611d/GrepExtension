@@ -7,12 +7,12 @@ import { FileModel } from "./FileModel";
 export class ResultFileModel extends FileModel {
 
     public get initialLastLine() {
-        return this._initailLastLine;
+        return this._initialLastLine;
     }
-    protected _initailLastLine = 0;
+    protected _initialLastLine = 0;
 
 
-    //--- Overide Functions ---
+    //--- Override Functions ---
 
     /**
      * Output file name.
@@ -34,7 +34,7 @@ export class ResultFileModel extends FileModel {
     public get FileExtension(): string {
         if (isNull(this._fileExtension)) {
             const defaultFormat = "txt";
-            // TOOD json format will be impelemented in the future
+            // TODO json format will be implemented in the future
             const allowedContentFormats = ["txt", "tsv", "csv", "json"];
     
             const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
@@ -58,26 +58,26 @@ export class ResultFileModel extends FileModel {
     /**
      * Output file path
      */
-    public get FilePath() {
+    public get FullPath() {
         return Common.BASE_DIR + Common.DIR_SEPARATOR + this.FileNameWithExtension;
     }
 
-    //--- Overide Functions ---
+    //--- Override Functions ---
 
 
 
     public addNewFile(): string {
         // TODO use encoding which is defined in config file
         // create result file
-        fs.appendFileSync(this.FilePath, '', this.encoding);
-        return this.FilePath;
+        fs.appendFileSync(this.FullPath, '', this.encoding);
+        return this.FullPath;
     }
 
 
     protected getPosition(editor: vscode.TextEditor) {
         const lastLine = editor.document.lineCount;
-        if (this._initailLastLine === 0) {
-            this._initailLastLine = lastLine;
+        if (this._initialLastLine === 0) {
+            this._initialLastLine = lastLine;
         }
         return new vscode.Position(lastLine, 0);
     }
