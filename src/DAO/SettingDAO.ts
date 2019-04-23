@@ -12,7 +12,7 @@ export class SettingDAO extends BaseDAO{
 
 
     /**
-     * Gets the setting value. Type of returned value is determined by type of defualt value
+     * Gets the setting value. Type of returned value is determined by type of default value
      * @param key 
      * @param defaultValue 
      */
@@ -21,7 +21,7 @@ export class SettingDAO extends BaseDAO{
         
         // Get the value from setting.json
         const value = this.getValue(key);
-        // If any value is configured in setting.json, passed defualt value is returned.
+        // If any value is configured in setting.json, passed default value is returned.
         if (isNullOrUndefined(value)) {
             return defaultValue;
         } else {
@@ -34,7 +34,7 @@ export class SettingDAO extends BaseDAO{
     }
 
     /**
-     * Get value from key. If you overide this function, Datasource of getSettingValue function will be changed.
+     * Get value from key. If you override this function, data source of getSettingValue function will be changed.
      * @param key 
      */
     protected getValue(key: string) {

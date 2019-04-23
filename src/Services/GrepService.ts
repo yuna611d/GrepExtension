@@ -12,48 +12,38 @@ import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
+import { Message } from '../Commons/Message';
 
 export class GrepService {
 
     private resultFile: ResultFileModel;
     private resultContent: ResultContentModel;
     private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
-    private _wordFindConfig = {
-        searchWord: '',
-        isRegExpMode: false,
-        regExpOptions: ''
-    };
-    // TODO TimeKeepr should be observe from outside. However, at this time, inside of service
+    private searchConfig = new SearchWordConfiguration();
+
+    // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
 
     constructor(resultFile: ResultFileModel, searchWord: string | undefined) {
-        // Check search word exisntance and reg exp mode
-        if (!isNullOrUndefined(searchWord)) {
-            this.setSearchWordConfig(searchWord);
-        }
+        // Check search word existence and reg exp mode
+        this.searchConfig.configure(searchWord);
         this.resultFile = resultFile;
         this.resultContent = new ResultContentModelFactory(resultFile).retrieve();
     }
 
-    private isValidSearchWord(): boolean {
-        // Get search word
-        const searchWord = this._wordFindConfig.searchWord;
-        if (isNullOrUndefined(searchWord) || searchWord.length === 0) {
-            vscode.window.showInformationMessage("Sorry, I can't grep this word...");
-            return false;
-        }
-        return true;
-    }
-
     public prepareGrep(): boolean {
-        if (!this.isValidSearchWord()) {
+        if (!this.searchConfig.hasValidSearchWord()) {
+            vscode.window.showInformationMessage(Message.MESSAGE_FAILED);
             return false;
         }
+        
         // Start time consuming count
         this.timeKeeper.countStart();
 
         // set Configuration
-        this.resultContent.setGrepConf(Common.BASE_DIR, this._wordFindConfig);
+        this.resultContent.setGrepConditionText(Common.BASE_DIR, 
+                {searchWord: this.searchConfig.SearchWord, 
+                 isRegExpMode: this.searchConfig.IsRegExpMode});
         return true;
     }
 
@@ -69,18 +59,15 @@ export class GrepService {
         try {
             await this.directorySeekAndInsertText(editor);
             // Notify finish
-            vscode.window.showInformationMessage("Grep is finished...");    
+            vscode.window.showInformationMessage(Message.MESSAGE_FINISH);    
         } catch (e) {
              // Notify cancellation
-            vscode.window.showInformationMessage('Grep is cancelled');
+            vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
         }
         
         // Pickup positions found word in result file.
         return await this.findWordsWithRange(editor, columnTitleLineNumber);
     }
-
-
-    //----- Core functions -----
 
     /**
      * Read file and check if line contain search word or not.
@@ -99,32 +86,25 @@ export class GrepService {
         }
 
         // Get file or directory names in targetDir
-        const files = fs.readdirSync(targetDir);
+        const targetFiles = this.getTargetFiles(targetDir);
 
-        for (let file of files) {
-
-            const seekdFile = this.seekedFileModelFactory.retrieve(file, targetDir, this.resultFile);
-
-            // Skip if file name is ignored file or directory
-            if (seekdFile.isIgnoredFileOrDirectory()) {
-                continue;
-            }
-
-            if (seekdFile.isDirectory) {
-                // if file path is directory, regrep by using filepath as nextTargetDir
-                await this.directorySeekAndInsertText(editor, seekdFile.FilePath);
-            } else if (seekdFile.isFile) {
+        for (let file of targetFiles) {
+            if (file.isDirectory) {
+                // if file path is directory, re-grep by using file path as nextTargetDir
+                await this.directorySeekAndInsertText(editor, file.FullPath);
+            } else if (file.isFile) {
                 // if file path is file, read file and insert grep results to editor
-                await this.readFileAndInsertText(editor, seekdFile);
+                await this.readFileAndInsertText(editor, file);
             }
 
             // End performance measure
             this.timeKeeper.checkConsumedTime();
         }
+
     }
 
     /**
-     * Read file and insert text to activeeditor.
+     * Read file and insert text to active editor.
      * @param filePath filePath
      */
     public async readFileAndInsertText(editor: vscode.TextEditor, seekedFile: SeekedFileModel) {
@@ -135,7 +115,7 @@ export class GrepService {
         const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
             if (isContainSearchWord(foundWordInfo.lineText)) {
                 // const foundResult = content.getContentInOneLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
-                await resultContent.addLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
+                await resultContent.addLine(seekedFile.FullPath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
             }   
         };
 
@@ -145,8 +125,6 @@ export class GrepService {
 
         await this.findWord(seekedFile.Content, action);
     }
-
-
 
     protected async findWord (content: string, action: Function, startLine?: number) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
@@ -192,7 +170,7 @@ export class GrepService {
 
     /**
      * Return Range object if search word is found in targetString in a specified line.
-     * The null is retruned if search word is not found.
+     * The null is returned if search word is not found.
      */
     protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
         re.lastIndex = 0;
@@ -217,90 +195,169 @@ export class GrepService {
         return re.test(targetString);
     }
 
-    //----- Core functions -----
-
-
-
-
-    /**
-     * Set parameters for regulare expression.
-     * @param searchWord: searchWord
-     */
-    protected setSearchWordConfig(searchWord: string) {
-        // Set Inital  Configuration
-        this._wordFindConfig.searchWord = this.escapeRegExpWord(searchWord);
-        this._wordFindConfig.isRegExpMode = false;
-        this._wordFindConfig.regExpOptions = '';
-
-
-        //  re/<pattern>/flags
-        let REGEXP_FORMAT_PREFIX = "re/";
-        let REGEXP_FORMAT_POSTFIX = "/";
-        let ALLOWED_OPTIONS = ["i"];
-
-
-        let patternStartPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
-        if (patternStartPos === -1) {
-            return;
-        }
-        patternStartPos += REGEXP_FORMAT_PREFIX.length;
-
-
-        let patternEndPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
-        if (patternEndPos === -1 || patternStartPos >= patternEndPos) {
-            return;
-        }
-
-        let pattern = searchWord.substring(patternStartPos, patternEndPos);
-        if (pattern.length === 0) {
-            return;
-        }
-
-        let options = "";
-        let tmpOptions = searchWord.substring(patternEndPos + 1);
-        for (let i = 0; i < tmpOptions.length; i++) {
-            let option = tmpOptions.charAt(i);
-            if (ALLOWED_OPTIONS.indexOf(option) > -1) {
-                options += option;
-            }
-        }
-
-
-        // Configure for regexp
-        this._wordFindConfig.searchWord = pattern;
-        this._wordFindConfig.isRegExpMode = true;
-        this._wordFindConfig.regExpOptions = options;
-    }
-
-    private escapeRegExpWord(word: string): string {
-        return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
-    }
-
-
     protected getTargetDir(nextTargetDir: string | null) {
         return (isNull(nextTargetDir)) ? Common.BASE_DIR : nextTargetDir;
+    }
+
+    protected getTargetFiles(targetDir: string) {
+        // Skip if file name is ignored file or directory
+        const targetFiles = fs.readdirSync(targetDir)
+        .map(file => {
+            return this.seekedFileModelFactory.retrieve(file, targetDir, this.resultFile);
+        }).filter(file => {
+            return !file.isIgnoredFileOrDirectory();
+        });
+        return targetFiles;
     }
 
     private getRegExp(isGlobal?: boolean): RegExp {
 
         if (isGlobal) {
-            return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions + 'g');
+            return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions + 'g');
         }
 
         if (isNull(this._regExp)) {
-            if (this._wordFindConfig.isRegExpMode) {
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
+            if (this.searchConfig.IsRegExpMode) {
+                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
             } else {
-                this._wordFindConfig.regExpOptions += (this._wordFindConfig.regExpOptions.indexOf('i') === -1) ? 'i': '';
-                return this._regExp = new RegExp(this._wordFindConfig.searchWord, this._wordFindConfig.regExpOptions);
+                this.searchConfig.addIgnoreCaseOption();
+                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
             }
         } 
-
 
         return this._regExp;
     }
     private _regExp: RegExp | null = null;
 
+}
 
+class SearchWordConfiguration {
+
+    public get SearchWord() {return this.searchWord;}
+    public get IsRegExpMode() {return this.isRegExpMode;}
+    public get RegExpOptions() {return this.regExpOptions;}
+
+    private searchWord = '';
+    private isRegExpMode = false;
+    private regExpOptions =  '';
+
+    resetConfiguration() {
+        this.searchWord = '';
+        this.isRegExpMode = false;
+        this.regExpOptions =  '';    
+    }
+
+    setInitialConfiguration(searchWord: string) {
+        this.resetConfiguration();
+        this.searchWord = searchWord;
+    }
+
+    setRegExpMode(pattern: string, options: string) {
+        this.searchWord = pattern;
+        this.isRegExpMode = true;
+        this.regExpOptions = options;
+    }
+
+    addIgnoreCaseOption() {
+        this.regExpOptions += (this.regExpOptions.indexOf('i') === -1) ? 'i': '';
+    }
+
+    hasValidSearchWord(): boolean {
+        if (isNullOrUndefined(this.SearchWord) || this.SearchWord.length === 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Set parameters for regular expression.
+     * @param searchWord: searchWord
+     */
+    public configure(searchWord: string | null | undefined) {
+        // Guard
+        if (isNullOrUndefined(searchWord)) {
+            return;
+        }
+
+        // Set Initial  Configuration
+        this.setInitialConfiguration(this._escapeRegExpWord(searchWord));
+
+        // re/<pattern>/<flags> -> [<pattern>, <flagCandidates>]
+        const splittedWords = this._getPatternAndFlagCandidates(searchWord);        
+        // Get Pattern, which may be option of regexp
+        const pattern = splittedWords[0];
+        if (!pattern) {
+            return;
+        }
+        // Get Flags from input word
+        const options = this._getFlags(splittedWords[1]);
+
+        // Configure for regexp
+        this.setRegExpMode(pattern, options);
+    }
+
+    private _getPatternAndFlagCandidates(searchWord: string): Array<string | null>{    
+
+        // StartPos
+        const startPos = this._getPatternStartPos(searchWord);
+        if (!startPos) {
+            return [null, null];
+        }
+        // EndPos
+        const endPos = this._getPatternEndPos(searchWord, startPos);
+        if (!endPos){
+            return [null, null];
+        }
+
+        // Return pattern and flagCandidates
+        const pattern = this._getPattern(searchWord, startPos, endPos);
+        const flags = this._getFlagCandidates(searchWord, endPos);
+        return [pattern, flags];
+    }
+
+    private _getFlags(flagCandidates: string | null): string {
+        const ALLOWED_OPTIONS = ["i"];
+
+        return (flagCandidates || "").split("")
+            .filter(c => { return ALLOWED_OPTIONS.indexOf(c) > -1; })
+            .reduce((option, candidate) => {return option += candidate;}, "");
+    }
+
+    private _getPatternStartPos(searchWord: string): number | null {
+        const REGEXP_FORMAT_PREFIX = "re/"; 
+        const startPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
+        if (startPos === -1) {
+            return null;
+        }
+        return startPos + REGEXP_FORMAT_PREFIX.length;
+    }
+    private _getPatternEndPos(searchWord: string, startPos: number): number | null{
+        const REGEXP_FORMAT_POSTFIX = "/";
+        const endPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
+        if (endPos === -1 || startPos >= endPos) {
+            return null;
+        }
+        return endPos;
+    }
+
+    private _getPattern(searchWord: string, startPos: number, endPos: number): string | null{    
+        const pattern = searchWord.substring(startPos, endPos);
+        if (pattern.length === 0) {
+            return null;
+        }
+        return pattern;
+    }
+
+    private _getFlagCandidates(searchWord: string, startPos: number): string | null{    
+        const flags = searchWord.substring(startPos+ 1);
+        if (flags.length === 0) {
+            return null;
+        }
+        return flags;
+    }
+
+    private _escapeRegExpWord(word: string): string {
+        return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+    }
 
 }

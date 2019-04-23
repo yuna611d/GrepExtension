@@ -16,7 +16,7 @@ export class ResultContentModelFactory extends BaseModelFactory {
         if (isNullOrUndefined(this.resultFile)) {
             return new ResultContentModel(this._dao, this.resultFile);
         }
-        // TOOD this should be duck or override function        
+        // TODO this should be duck or override function        
         const format = this.resultFile.FileExtension;
 
         switch (format) {
@@ -30,7 +30,7 @@ export class ResultContentModelFactory extends BaseModelFactory {
                 return new ResultContentCSVModel(this._dao, this.resultFile);
                 break;
             case "json":
-                // TODO implement in the futrue
+                // TODO implement in the future
                 return new ResultContentJSONModel(this._dao, this.resultFile);
             default:
                 return new ResultContentModel(this._dao, this.resultFile);

@@ -6,5 +6,5 @@ export abstract class FileModel extends BaseModel{
     abstract get FileName(): string;
     abstract get FileExtension(): string;
     abstract get FileNameWithExtension(): string;
-    abstract get FilePath(): string;
+    abstract get FullPath(): string;
 }

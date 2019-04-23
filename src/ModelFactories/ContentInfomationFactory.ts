@@ -1,6 +1,6 @@
 import { ContentInformation } from "../Models/ContentInformation";
 
-export class ContentInfomationFactory {
+export class ContentInformationFactory {
     private id = 0;
     
     public retrieve(content: string, lineNumber: number) {

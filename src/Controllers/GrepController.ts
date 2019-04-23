@@ -21,7 +21,7 @@ export class GrepController {
     protected callback(v: string | undefined) {
         const searchWord = v;
 
-        // Prepare configuration and utilitites
+        // Prepare configuration and utilities
         const resultFile = new FileModelFactory().retrieve();
 
         // Prepare services to be used

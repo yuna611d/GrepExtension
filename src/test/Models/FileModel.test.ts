@@ -17,7 +17,7 @@ suite("File Factory Tests", function () {
 
     });
 
-    test("Factory should return SeekedFileModel when valid parameteres are passed.", () => {
+    test("Factory should return SeekedFileModel when valid parameters are passed.", () => {
 
         const fileName = "file1.txt";
         const targetDir = "dir1";
@@ -33,7 +33,7 @@ suite("File Factory Tests", function () {
         assert.equal(obj.FileExtension, "txt",       "FileExtension is checked");
         assert.equal(obj.FileNameWithExtension,      "file1.txt", "FileNameWithExtension is checked");
         assert.equal(obj.TargetDir, "dir1",          "TargetDir is checked");
-        assert.equal(obj.FilePath, "dir1/file1.txt", "FilePath is checked");
+        assert.equal(obj.FullPath, "dir1/file1.txt", "FilePath is checked");
     });
 });
 
@@ -123,7 +123,7 @@ suite("ResultFileModel Tests", function() {
 // suite("FileUtil Tests", function () {
 
 //     // Defines a Mocha unit test
-//     test("txt file is not excluded by dfault Test", () => {
+//     test("txt file is not excluded by default Test", () => {
         
 //         let instance = new Configuration();
 //         let factory = new myExtension.FileUtilFactory(instance);
@@ -135,7 +135,7 @@ suite("ResultFileModel Tests", function() {
 //         assert.equal(actual, expected);
 //     });
 
-//     test("bin, sln, dll files are excluded by dfault Test", () => {
+//     test("bin, sln, dll files are excluded by default Test", () => {
         
 //         let instance = new Configuration();
 //         let factory = new myExtension.FileUtilFactory(instance);
@@ -151,7 +151,7 @@ suite("ResultFileModel Tests", function() {
 //         assert.equal(actual, expected);
 //     });
 
-//     test("result file is excluded by dfault Test", () => {
+//     test("result file is excluded by default Test", () => {
         
 //         let instance = new Configuration();
 //         let factory = new myExtension.FileUtilFactory(instance);
