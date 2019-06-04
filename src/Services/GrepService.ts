@@ -13,25 +13,53 @@ import { SeekedFileModel } from '../Models/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 import { Message } from '../Commons/Message';
+import { DecorationService } from './DecorationService';
+import { IService } from '../Interface/IService';
 
-export class GrepService {
+export class GrepService implements IService {
 
     private resultFile: ResultFileModel;
     private resultContent: ResultContentModel;
     private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
     private searchConfig = new SearchWordConfiguration();
+    private optionalService: DecorationService | undefined;
 
     // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
 
-    constructor(resultFile: ResultFileModel, searchWord: string | undefined) {
+    constructor(resultFile: ResultFileModel, searchWord: string | undefined, optionalService?: DecorationService) {
         // Check search word existence and reg exp mode
         this.searchConfig.configure(searchWord);
         this.resultFile = resultFile;
         this.resultContent = new ResultContentModelFactory(resultFile).retrieve();
+
+        // Optional Service
+        this.optionalService = optionalService;
     }
 
-    public prepareGrep(): boolean {
+    public doService() {
+        // Create and Get file path where result is outputted.
+        const filePath = this.resultFile.addNewFile();
+        if (this.prepareGrep()) {
+            vscode.workspace.openTextDocument(filePath).then(doc => {
+                vscode.window.showTextDocument(doc).then(async editor => {
+                    // Grep word
+                    const ranges = await this.grep(editor);
+
+                    // Decorate found word     
+                    if (!isNullOrUndefined(this.optionalService)) {               
+                        await this.optionalService
+                                .setParam(editor)
+                                .setParam(filePath)
+                                .setParam(ranges)                   
+                                .doService();
+                    }
+                });
+            });    
+        }                
+    }
+
+    protected prepareGrep(): boolean {
         if (!this.searchConfig.hasValidSearchWord()) {
             vscode.window.showInformationMessage(Message.MESSAGE_FAILED);
             return false;
