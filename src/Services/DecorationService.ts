@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
+import { AbsOptionalService } from '../Interface/IService';
 
-export class DecorationService {
-
+export class DecorationService extends AbsOptionalService {
     private decorationTheme = vscode.window.createTextEditorDecorationType({
         'borderWidth': '1px',
         'borderStyle': 'solid',
@@ -17,7 +17,14 @@ export class DecorationService {
         }
     });
 
-    public decorate(editor: vscode.TextEditor, resultFilePath: string, ranges: Array<vscode.Range>) {
-        editor.setDecorations(this.decorationTheme, ranges);
+
+
+    doService() {
+        const editor = this.editor;
+        if (editor !== null) {
+            editor.setDecorations(this.decorationTheme, this.ranges);
+        }
+        return this;
     }
+
 }
