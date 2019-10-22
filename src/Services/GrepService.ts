@@ -114,20 +114,16 @@ export class GrepService implements IService {
         }
 
         // Get file or directory names in targetDir
-        const targetFiles = this.getTargetFiles(targetDir);
+        const targetFilesOrDirectories = this.getTargetFiles(targetDir);
+        // if file path is directory, re-grep by using file path as nextTargetDir
+        const targetDirectories = targetFilesOrDirectories.filter(target => target.isDirectory);
+        for (const target of targetDirectories) { await this.directorySeekAndInsertText(editor, target.FullPath); }
+        this.timeKeeper.checkConsumedTime();
 
-        for (let file of targetFiles) {
-            if (file.isDirectory) {
-                // if file path is directory, re-grep by using file path as nextTargetDir
-                await this.directorySeekAndInsertText(editor, file.FullPath);
-            } else if (file.isFile) {
-                // if file path is file, read file and insert grep results to editor
-                await this.readFileAndInsertText(editor, file);
-            }
-
-            // End performance measure
-            this.timeKeeper.checkConsumedTime();
-        }
+        // if file path is file, read file and insert grep results to editor
+        const targetFiles = targetFilesOrDirectories.filter(target => target.isFile);
+        for (const target of targetFiles) { await this.readFileAndInsertText(editor, target); }
+        this.timeKeeper.checkConsumedTime();
 
     }
 
