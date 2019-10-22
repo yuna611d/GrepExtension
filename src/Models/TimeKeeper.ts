@@ -9,6 +9,7 @@ export class TimeKeeper {
     protected _isCancelled = false;
 
     public countStart() {
+        this._countConfirmedCancellation = 0;
         this._timeConsumingStart = performance.now();   
     }
 
@@ -19,6 +20,8 @@ export class TimeKeeper {
                 .then(r => {
                     if (r === 'Cancel') {
                         this._isCancelled = true;
+                    } else {
+                        this.countStart();
                     }
                 }                
             );
