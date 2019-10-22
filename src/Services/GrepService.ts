@@ -65,9 +65,6 @@ export class GrepService implements IService {
             return false;
         }
         
-        // Start time consuming count
-        this.timeKeeper.countStart();
-
         // set Configuration
         this.resultContent.setGrepConditionText(Common.BASE_DIR, 
                 {searchWord: this.searchConfig.SearchWord, 
