@@ -30,4 +30,11 @@ export class TimeKeeper {
         return this._isCancelled;
     }
 
+    public throwErrorIfCancelled() {
+        this.checkConsumedTime();
+        if (this._isCancelled) {
+            throw new Error('GrepInterruptionError');
+        }        
+    }
+
 }

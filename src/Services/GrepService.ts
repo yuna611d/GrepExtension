@@ -101,12 +101,7 @@ export class GrepService implements IService {
      * Read file and check if line contain search word or not.
      * @param nextTargetDir directory where is next target.
      */
-    protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {
-        // If cancelled, Do nothing
-        if (this.timeKeeper.isConfirmationTime()) {
-            throw new Error('GrepInterruptionError');
-        }
-        
+    protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {        
         // Get target directory
         let targetDir = this.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
@@ -117,13 +112,17 @@ export class GrepService implements IService {
         const targetFilesOrDirectories = this.getTargetFiles(targetDir);
         // if file path is directory, re-grep by using file path as nextTargetDir
         const targetDirectories = targetFilesOrDirectories.filter(target => target.isDirectory);
-        for (const target of targetDirectories) { await this.directorySeekAndInsertText(editor, target.FullPath); }
-        this.timeKeeper.checkConsumedTime();
+        for (const target of targetDirectories) { 
+            await this.directorySeekAndInsertText(editor, target.FullPath); 
+            this.timeKeeper.throwErrorIfCancelled();
+        }
 
         // if file path is file, read file and insert grep results to editor
         const targetFiles = targetFilesOrDirectories.filter(target => target.isFile);
-        for (const target of targetFiles) { await this.readFileAndInsertText(editor, target); }
-        this.timeKeeper.checkConsumedTime();
+        for (const target of targetFiles) { 
+            await this.readFileAndInsertText(editor, target); 
+            this.timeKeeper.throwErrorIfCancelled();
+        }
 
     }
 
