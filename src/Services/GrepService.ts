@@ -157,15 +157,12 @@ export class GrepService implements IService {
     protected async findWord (content: string, action: Function, startLine?: number) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(Common.LINE_BREAK);
-        for (let i = start; i < lines.length; i++) {
-            let line = lines[i];
-            let lineNumber = i + 1;
-            let foundWordInfo = {lineText: line, lineNumber: lineNumber};
+        const counter = (s: number) => {var i=s; return ()=>{return ++i;}; };
+        const lineCounter = counter(start);
+        const foundWordInfo = lines.slice(start)
+                                    .map(line => { return {lineText: line, lineNumber: lineCounter()};});
+        for (const v of foundWordInfo) { await action(v); }
 
-            // Do passed action.
-            await action(foundWordInfo);
-
-        }
     }
 
     public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
