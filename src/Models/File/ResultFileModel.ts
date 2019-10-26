@@ -83,24 +83,25 @@ export class ResultFileModel extends FileModel {
         this._initialLastLine === 0 = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
     }
 
-    protected getPosition(editor: vscode.TextEditor) {
-        return new vscode.Position(editor.document.lineCount, 0);
+    protected getPosition(editor: vscode.TextEditor): vscode.Position {
+        return new vscode.Position(this.getLastLine(editor), 0);
+    }
+    protected getLastLine(editor: vscode.TextEditor): number {
+        return editor.document.lineCount;
     }
 
 
     public async insertText(content: string): Promise<number> {
-        const editor = this._editor;
-        const insertedLine = () => { const lineCount = editor!.document.lineCount; return lineCount === 0 ? 0 : lineCount - 1;};
-        await editor!.edit(editBuilder => {
-            if (content === "") {
-                return;
-            }
-    
-            let position = this.getPosition(editor!);
-            editBuilder.insert(position, content);
-            return insertedLine();
+        const editor = this._editor!;
+
+        await editor.edit(editBuilder => {
+            if (content === "") { return; }
+            editBuilder.insert(this.getPosition(editor), content);
         });
-        return insertedLine();
+
+        // return inserted line number
+        const lineCount = this.getLastLine(editor); 
+        return lineCount === 0 ? 0 : lineCount - 1;
     }
 
 }
