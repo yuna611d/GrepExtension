@@ -1,6 +1,6 @@
 import { BaseModelFactory } from "../Interface/IModelFactory";
-import { ResultContentModel, ResultContentTSVModel, ResultContentCSVModel, ResultContentJSONModel } from "../Models/ResultContentModel";
-import { ResultFileModel } from "../Models/ResultFileModel";
+import { ResultContentModel, ResultContentTSVModel, ResultContentCSVModel, ResultContentJSONModel } from "../Models/Content/ResultContentModel";
+import { ResultFileModel } from "../Models/File/ResultFileModel";
 import { isNullOrUndefined } from "util";
 
 export class ResultContentModelFactory extends BaseModelFactory {

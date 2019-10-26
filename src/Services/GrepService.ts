@@ -6,10 +6,10 @@ import {
 } from 'util';
 import * as fs from 'fs';
 import { TimeKeeper } from '../Models/TimeKeeper';
-import { ResultFileModel } from '../Models/ResultFileModel';
-import { ResultContentModel } from '../Models/ResultContentModel';
+import { ResultFileModel } from '../Models/File/ResultFileModel';
+import { ResultContentModel } from '../Models/Content/ResultContentModel';
 import { Common } from '../Commons/Common';
-import { SeekedFileModel } from '../Models/SeekedFileModel';
+import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 import { Message } from '../Commons/Message';

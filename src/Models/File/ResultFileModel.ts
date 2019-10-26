@@ -1,5 +1,5 @@
 import { isNull } from "util";
-import { Common } from "../Commons/Common";
+import { Common } from "../../Commons/Common";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { FileModel } from "./FileModel";

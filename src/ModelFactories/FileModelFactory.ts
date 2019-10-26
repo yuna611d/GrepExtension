@@ -1,8 +1,8 @@
 import { BaseModelFactory } from "../Interface/IModelFactory";
-import { ResultFileModel } from "../Models/ResultFileModel";
+import { ResultFileModel } from "../Models/File/ResultFileModel";
 import { isNullOrUndefined } from "util";
-import { SeekedFileModel } from "../Models/SeekedFileModel";
-import { FileModel } from "../Models/FileModel";
+import { SeekedFileModel } from "../Models/File/SeekedFileModel";
+import { FileModel } from "../Models/File/FileModel";
 
 export class FileModelFactory extends BaseModelFactory {
 
