@@ -41,19 +41,26 @@ export class GrepService implements IService {
     public doService() {
         // Create and Get file path where result is outputted.
         const filePath = this.resultFile.addNewFile();
+
         if (this.prepareGrep()) {
             vscode.workspace.openTextDocument(filePath).then(doc => {
                 vscode.window.showTextDocument(doc).then(async editor => {
+                    // Set editor to resultFile
+                    this.resultFile.initialize(editor);
+                    // Write Title
+                    await this.resultContent.addTitle();
+                    // Write Column Title
+                    const columnTitleLineNumber = await this.resultContent.addColumnTitle();
+
                     // Grep word
-                    const ranges = await this.grep(editor);
+                    await this.grep(editor);
+
+                    // Pickup positions found word in result file.
+                    const ranges = await this.findWordsWithRange(editor, columnTitleLineNumber);
 
                     // Decorate found word     
                     if (!isNullOrUndefined(this.optionalService)) {               
-                        await this.optionalService
-                                .setParam(editor)
-                                .setParam(filePath)
-                                .setParam(ranges)                   
-                                .doService();
+                        await this.optionalService.setParam(editor).setParam(filePath).setParam(ranges).doService();
                     }
                 });
             });    
@@ -73,14 +80,8 @@ export class GrepService implements IService {
         return true;
     }
 
-    public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {        
-        // Set editor to resultFile
-        this.resultFile.initialize(editor);
+    public async grep(editor: vscode.TextEditor) {        
 
-        // Write Title
-        await this.resultContent.addTitle();
-        // Write Column Title
-        const columnTitleLineNumber = await this.resultContent.addColumnTitle();
         // Do grep and write its found result.
         try {
             await this.seekDirectoryOrInsertText(editor);
@@ -91,8 +92,6 @@ export class GrepService implements IService {
             vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
         }
         
-        // Pickup positions found word in result file.
-        return await this.findWordsWithRange(editor, columnTitleLineNumber);
     }
 
     /**
