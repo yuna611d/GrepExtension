@@ -1,7 +1,7 @@
 import { isNull, isNullOrUndefined } from 'util';
 import { Common } from '../Commons/Common';
 import { ResultFileModel } from './ResultFileModel';
-import { BaseDAO } from '../DAO/BaseDAO';
+import { BaseDAO } from '../DAO/BaseDao';
 import * as fs from 'fs';
 import { FileModel } from './FileModel';
 
