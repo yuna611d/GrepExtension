@@ -1,11 +1,10 @@
-import { Common } from "../../Commons/Common";
-import { BaseModel } from "../../Interface/IModel";
+import { Common } from "../../../Commons/Common";
+import { BaseModel } from "../../../Interface/IModel";
 import { isNull } from "util";
-import { ResultFileModel } from "../File/ResultFileModel";
-import { BaseDAO } from "../../DAO/BaseDao";
-import { TextEdit } from "vscode";
-import { ContentInformation } from "./ContentInformation";
-import { ContentInformationFactory as ContentInformationFactory } from "../../ModelFactories/ContentInfomationFactory";
+import { ResultFileModel } from "../../File/ResultFileModel";
+import { BaseDAO } from "../../../DAO/BaseDao";
+import { ContentInformation } from "../ContentInformation";
+import { ContentInformationFactory as ContentInformationFactory } from "../../../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {

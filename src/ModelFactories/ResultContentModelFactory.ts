@@ -1,7 +1,10 @@
 import { BaseModelFactory } from "../Interface/IModelFactory";
-import { ResultContentModel, ResultContentTSVModel, ResultContentCSVModel, ResultContentJSONModel } from "../Models/Content/ResultContentModel";
 import { ResultFileModel } from "../Models/File/ResultFileModel";
 import { isNullOrUndefined } from "util";
+import { ResultContentModel } from "../Models/Content/ResultContent/ResultContentModel";
+import { ResultContentTSVModel } from "../Models/Content/ResultContent/ResultContentTSVModel";
+import { ResultContentCSVModel } from "../Models/Content/ResultContent/ResultContentCSVModel";
+import { ResultContentJSONModel } from "../Models/Content/ResultContent/ResultContentJSONModel";
 
 export class ResultContentModelFactory extends BaseModelFactory {
  
