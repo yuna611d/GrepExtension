@@ -53,7 +53,7 @@ export class GrepService implements IService {
                     const columnTitleLineNumber = await this.resultContent.addColumnTitle();
 
                     // Grep word
-                    await this.grep(editor);
+                    await this.grep();
 
                     // Pickup positions found word in result file.
                     const ranges = await this.findWordsWithRange(editor, columnTitleLineNumber);
@@ -80,11 +80,11 @@ export class GrepService implements IService {
         return true;
     }
 
-    public async grep(editor: vscode.TextEditor) {        
+    public async grep() {        
 
         // Do grep and write its found result.
         try {
-            await this.seekDirectoryOrInsertText(editor);
+            await this.seekDirectoryOrInsertText();
             // Notify finish
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);    
         } catch (e) {
@@ -98,7 +98,7 @@ export class GrepService implements IService {
      * Read file and check if line contain search word or not.
      * @param nextTargetDir directory where is next target.
      */
-    protected async seekDirectoryOrInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {        
+    protected async seekDirectoryOrInsertText(nextTargetDir: string | null = null) {        
         // Get target directory
         let targetDir = this.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
@@ -109,7 +109,7 @@ export class GrepService implements IService {
         const targetFilesOrDirectories = this.getTargetFiles(targetDir);
         const targetDirectories = targetFilesOrDirectories.filter(target => target.isDirectory);
         for (const target of targetDirectories) { 
-            await this.seekDirectoryOrInsertText(editor, target.FullPath);
+            await this.seekDirectoryOrInsertText(target.FullPath);
         }
 
         // if file path is file, read file and insert grep results to editor
