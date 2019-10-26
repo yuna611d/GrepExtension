@@ -7,7 +7,6 @@ import {
 import * as fs from 'fs';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
-import { ResultContentModel } from '../Models/Content/ResultContentModel';
 import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
@@ -16,6 +15,7 @@ import { Message } from '../Commons/Message';
 import { DecorationService } from './DecorationService';
 import { IService } from '../Interface/IService';
 import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
+import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
 
 export class GrepService implements IService {
 

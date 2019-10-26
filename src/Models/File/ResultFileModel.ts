@@ -80,7 +80,7 @@ export class ResultFileModel extends FileModel {
      */
     public initialize(editor: vscode.TextEditor) {
         this._editor = editor;
-        this._initialLastLine === 0 = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
+        this._initialLastLine = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
     }
 
     protected getPosition(editor: vscode.TextEditor): vscode.Position {
