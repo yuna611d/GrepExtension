@@ -10,6 +10,7 @@ export class ResultFileModel extends FileModel {
         return this._initialLastLine;
     }
     protected _initialLastLine = 0;
+    private _editor: vscode.TextEditor | undefined;
 
 
     //--- Override Functions ---
@@ -73,17 +74,19 @@ export class ResultFileModel extends FileModel {
         return this.FullPath;
     }
 
-
-    protected getPosition(editor: vscode.TextEditor) {
-        const lastLine = editor.document.lineCount;
-        if (this._initialLastLine === 0) {
-            this._initialLastLine = lastLine;
-        }
-        return new vscode.Position(lastLine, 0);
+    /**
+     * Initalize initalLastLine
+     * @param editor 
+     */
+    public initialize(editor: vscode.TextEditor) {
+        this._editor = editor;
+        this._initialLastLine === 0 = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
     }
 
+    protected getPosition(editor: vscode.TextEditor) {
+        return new vscode.Position(editor.document.lineCount, 0);
+    }
 
-    public async insertText(content: string): Promise<number> ;
 
     public async insertText(content: string): Promise<number> {
         const editor = this._editor;
@@ -99,11 +102,5 @@ export class ResultFileModel extends FileModel {
         });
         return insertedLine();
     }
-
-
-    public set editor(editor: vscode.TextEditor) {
-        this._editor = editor;
-    }
-    private _editor: vscode.TextEditor | undefined;
 
 }

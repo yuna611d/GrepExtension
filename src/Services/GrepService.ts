@@ -75,7 +75,7 @@ export class GrepService implements IService {
 
     public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {        
         // Set editor to resultFile
-        this.resultFile.editor = editor;
+        this.resultFile.initialize(editor);
 
         // Write Title
         await this.resultContent.addTitle();
