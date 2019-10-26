@@ -35,6 +35,15 @@ export class ResultContentModel extends BaseModel {
         };
     }
 
+    protected _lineNumberOfCursor: number = 0;
+    public get lineNumberOfCursor(): number {
+        return this._lineNumberOfCursor;
+    }
+    protected _lineNumberOfContentStart: number = 0;
+    public get lineNumberOfContentStart(): number {
+        return this._lineNumberOfContentStart;
+    }
+
     // ------ Meta information ------
 
 
@@ -79,19 +88,19 @@ export class ResultContentModel extends BaseModel {
     public async addTitle() {
         const content = this.Title;
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
     }
     public async addColumnTitle() {
         const content = this.ColumnTitle;
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
     }
 
     public async addLine(filePath: string, lineNumber: string, line: string) {
         // Get formated content
         const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfCursor = await this.insertAndStackContent(content);
     }
 
     private async insertAndStackContent(content: string) {

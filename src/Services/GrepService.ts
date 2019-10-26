@@ -50,14 +50,13 @@ export class GrepService implements IService {
                     // Write Title
                     await this.resultContent.addTitle();
                     // Write Column Title
-                    const columnTitleLineNumber = await this.resultContent.addColumnTitle();
+                    await this.resultContent.addColumnTitle();
 
                     // Grep word
                     await this.grep();
 
                     // Pickup positions found word in result file.
-                    const ranges = await this.findWordsWithRange(editor, columnTitleLineNumber);
-
+                    const ranges = await this.findWordsWithRange(editor, this.resultContent.lineNumberOfContentStart);
                     // Decorate found word     
                     if (!isNullOrUndefined(this.optionalService)) {               
                         await this.optionalService.setParam(editor).setParam(filePath).setParam(ranges).doService();
