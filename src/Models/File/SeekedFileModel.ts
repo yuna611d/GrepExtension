@@ -1,8 +1,8 @@
+import * as fs from 'fs';
 import { isNull, isNullOrUndefined } from 'util';
 import { Common } from '../../Commons/Common';
 import { ResultFileModel } from './ResultFileModel';
 import { BaseDAO } from '../../DAO/BaseDao';
-import * as fs from 'fs';
 import { FileModel } from './FileModel';
 
 export class SeekedFileModel extends FileModel {
@@ -161,7 +161,4 @@ export class SeekedFileModel extends FileModel {
         }
         return false;
     }
-
-
-
 }

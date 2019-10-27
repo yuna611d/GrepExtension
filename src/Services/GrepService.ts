@@ -4,26 +4,25 @@ import {
     isNullOrUndefined,
     isNull
 } from 'util';
-import * as fs from 'fs';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
 import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
-import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 import { Message } from '../Commons/Message';
 import { DecorationService } from './DecorationService';
 import { IService } from '../Interface/IService';
 import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
 import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
+import { FileRepository } from '../Models/File/FileRepository';
 
 export class GrepService implements IService {
 
     private resultFile: ResultFileModel;
     private resultContent: ResultContentModel;
-    private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
     private searchConfig = new SearchWordConfiguration();
     private optionalService: DecorationService | undefined;
+    protected fileRepository: FileRepository = new FileRepository();
 
     // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
@@ -112,7 +111,7 @@ export class GrepService implements IService {
         }
 
         // if file path is directory, re-grep by using file path as nextTargetDir
-        const targetFilesOrDirectories = this.getTargetFiles(targetDir);
+        const targetFilesOrDirectories = this.fileRepository.retriveFiles(targetDir, this.resultFile);
         const targetDirectories = targetFilesOrDirectories.filter(target => target.isDirectory);
         for (const target of targetDirectories) { 
             await this.seekDirectoryOrInsertText(target.FullPath);
@@ -215,13 +214,6 @@ export class GrepService implements IService {
         return (isNull(nextTargetDir)) ? Common.BASE_DIR : nextTargetDir;
     }
 
-    protected getTargetFiles(targetDir: string) {
-        // Skip if file name is ignored file or directory
-        const targetFiles = fs.readdirSync(targetDir)
-            .map(file => { return this.seekedFileModelFactory.retrieve(file, targetDir, this.resultFile);})
-            .filter(file => {return !file.isIgnoredFileOrDirectory();});
-        return targetFiles;
-    }
 
     private getRegExp(isGlobal?: boolean): RegExp {
 
