@@ -8,7 +8,12 @@ export class TimeKeeper {
     protected _timeConsumingStart = 0;
     protected _isCancelled = false;
 
-    public countStart() {
+    constructor() {
+        this.resetTimeConsumingChecker();
+    }
+
+    public resetTimeConsumingChecker() {
+        this._countConfirmedCancellation = 0;
         this._timeConsumingStart = performance.now();   
     }
 
@@ -19,6 +24,8 @@ export class TimeKeeper {
                 .then(r => {
                     if (r === 'Cancel') {
                         this._isCancelled = true;
+                    } else {
+                        this.resetTimeConsumingChecker();
                     }
                 }                
             );
@@ -28,6 +35,13 @@ export class TimeKeeper {
 
     public isConfirmationTime(): boolean {
         return this._isCancelled;
+    }
+
+    public throwErrorIfCancelled() {
+        this.checkConsumedTime();
+        if (this._isCancelled) {
+            throw new Error('GrepInterruptionError');
+        }        
     }
 
 }

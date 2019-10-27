@@ -1,11 +1,10 @@
-import { Common } from "../Commons/Common";
-import { BaseModel } from "../Interface/IModel";
+import { Common } from "../../../Commons/Common";
+import { BaseModel } from "../../../Interface/IModel";
 import { isNull } from "util";
-import { ResultFileModel } from "./ResultFileModel";
-import { BaseDAO } from "../DAO/BaseDAO";
-import { TextEdit } from "vscode";
-import { ContentInformation } from "./ContentInformation";
-import { ContentInformationFactory as ContentInformationFactory } from "../ModelFactories/ContentInfomationFactory";
+import { ResultFileModel } from "../../File/ResultFileModel";
+import { BaseDAO } from "../../../DAO/BaseDao";
+import { ContentInformation } from "../ContentInformation";
+import { ContentInformationFactory as ContentInformationFactory } from "../../../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {
@@ -36,9 +35,15 @@ export class ResultContentModel extends BaseModel {
         };
     }
 
-    public set editor(editor: TextEdit) {
-
+    protected _lineNumberOfCursor: number = 0;
+    public get lineNumberOfCursor(): number {
+        return this._lineNumberOfCursor;
     }
+    protected _lineNumberOfContentStart: number = 0;
+    public get lineNumberOfContentStart(): number {
+        return this._lineNumberOfContentStart;
+    }
+
     // ------ Meta information ------
 
 
@@ -83,19 +88,19 @@ export class ResultContentModel extends BaseModel {
     public async addTitle() {
         const content = this.Title;
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
     }
     public async addColumnTitle() {
         const content = this.ColumnTitle;
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
     }
 
     public async addLine(filePath: string, lineNumber: string, line: string) {
         // Get formated content
         const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         // Insert result to file and stack content.
-        return await this.insertAndStackContent(content);
+        this._lineNumberOfCursor = await this.insertAndStackContent(content);
     }
 
     private async insertAndStackContent(content: string) {
@@ -133,40 +138,4 @@ export class ResultContentModel extends BaseModel {
     protected _hasOutputTitle: boolean | null = null;
  
 
-}
-
-export class ResultContentCSVModel extends ResultContentModel {
-
-    protected _separator: string = ",";
-
-    public get Title() {
-        return "";
-    }
-
-    protected getFormatedTitle(titleItems: string[]) {
-        const separator = " | ";
-        return titleItems.join(separator);
-    }
-
-    protected getFormattedContent(contents: string[]) {
-        if (!this.hasOutputTitle()) {
-            contents.shift();
-        }
-        return contents.join(this.SEPARATOR);
-    }
-}
-
-export class ResultContentTSVModel extends ResultContentCSVModel {
-    protected _separator: string = "\t";
-
-    protected getFormattedContent(contents: string[]) {
-        if (!this.hasOutputTitle()) {
-            contents.shift();
-        }
-        return contents.join(this.SEPARATOR);
-    }
-}
-
-export class ResultContentJSONModel extends ResultContentModel {
-    // TODO implement in the future
 }

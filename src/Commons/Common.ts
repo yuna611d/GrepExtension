@@ -1,8 +1,8 @@
 import * as os from 'os';
 import { isNullOrUndefined, isNull } from "util";
 import * as vscode from 'vscode';
-import { BaseDAO } from '../DAO/BaseDAO';
-import { SettingDAO } from '../DAO/SettingDAO';
+import { BaseDAO } from '../DAO/BaseDao';
+import { SettingDAO } from '../DAO/SettingDao';
 
 export class Common {
     public static readonly LINE_BREAK = "\n";

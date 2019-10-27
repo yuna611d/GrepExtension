@@ -19,7 +19,7 @@ export class DecorationService extends AbsOptionalService {
 
 
 
-    doService() {
+    doService(): AbsOptionalService {
         const editor = this.editor;
         if (editor !== null) {
             editor.setDecorations(this.decorationTheme, this.ranges);

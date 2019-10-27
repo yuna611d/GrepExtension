@@ -1,4 +1,4 @@
-import { ContentInformation } from "../Models/ContentInformation";
+import { ContentInformation } from "../Models/Content/ContentInformation";
 
 export class ContentInformationFactory {
     private id = 0;

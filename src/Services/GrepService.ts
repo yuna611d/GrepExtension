@@ -1,28 +1,25 @@
 'use strict';
 import * as vscode from 'vscode';
-import {
-    isNullOrUndefined,
-    isNull
-} from 'util';
-import * as fs from 'fs';
-import { TimeKeeper } from '../Models/TimeKeeper';
-import { ResultFileModel } from '../Models/ResultFileModel';
-import { ResultContentModel } from '../Models/ResultContentModel';
+import { isNullOrUndefined, isNull } from 'util';
 import { Common } from '../Commons/Common';
-import { SeekedFileModel } from '../Models/SeekedFileModel';
-import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
-import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 import { Message } from '../Commons/Message';
-import { DecorationService } from './DecorationService';
 import { IService } from '../Interface/IService';
+import { TimeKeeper } from '../Models/TimeKeeper';
+import { FileRepository } from '../Models/File/FileRepository';
+import { ResultFileModel } from '../Models/File/ResultFileModel';
+import { SeekedFileModel } from '../Models/File/SeekedFileModel';
+import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
+import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
+import { DecorationService } from './DecorationService';
+import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
 
 export class GrepService implements IService {
 
-    private resultFile: ResultFileModel;
-    private resultContent: ResultContentModel;
-    private seekedFileModelFactory: FileModelFactory = new FileModelFactory();
-    private searchConfig = new SearchWordConfiguration();
-    private optionalService: DecorationService | undefined;
+    protected searchConfig = new SearchWordConfiguration();
+    protected optionalService: DecorationService | undefined;
+    protected fileRepository: FileRepository = new FileRepository();
+    protected resultFile: ResultFileModel;
+    protected resultContent: ResultContentModel;
 
     // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
@@ -37,26 +34,39 @@ export class GrepService implements IService {
         this.optionalService = optionalService;
     }
 
-    public doService() {
+    public doService(): IService {
         // Create and Get file path where result is outputted.
-        const filePath = this.resultFile.addNewFile();
-        if (this.prepareGrep()) {
-            vscode.workspace.openTextDocument(filePath).then(doc => {
-                vscode.window.showTextDocument(doc).then(async editor => {
-                    // Grep word
-                    const ranges = await this.grep(editor);
+        const filePath = this.resultFile.addNewFile().FullPath;
 
-                    // Decorate found word     
-                    if (!isNullOrUndefined(this.optionalService)) {               
-                        await this.optionalService
-                                .setParam(editor)
-                                .setParam(filePath)
-                                .setParam(ranges)                   
-                                .doService();
-                    }
-                });
-            });    
-        }                
+        if (!this.prepareGrep()) { return this; }
+
+        vscode.workspace.openTextDocument(filePath).then(doc => {
+            vscode.window.showTextDocument(doc).then(async editor => {
+                // Set editor to resultFile
+                this.resultFile.initialize(editor);
+                // Write Title
+                await this.resultContent.addTitle();
+                // Write Column Title
+                await this.resultContent.addColumnTitle();
+
+                // Grep word
+                await this.grep();
+
+                // Do optional service
+                await this.doOptionalService(editor);
+            });
+        });
+
+        return this;                         
+    }
+
+    protected async doOptionalService(editor: vscode.TextEditor) {
+        if (isNullOrUndefined(this.optionalService)) { return false; }     
+
+        // Decorate found word     
+        // Pickup positions found word in result file.
+        const ranges = await this.findWordsWithRange();       
+        return this.optionalService.setParam(editor).setParam(this.resultFile.FullPath).setParam(ranges).doService();   
     }
 
     protected prepareGrep(): boolean {
@@ -65,9 +75,6 @@ export class GrepService implements IService {
             return false;
         }
         
-        // Start time consuming count
-        this.timeKeeper.countStart();
-
         // set Configuration
         this.resultContent.setGrepConditionText(Common.BASE_DIR, 
                 {searchWord: this.searchConfig.SearchWord, 
@@ -75,17 +82,11 @@ export class GrepService implements IService {
         return true;
     }
 
-    public async grep(editor: vscode.TextEditor): Promise<Array<vscode.Range>> {        
-        // Set editor to resultFile
-        this.resultFile.editor = editor;
+    public async grep() {        
 
-        // Write Title
-        await this.resultContent.addTitle();
-        // Write Column Title
-        const columnTitleLineNumber = await this.resultContent.addColumnTitle();
         // Do grep and write its found result.
         try {
-            await this.directorySeekAndInsertText(editor);
+            await this.seekDirectoryOrInsertText();
             // Notify finish
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);    
         } catch (e) {
@@ -93,105 +94,88 @@ export class GrepService implements IService {
             vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
         }
         
-        // Pickup positions found word in result file.
-        return await this.findWordsWithRange(editor, columnTitleLineNumber);
     }
 
     /**
      * Read file and check if line contain search word or not.
      * @param nextTargetDir directory where is next target.
      */
-    protected async directorySeekAndInsertText(editor: vscode.TextEditor, nextTargetDir: string | null = null) {
-        // If cancelled, Do nothing
-        if (this.timeKeeper.isConfirmationTime()) {
-            throw new Error('GrepInterruptionError');
-        }
-        
+    protected async seekDirectoryOrInsertText(nextTargetDir: string | null = null) {        
         // Get target directory
         let targetDir = this.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
             return;
         }
 
-        // Get file or directory names in targetDir
-        const targetFiles = this.getTargetFiles(targetDir);
-
-        for (let file of targetFiles) {
-            if (file.isDirectory) {
-                // if file path is directory, re-grep by using file path as nextTargetDir
-                await this.directorySeekAndInsertText(editor, file.FullPath);
-            } else if (file.isFile) {
-                // if file path is file, read file and insert grep results to editor
-                await this.readFileAndInsertText(editor, file);
-            }
-
-            // End performance measure
-            this.timeKeeper.checkConsumedTime();
+        const seekedFilesOrDirectories = this.fileRepository.retrieve(targetDir, [this.resultFile.FileNameWithExtension]);
+        // if file path is directory, re-grep by using file path as nextTargetDir
+        const directories = seekedFilesOrDirectories.filter(target => target.isDirectory);
+        for (const target of directories) { 
+            await this.seekDirectoryOrInsertText(target.FullPath);
         }
 
-    }
-
-    /**
-     * Read file and insert text to active editor.
-     * @param filePath filePath
-     */
-    public async readFileAndInsertText(editor: vscode.TextEditor, seekedFile: SeekedFileModel) {
-        const isContainSearchWord = this.isContainSearchWord.bind(undefined, this.getRegExp());
-
-        // Action when search word is found
-        const resultContent = this.resultContent;        
-        const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
-            if (isContainSearchWord(foundWordInfo.lineText)) {
-                // const foundResult = content.getContentInOneLine(seekedFile.FilePath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
-                await resultContent.addLine(seekedFile.FullPath, foundWordInfo.lineNumber.toString(), foundWordInfo.lineText);
-            }   
-        };
-
-        if (seekedFile.seemsBinary) {
-            return;
+        // if file path is file, read file and insert grep results to editor
+        const files = seekedFilesOrDirectories.filter(f => f.isFile).filter(f => !f.seemsBinary);
+        for (const f of files) {
+            await this.readContent(f).then(async r => await this.findWordInAFile(r));   
         }
-
-        await this.findWord(seekedFile.Content, action);
     }
 
+
+    async findWordInAFile(r: {filePath:string, lineText: string, lineNumber: number}[]) {
+        const content = r.filter(v => this.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
+        for (const v of content) {
+            await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
+            .then(r => this.timeKeeper.throwErrorIfCancelled()); 
+        }
+    }
+
+    
+    protected async readContent (file: SeekedFileModel, startLine?: number) {
+        const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
+        const lines = file.Content.split(Common.LINE_BREAK);
+        const counter = (s: number) => {var i=s; return ()=>{return ++i;}; };
+        const lineCounter = counter(start);
+        return  lines.slice(start)
+                     .map(line => { 
+                         return {
+                             filePath: file.FullPath,
+                             lineText: line, 
+                             lineNumber: lineCounter()};
+                    });
+    }
+    
     protected async findWord (content: string, action: Function, startLine?: number) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(Common.LINE_BREAK);
-        for (let i = start; i < lines.length; i++) {
-            let line = lines[i];
-            let lineNumber = i + 1;
-            let foundWordInfo = {lineText: line, lineNumber: lineNumber};
+        const counter = (s: number) => {var i=s; return ()=>{return ++i;}; };
+        const lineCounter = counter(start);
+        const foundWordInfo = lines.slice(start)
+                                    .map(line => { return {lineText: line, lineNumber: lineCounter()};});
+        for (const v of foundWordInfo) { await action(v); }
 
-            // Do passed action.
-            await action(foundWordInfo);
-
-        }
     }
 
-    public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
+
+    public async findWordsWithRange(): Promise<Array<vscode.Range>> {
         let ranges = new Array();
 
-        const contentIndex = this.resultContent.columnPosition.content;
-        const contentSeparator = this.resultContent.SEPARATOR;
-        const getFindWordRange = this.getFindWordRange.bind(undefined, this.getRegExp(true));
-
         // Action when search word is found
-        const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
-            const lineText = foundWordInfo.lineText;
-            const splittedTexts = lineText.split(contentSeparator);
-            const contentText = (splittedTexts.length >= contentIndex) ? splittedTexts[contentIndex] : "";
-            const searchStartPos = splittedTexts.map(x => x.length).reduce((a, v, i) => (i < contentIndex) ? a + v + contentSeparator.length : a) + contentSeparator.length;
+        const action = async (foundWordInfo: {lineText: string; lineNumber: number;}) => {
+            const splittedTexts = foundWordInfo.lineText.split(this.resultContent.SEPARATOR);
+            const contentText = (splittedTexts.length >= this.resultContent.columnPosition.content) ? splittedTexts[this.resultContent.columnPosition.content] : "";
+            const searchStartPos = splittedTexts.map(x => x.length)
+                                                .reduce((a, v, i) => (i < this.resultContent.columnPosition.content) ? a + v + this.resultContent.SEPARATOR.length : a) + this.resultContent.SEPARATOR.length;
 
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = await getFindWordRange(contentText, lineNumber, searchStartPos);
+            const range = this.getFindWordRange(this.searchConfig.getRegExp(true), contentText, lineNumber, searchStartPos);
             if (!isNull(range)) {
                 ranges.push(range);
             }
         };
 
-        const content = editor.document.getText();
-        await this.findWord(content, action, startLine);
 
+        await this.findWord(this.resultFile.getText(), action, this.resultContent.lineNumberOfContentStart);
         return ranges;
     }
 
@@ -225,167 +209,6 @@ export class GrepService implements IService {
 
     protected getTargetDir(nextTargetDir: string | null) {
         return (isNull(nextTargetDir)) ? Common.BASE_DIR : nextTargetDir;
-    }
-
-    protected getTargetFiles(targetDir: string) {
-        // Skip if file name is ignored file or directory
-        const targetFiles = fs.readdirSync(targetDir)
-        .map(file => {
-            return this.seekedFileModelFactory.retrieve(file, targetDir, this.resultFile);
-        }).filter(file => {
-            return !file.isIgnoredFileOrDirectory();
-        });
-        return targetFiles;
-    }
-
-    private getRegExp(isGlobal?: boolean): RegExp {
-
-        if (isGlobal) {
-            return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions + 'g');
-        }
-
-        if (isNull(this._regExp)) {
-            if (this.searchConfig.IsRegExpMode) {
-                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
-            } else {
-                this.searchConfig.addIgnoreCaseOption();
-                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
-            }
-        } 
-
-        return this._regExp;
-    }
-    private _regExp: RegExp | null = null;
-
-}
-
-class SearchWordConfiguration {
-
-    public get SearchWord() {return this.searchWord;}
-    public get IsRegExpMode() {return this.isRegExpMode;}
-    public get RegExpOptions() {return this.regExpOptions;}
-
-    private searchWord = '';
-    private isRegExpMode = false;
-    private regExpOptions =  '';
-
-    resetConfiguration() {
-        this.searchWord = '';
-        this.isRegExpMode = false;
-        this.regExpOptions =  '';    
-    }
-
-    setInitialConfiguration(searchWord: string) {
-        this.resetConfiguration();
-        this.searchWord = searchWord;
-    }
-
-    setRegExpMode(pattern: string, options: string) {
-        this.searchWord = pattern;
-        this.isRegExpMode = true;
-        this.regExpOptions = options;
-    }
-
-    addIgnoreCaseOption() {
-        this.regExpOptions += (this.regExpOptions.indexOf('i') === -1) ? 'i': '';
-    }
-
-    hasValidSearchWord(): boolean {
-        if (isNullOrUndefined(this.SearchWord) || this.SearchWord.length === 0) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Set parameters for regular expression.
-     * @param searchWord: searchWord
-     */
-    public configure(searchWord: string | null | undefined) {
-        // Guard
-        if (isNullOrUndefined(searchWord)) {
-            return;
-        }
-
-        // Set Initial  Configuration
-        this.setInitialConfiguration(this._escapeRegExpWord(searchWord));
-
-        // re/<pattern>/<flags> -> [<pattern>, <flagCandidates>]
-        const splittedWords = this._getPatternAndFlagCandidates(searchWord);        
-        // Get Pattern, which may be option of regexp
-        const pattern = splittedWords[0];
-        if (!pattern) {
-            return;
-        }
-        // Get Flags from input word
-        const options = this._getFlags(splittedWords[1]);
-
-        // Configure for regexp
-        this.setRegExpMode(pattern, options);
-    }
-
-    private _getPatternAndFlagCandidates(searchWord: string): Array<string | null>{    
-
-        // StartPos
-        const startPos = this._getPatternStartPos(searchWord);
-        if (!startPos) {
-            return [null, null];
-        }
-        // EndPos
-        const endPos = this._getPatternEndPos(searchWord, startPos);
-        if (!endPos){
-            return [null, null];
-        }
-
-        // Return pattern and flagCandidates
-        const pattern = this._getPattern(searchWord, startPos, endPos);
-        const flags = this._getFlagCandidates(searchWord, endPos);
-        return [pattern, flags];
-    }
-
-    private _getFlags(flagCandidates: string | null): string {
-        const ALLOWED_OPTIONS = ["i"];
-
-        return (flagCandidates || "").split("")
-            .filter(c => { return ALLOWED_OPTIONS.indexOf(c) > -1; })
-            .reduce((option, candidate) => {return option += candidate;}, "");
-    }
-
-    private _getPatternStartPos(searchWord: string): number | null {
-        const REGEXP_FORMAT_PREFIX = "re/"; 
-        const startPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
-        if (startPos === -1) {
-            return null;
-        }
-        return startPos + REGEXP_FORMAT_PREFIX.length;
-    }
-    private _getPatternEndPos(searchWord: string, startPos: number): number | null{
-        const REGEXP_FORMAT_POSTFIX = "/";
-        const endPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
-        if (endPos === -1 || startPos >= endPos) {
-            return null;
-        }
-        return endPos;
-    }
-
-    private _getPattern(searchWord: string, startPos: number, endPos: number): string | null{    
-        const pattern = searchWord.substring(startPos, endPos);
-        if (pattern.length === 0) {
-            return null;
-        }
-        return pattern;
-    }
-
-    private _getFlagCandidates(searchWord: string, startPos: number): string | null{    
-        const flags = searchWord.substring(startPos+ 1);
-        if (flags.length === 0) {
-            return null;
-        }
-        return flags;
-    }
-
-    private _escapeRegExpWord(word: string): string {
-        return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
     }
 
 }

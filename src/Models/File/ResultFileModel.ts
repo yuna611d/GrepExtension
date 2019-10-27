@@ -1,5 +1,5 @@
 import { isNull } from "util";
-import { Common } from "../Commons/Common";
+import { Common } from "../../Commons/Common";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { FileModel } from "./FileModel";
@@ -10,6 +10,7 @@ export class ResultFileModel extends FileModel {
         return this._initialLastLine;
     }
     protected _initialLastLine = 0;
+    private _editor: vscode.TextEditor | undefined;
 
 
     //--- Override Functions ---
@@ -66,44 +67,46 @@ export class ResultFileModel extends FileModel {
 
 
 
-    public addNewFile(): string {
+    public addNewFile(): ResultFileModel {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.FullPath, '', this.encoding);
-        return this.FullPath;
+        return this;
     }
 
-
-    protected getPosition(editor: vscode.TextEditor) {
-        const lastLine = editor.document.lineCount;
-        if (this._initialLastLine === 0) {
-            this._initialLastLine = lastLine;
-        }
-        return new vscode.Position(lastLine, 0);
+    /**
+     * Initalize initalLastLine
+     * @param editor 
+     */
+    public initialize(editor: vscode.TextEditor) {
+        this._editor = editor;
+        this._initialLastLine = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
     }
 
+    protected getPosition(editor: vscode.TextEditor): vscode.Position {
+        return new vscode.Position(this.getLastLine(editor), 0);
+    }
+    protected getLastLine(editor: vscode.TextEditor): number {
+        return editor.document.lineCount;
+    }
 
-    public async insertText(content: string): Promise<number> ;
 
     public async insertText(content: string): Promise<number> {
-        const editor = this._editor;
-        const insertedLine = () => { const lineCount = editor!.document.lineCount; return lineCount === 0 ? 0 : lineCount - 1;};
-        await editor!.edit(editBuilder => {
-            if (content === "") {
-                return;
-            }
-    
-            let position = this.getPosition(editor!);
-            editBuilder.insert(position, content);
-            return insertedLine();
+        const editor = this._editor!;
+
+        await editor.edit(editBuilder => {
+            if (content === "") { return; }
+            editBuilder.insert(this.getPosition(editor), content);
         });
-        return insertedLine();
+
+        // return inserted line number
+        const lineCount = this.getLastLine(editor); 
+        return lineCount === 0 ? 0 : lineCount - 1;
     }
 
-
-    public set editor(editor: vscode.TextEditor) {
-        this._editor = editor;
+    public getText(): string {
+        const editor = this._editor!;
+        return editor.document.getText();
     }
-    private _editor: vscode.TextEditor | undefined;
 
 }
