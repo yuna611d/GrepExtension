@@ -1,4 +1,4 @@
-import { BaseDAO } from "../DAO/BaseDAO";
+import { BaseDAO } from "../DAO/BaseDao";
 
 export interface IModel {
 

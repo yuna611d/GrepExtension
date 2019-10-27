@@ -1,20 +1,19 @@
-import { isNull, isNullOrUndefined } from 'util';
-import { Common } from '../Commons/Common';
-import { ResultFileModel } from './ResultFileModel';
-import { BaseDAO } from '../DAO/BaseDAO';
 import * as fs from 'fs';
+import { isNull, isNullOrUndefined } from 'util';
+import { Common } from '../../Commons/Common';
+import { BaseDAO } from '../../DAO/BaseDao';
 import { FileModel } from './FileModel';
 
 export class SeekedFileModel extends FileModel {
 
     public readonly TargetDir: string;
-    protected _resultFile: ResultFileModel;
+    protected excludedFileNames: string[];
 
-    constructor(dao: BaseDAO, fileNameWithExtension: string, targetDir: string, resultFile: ResultFileModel) {
+    constructor(dao: BaseDAO, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
         super(dao);
         this.FileNameWithExtension = fileNameWithExtension;
         this.TargetDir = targetDir;
-        this._resultFile = resultFile;
+        this.excludedFileNames = excludedFileNames;
     }
 
     //--- Override Functions ---
@@ -85,13 +84,8 @@ export class SeekedFileModel extends FileModel {
                 return true;
             }
         }
-
         // don't read result file.
-        if (this.FileNameWithExtension.startsWith(this._resultFile.FileNameWithExtension)) {
-            return true;
-        }
-
-        return false;
+        return this.excludedFileNames.includes(this.FileNameWithExtension);
     }
     
     public isIgnoredFileOrDirectory(): boolean {
@@ -161,5 +155,4 @@ export class SeekedFileModel extends FileModel {
         }
         return false;
     }
-
 }

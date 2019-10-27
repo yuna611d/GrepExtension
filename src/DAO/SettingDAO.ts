@@ -1,4 +1,4 @@
-import { BaseDAO } from './BaseDAO';
+import { BaseDAO } from './BaseDao';
 import * as vscode from 'vscode';
 import {
     isNullOrUndefined, isBoolean

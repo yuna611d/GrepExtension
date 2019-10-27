@@ -2,7 +2,7 @@
 import { GrepService } from '../Services/GrepService';
 import { DecorationService} from '../Services/DecorationService';
 import * as ib from '../InteractionItems/InputBox';
-import { SettingDAO } from '../DAO/SettingDAO';
+import { SettingDAO } from '../DAO/SettingDao';
 import { Common } from '../Commons/Common';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 
