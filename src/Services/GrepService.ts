@@ -1,17 +1,14 @@
 'use strict';
 import * as vscode from 'vscode';
-import {
-    isNullOrUndefined,
-    isNull
-} from 'util';
+import { isNullOrUndefined, isNull } from 'util';
+import { Common } from '../Commons/Common';
+import { Message } from '../Commons/Message';
+import { IService } from '../Interface/IService';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
-import { Common } from '../Commons/Common';
 import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
-import { Message } from '../Commons/Message';
 import { DecorationService } from './DecorationService';
-import { IService } from '../Interface/IService';
 import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
 import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
 import { FileRepository } from '../Models/File/FileRepository';
@@ -69,7 +66,7 @@ export class GrepService implements IService {
         // Decorate found word     
         // Pickup positions found word in result file.
         const ranges = await this.findWordsWithRange();       
-        return await this.optionalService.setParam(editor).setParam(this.resultFile.FullPath).setParam(ranges).doService();   
+        return this.optionalService.setParam(editor).setParam(this.resultFile.FullPath).setParam(ranges).doService();   
     }
 
     protected prepareGrep(): boolean {
@@ -110,16 +107,16 @@ export class GrepService implements IService {
             return;
         }
 
+        const seekedFilesOrDirectories = this.fileRepository.retrieve(targetDir, [this.resultFile.FileNameWithExtension]);
         // if file path is directory, re-grep by using file path as nextTargetDir
-        const targetFilesOrDirectories = this.fileRepository.retriveFiles(targetDir, this.resultFile);
-        const targetDirectories = targetFilesOrDirectories.filter(target => target.isDirectory);
-        for (const target of targetDirectories) { 
+        const directories = seekedFilesOrDirectories.filter(target => target.isDirectory);
+        for (const target of directories) { 
             await this.seekDirectoryOrInsertText(target.FullPath);
         }
 
         // if file path is file, read file and insert grep results to editor
-        const targetFiles = targetFilesOrDirectories.filter(f => f.isFile).filter(f => !f.seemsBinary);
-        for (const f of targetFiles) {
+        const files = seekedFilesOrDirectories.filter(f => f.isFile).filter(f => !f.seemsBinary);
+        for (const f of files) {
             await this.readContent(f).then(async r => await this.findWordInAFile(r));   
         }
     }
@@ -233,5 +230,6 @@ export class GrepService implements IService {
         return this._regExp;
     }
     private _regExp: RegExp | null = null;
+
 
 }
