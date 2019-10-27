@@ -5,21 +5,21 @@ import { Common } from '../Commons/Common';
 import { Message } from '../Commons/Message';
 import { IService } from '../Interface/IService';
 import { TimeKeeper } from '../Models/TimeKeeper';
+import { FileRepository } from '../Models/File/FileRepository';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
 import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
+import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
 import { DecorationService } from './DecorationService';
 import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
-import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
-import { FileRepository } from '../Models/File/FileRepository';
 
 export class GrepService implements IService {
 
-    private resultFile: ResultFileModel;
-    private resultContent: ResultContentModel;
-    private searchConfig = new SearchWordConfiguration();
-    private optionalService: DecorationService | undefined;
+    protected searchConfig = new SearchWordConfiguration();
+    protected optionalService: DecorationService | undefined;
     protected fileRepository: FileRepository = new FileRepository();
+    protected resultFile: ResultFileModel;
+    protected resultContent: ResultContentModel;
 
     // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
@@ -123,7 +123,7 @@ export class GrepService implements IService {
 
 
     async findWordInAFile(r: {filePath:string, lineText: string, lineNumber: number}[]) {
-        const content = r.filter(v => this.isContainSearchWord(this.getRegExp(), v.lineText));
+        const content = r.filter(v => this.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
         for (const v of content) {
             await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
             .then(r => this.timeKeeper.throwErrorIfCancelled()); 
@@ -168,7 +168,7 @@ export class GrepService implements IService {
                                                 .reduce((a, v, i) => (i < this.resultContent.columnPosition.content) ? a + v + this.resultContent.SEPARATOR.length : a) + this.resultContent.SEPARATOR.length;
 
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = this.getFindWordRange(this.getRegExp(true), contentText, lineNumber, searchStartPos);
+            const range = this.getFindWordRange(this.searchConfig.getRegExp(true), contentText, lineNumber, searchStartPos);
             if (!isNull(range)) {
                 ranges.push(range);
             }
@@ -210,26 +210,5 @@ export class GrepService implements IService {
     protected getTargetDir(nextTargetDir: string | null) {
         return (isNull(nextTargetDir)) ? Common.BASE_DIR : nextTargetDir;
     }
-
-
-    private getRegExp(isGlobal?: boolean): RegExp {
-
-        if (isGlobal) {
-            return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions + 'g');
-        }
-
-        if (isNull(this._regExp)) {
-            if (this.searchConfig.IsRegExpMode) {
-                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
-            } else {
-                this.searchConfig.addIgnoreCaseOption();
-                return this._regExp = new RegExp(this.searchConfig.SearchWord, this.searchConfig.RegExpOptions);
-            }
-        } 
-
-        return this._regExp;
-    }
-    private _regExp: RegExp | null = null;
-
 
 }

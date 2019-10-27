@@ -1,7 +1,5 @@
 'use strict';
-import {
-    isNullOrUndefined
-} from 'util';
+import { isNullOrUndefined, isNull } from 'util';
 
 export class SearchWordConfiguration {
 
@@ -67,6 +65,27 @@ export class SearchWordConfiguration {
         // Configure for regexp
         this.setRegExpMode(pattern, options);
     }
+
+
+    public getRegExp(isGlobal?: boolean): RegExp {
+
+        if (isGlobal) {
+            return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions + 'g');
+        }
+
+        if (isNull(this._regExp)) {
+            if (this.IsRegExpMode) {
+                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
+            } else {
+                this.addIgnoreCaseOption();
+                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
+            }
+        } 
+
+        return this._regExp;
+    }
+    private _regExp: RegExp | null = null;
+
 
     private _getPatternAndFlagCandidates(searchWord: string): Array<string | null>{    
 
