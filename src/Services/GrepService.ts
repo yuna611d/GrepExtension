@@ -38,32 +38,39 @@ export class GrepService implements IService {
         this.optionalService = optionalService;
     }
 
-    public doService() {
+    public doService(): IService {
         // Create and Get file path where result is outputted.
-        const filePath = this.resultFile.addNewFile();
+        const filePath = this.resultFile.addNewFile().FullPath;
 
-        if (this.prepareGrep()) {
-            vscode.workspace.openTextDocument(filePath).then(doc => {
-                vscode.window.showTextDocument(doc).then(async editor => {
-                    // Set editor to resultFile
-                    this.resultFile.initialize(editor);
-                    // Write Title
-                    await this.resultContent.addTitle();
-                    // Write Column Title
-                    await this.resultContent.addColumnTitle();
+        if (!this.prepareGrep()) { return this; }
 
-                    // Grep word
-                    await this.grep();
+        vscode.workspace.openTextDocument(filePath).then(doc => {
+            vscode.window.showTextDocument(doc).then(async editor => {
+                // Set editor to resultFile
+                this.resultFile.initialize(editor);
+                // Write Title
+                await this.resultContent.addTitle();
+                // Write Column Title
+                await this.resultContent.addColumnTitle();
 
-                    // Pickup positions found word in result file.
-                    const ranges = await this.findWordsWithRange(editor, this.resultContent.lineNumberOfContentStart);
-                    // Decorate found word     
-                    if (!isNullOrUndefined(this.optionalService)) {               
-                        await this.optionalService.setParam(editor).setParam(filePath).setParam(ranges).doService();
-                    }
-                });
-            });    
-        }                
+                // Grep word
+                await this.grep();
+
+                // Do optional service
+                await this.doOptionalService(editor);
+            });
+        });
+
+        return this;                         
+    }
+
+    protected async doOptionalService(editor: vscode.TextEditor) {
+        if (isNullOrUndefined(this.optionalService)) { return false; }     
+
+        // Decorate found word     
+        // Pickup positions found word in result file.
+        const ranges = await this.findWordsWithRange();       
+        return await this.optionalService.setParam(editor).setParam(this.resultFile.FullPath).setParam(ranges).doService();   
     }
 
     protected prepareGrep(): boolean {
@@ -141,6 +148,7 @@ export class GrepService implements IService {
                              lineNumber: lineCounter()};
                     });
     }
+    
     protected async findWord (content: string, action: Function, startLine?: number) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(Common.LINE_BREAK);
@@ -153,30 +161,25 @@ export class GrepService implements IService {
     }
 
 
-    public async findWordsWithRange(editor: vscode.TextEditor, startLine: number): Promise<Array<vscode.Range>> {
+    public async findWordsWithRange(): Promise<Array<vscode.Range>> {
         let ranges = new Array();
 
-        const contentIndex = this.resultContent.columnPosition.content;
-        const contentSeparator = this.resultContent.SEPARATOR;
-        const getFindWordRange = this.getFindWordRange.bind(undefined, this.getRegExp(true));
-
         // Action when search word is found
-        const action = async function(foundWordInfo: {lineText: string; lineNumber: number;}) {
-            const lineText = foundWordInfo.lineText;
-            const splittedTexts = lineText.split(contentSeparator);
-            const contentText = (splittedTexts.length >= contentIndex) ? splittedTexts[contentIndex] : "";
-            const searchStartPos = splittedTexts.map(x => x.length).reduce((a, v, i) => (i < contentIndex) ? a + v + contentSeparator.length : a) + contentSeparator.length;
+        const action = async (foundWordInfo: {lineText: string; lineNumber: number;}) => {
+            const splittedTexts = foundWordInfo.lineText.split(this.resultContent.SEPARATOR);
+            const contentText = (splittedTexts.length >= this.resultContent.columnPosition.content) ? splittedTexts[this.resultContent.columnPosition.content] : "";
+            const searchStartPos = splittedTexts.map(x => x.length)
+                                                .reduce((a, v, i) => (i < this.resultContent.columnPosition.content) ? a + v + this.resultContent.SEPARATOR.length : a) + this.resultContent.SEPARATOR.length;
 
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = await getFindWordRange(contentText, lineNumber, searchStartPos);
+            const range = this.getFindWordRange(this.getRegExp(true), contentText, lineNumber, searchStartPos);
             if (!isNull(range)) {
                 ranges.push(range);
             }
         };
 
-        const content = editor.document.getText();
-        await this.findWord(content, action, startLine);
 
+        await this.findWord(this.resultFile.getText(), action, this.resultContent.lineNumberOfContentStart);
         return ranges;
     }
 

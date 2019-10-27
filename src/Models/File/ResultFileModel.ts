@@ -67,11 +67,11 @@ export class ResultFileModel extends FileModel {
 
 
 
-    public addNewFile(): string {
+    public addNewFile(): ResultFileModel {
         // TODO use encoding which is defined in config file
         // create result file
         fs.appendFileSync(this.FullPath, '', this.encoding);
-        return this.FullPath;
+        return this;
     }
 
     /**
@@ -102,6 +102,11 @@ export class ResultFileModel extends FileModel {
         // return inserted line number
         const lineCount = this.getLastLine(editor); 
         return lineCount === 0 ? 0 : lineCount - 1;
+    }
+
+    public getText(): string {
+        const editor = this._editor!;
+        return editor.document.getText();
     }
 
 }
