@@ -1,0 +1,292 @@
+Search Dir: /Users/yuta/Desktop/test-resources
+Search Word: lo
+RegExpMode: OFF	FilePath	lineNumber	TextLine
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 17.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 17.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 17.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 17.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 18.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 18.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 18.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 18.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 19.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 19.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 19.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 19.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 2.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 2.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 2.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 2.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 20.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 20.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 20.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 20.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 21.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 21.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 21.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 21.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 22.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 22.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 22.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 22.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 23.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 23.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 23.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 23.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 24.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 24.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 24.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 24.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 25.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 25.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 25.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 25.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 26.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 26.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 26.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 26.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 27.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 27.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 27.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 27.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 28.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 28.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 28.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 28.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 29.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 29.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 29.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 29.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 3.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 3.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 3.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 3.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 30.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 30.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 30.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 30.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 31.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 31.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 31.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 31.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 32.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 32.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 32.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 32.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 33.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 33.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 33.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 33.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 34.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 34.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 34.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 34.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 35.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 35.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 35.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 35.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 36.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 36.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 36.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 36.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 37.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 37.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 37.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 37.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 38.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 38.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 38.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 38.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 39.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 39.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 39.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 39.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 4.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 4.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 4.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 4.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 40.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 40.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 40.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 40.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 41.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 41.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 41.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 41.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 42.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 42.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 42.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 42.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 43.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 43.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 43.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 43.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 44.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 44.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 44.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 44.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 45.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 45.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 45.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 45.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 46.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 46.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 46.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 46.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 47.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 47.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 47.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 47.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 5.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 5.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 5.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 5.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 6.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 6.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 6.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 6.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 7.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 7.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 7.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 7.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 8.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 8.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 8.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 8.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 9.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 9.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 9.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 9.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/fileA.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/fileA.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/fileA.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/fileA.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+Search Dir: /Users/yuta/Desktop/test-resources
+Search Word: a
+RegExpMode: OFF	FilePath	lineNumber	TextLine
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir1/dir1-1/fileC.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir1/fileB.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 10.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 11.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 12.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 13.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 14.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 15.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	1	This is sample text for grep.
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	2	"Lorem ipsum dolor sit amet, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	3	consectetur adipiscing elit, 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	5	labore et dolore magna aliqua. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	6	Ut enim ad minim veniam*, quis nostrud 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	7	exercitation ullamco laboris nisi ut aliquip ex 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 16.txt	10	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+	/Users/yuta/Desktop/test-resources/dir2/fileD copy 17.txt	1	This is sample text for grep.
