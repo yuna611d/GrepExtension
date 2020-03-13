@@ -17,7 +17,6 @@ export class GrepService implements IService {
 
     protected searchConfig = new SearchWordConfiguration();
     protected optionalService: AbsOptionalService;
-    protected optionalServiceFunc: AbsOptionalService | undefined;
     protected fileRepository: FileRepository = new FileRepository();
     protected resultFile: ResultFileModel;
     protected resultContent: ResultContentModel;
@@ -50,31 +49,26 @@ export class GrepService implements IService {
                 // Write Column Title
                 await this.resultContent.addColumnTitle();
 
-                this.optionalServiceFunc = this.doOptionalService(editor);
+                // set params for optional service
+                this.optionalService = this.prepareOptionalService(editor);
 
 
                 // Grep word
                 await this.grep();
 
-                // Do optional service
-                // await this.doOptionalService(editor);
             });
         });
 
         return this;                         
     }
 
-    protected doOptionalService(editor: vscode.TextEditor) {
-        // if (isNullOrUndefined(this.optionalService)) { return false; }     
-
+    protected prepareOptionalService(editor: vscode.TextEditor) {
         // Decorate found word     
         // Pickup positions found word in result file.
         return this.optionalService
                     .setParam(editor)
                     .setParam(this.resultFile.FullPath)
                     ;
-                    // .setParam(await this.findWordsWithRange());
-                    //.doService();
     }
 
     protected prepareGrep(): boolean {
@@ -134,11 +128,9 @@ export class GrepService implements IService {
         const content = r.filter(v => this.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
         for (const v of content) {
             await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
-            .then(async r => {
-                if (!isNullOrUndefined(this.optionalServiceFunc)){
-                    this.optionalServiceFunc.setParam(await this.findWordsWithRange()).doService();
-                }
-            })
+            .then(async r => this.optionalService
+                .setParam(await this.findWordsWithRange())
+                .doService())
             .then(r => this.timeKeeper.throwErrorIfCancelled()); 
         }
     }
