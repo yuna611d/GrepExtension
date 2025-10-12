@@ -1,8 +1,6 @@
 import { BaseDao } from "../DAO/BaseDao";
 
-export interface IModel {
-
-}
+export type IModel = object;
 
 export abstract class BaseModel implements IModel {
     protected _dao: BaseDao;

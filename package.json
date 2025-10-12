@@ -5,7 +5,7 @@
     "version": "0.5.4",
     "publisher": "yuna611d",
     "engines": {
-    "vscode": "^1.105.0"
+        "vscode": "^1.105.0"
     },
     "categories": [
         "Other"
@@ -66,15 +66,17 @@
         "test": "vscode-test"
     },
     "devDependencies": {
-        "@types/vscode": "^1.105.0",
+        "@stylistic/eslint-plugin": "^5.4.0",
         "@types/mocha": "^10.0.10",
         "@types/node": "22.x",
+        "@types/vscode": "^1.105.0",
         "@typescript-eslint/eslint-plugin": "^8.45.0",
         "@typescript-eslint/parser": "^8.45.0",
-        "eslint": "^9.36.0",
-        "typescript": "^5.9.3",
         "@vscode/test-cli": "^0.0.11",
-        "@vscode/test-electron": "^2.5.2"
+        "@vscode/test-electron": "^2.5.2",
+        "eslint": "^9.37.0",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.46.0"
     },
     "repository": {
         "type": "git",

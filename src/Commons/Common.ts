@@ -24,7 +24,7 @@ export class Common {
      */
     public static get DIR_SEPARATOR(): string {
         if (isNull(this._dirSeparator)) {
-            let osType = os.type();
+            const osType = os.type();
             if (osType === 'Windows_NT') {
                 return this._dirSeparator =  "\\";
             } else {

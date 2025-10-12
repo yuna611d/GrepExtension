@@ -79,8 +79,8 @@ export class SeekedFileModel extends FileModel {
 
     public isExcludedFile(): boolean {
         // don't read files which have extension specified
-        for (let ext of this.ExcludedFileExtensions) {
-            const re = new RegExp(ext, "i");
+        for (const extension of this.ExcludedFileExtensions) {
+            const re = new RegExp(extension, "i");
             if (re.test(this.FileExtension)) {
                 return true;
             }
@@ -131,8 +131,8 @@ export class SeekedFileModel extends FileModel {
      */
     protected ignoreHiddenFile(): boolean {
         if (isNull(this._ignoreHiddenFile)) {
-            let ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
-            return this._ignoreHiddenFile = ignoreHiddenFile;    
+            const ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
+            return this._ignoreHiddenFile = ignoreHiddenFile;
         }
         return this._ignoreHiddenFile;
     }

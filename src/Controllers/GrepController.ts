@@ -13,7 +13,7 @@ export class GrepController {
     }
 
     public doAction(): void {
-        let inputBox = new ib.SearchWordInputBox();
+        const inputBox = new ib.SearchWordInputBox();
         inputBox.showInputBox(this.callback);
     }
 

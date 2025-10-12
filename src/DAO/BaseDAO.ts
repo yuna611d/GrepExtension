@@ -8,5 +8,5 @@ export abstract class BaseDao {
      * @param key 
      * @param defaultValue 
      */
-    public abstract getSettingValue(key: string, defaultValue: any): any;
+    public abstract getSettingValue<T>(key: string, defaultValue: T): T;
 }
