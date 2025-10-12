@@ -5,8 +5,8 @@ import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
 
-    let disposable = vscode.commands.registerCommand('extension.grepResult2File', () => {
-        let controller = new GrepController();
+    const disposable = vscode.commands.registerCommand('extension.grepResult2File', () => {
+        const controller = new GrepController();
         controller.doAction();
     });
 

@@ -5,7 +5,7 @@ export interface IService {
 }
 
 export abstract class AbsOptionalService implements IService {
-    protected resultFilePath: string = "";
+    protected resultFilePath = "";
     protected ranges: Array<vscode.Range> = [];
     protected editor: vscode.TextEditor | null = null;
 

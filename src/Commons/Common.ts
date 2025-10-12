@@ -1,8 +1,8 @@
 import * as os from 'os';
 import { isNullOrUndefined, isNull } from "util";
 import * as vscode from 'vscode';
-import { BaseDAO } from '../DAO/BaseDao';
-import { SettingDAO } from '../DAO/SettingDao';
+import { BaseDao } from '../DAO/BaseDao';
+import { SettingDao } from '../DAO/SettingDao';
 
 export class Common {
     public static readonly LINE_BREAK = "\n";
@@ -24,7 +24,7 @@ export class Common {
      */
     public static get DIR_SEPARATOR(): string {
         if (isNull(this._dirSeparator)) {
-            let osType = os.type();
+            const osType = os.type();
             if (osType === 'Windows_NT') {
                 return this._dirSeparator =  "\\";
             } else {
@@ -35,15 +35,15 @@ export class Common {
     }
     private static _dirSeparator: string | null = null;
 
-    public static get DAO(): BaseDAO {
+    public static get DAO(): BaseDao {
         if (isNullOrUndefined(this._dao)) {
-            this._dao = new SettingDAO();
+            this._dao = new SettingDao();
         }
         return this._dao;
     }
-    public static set DAO(dao: BaseDAO) {
+    public static set DAO(dao: BaseDao) {
         this._dao = dao;
     }
-    private static _dao: BaseDAO;
+    private static _dao: BaseDao;
 
 }

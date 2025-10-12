@@ -1,4 +1,4 @@
-export abstract class BaseDAO {
+export abstract class BaseDao {
     public abstract getSettingValue(key: string, defaultValue: boolean): boolean;
     public abstract getSettingValue(key: string, defaultValue: string): string;
     public abstract getSettingValue(key: string, defaultValue: string[]): string[];
@@ -8,5 +8,5 @@ export abstract class BaseDAO {
      * @param key 
      * @param defaultValue 
      */
-    public abstract getSettingValue(key: string, defaultValue: any): any;
+    public abstract getSettingValue<T>(key: string, defaultValue: T): T;
 }

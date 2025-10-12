@@ -70,7 +70,7 @@ export class ResultFileModel extends FileModel {
     public addNewFile(): ResultFileModel {
         // TODO use encoding which is defined in config file
         // create result file
-        fs.appendFileSync(this.FullPath, '', this.encoding);
+        fs.appendFileSync(this.FullPath, '', { encoding: this.encoding as BufferEncoding });
         return this;
     }
 
