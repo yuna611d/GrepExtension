@@ -2,6 +2,10 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.5.4
+
+- Changed to ask cancell is repeated.
+
 ## 0.5.3
 
 - Comments of configuration are updated.
