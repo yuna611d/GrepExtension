@@ -1,13 +1,13 @@
-import { BaseDAO } from "../DAO/BaseDao";
+import { BaseDao } from "../DAO/BaseDao";
 
 export interface IModel {
 
 }
 
 export abstract class BaseModel implements IModel {
-    protected _dao: BaseDAO;
+    protected _dao: BaseDao;
 
-    constructor (dao: BaseDAO) {
+    constructor (dao: BaseDao) {
         this._dao = dao;
     }
 }

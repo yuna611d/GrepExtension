@@ -2,14 +2,14 @@ import { Common } from "../../../Commons/Common";
 import { BaseModel } from "../../../Interface/IModel";
 import { isNull } from "util";
 import { ResultFileModel } from "../../File/ResultFileModel";
-import { BaseDAO } from "../../../DAO/BaseDao";
+import { BaseDao } from "../../../DAO/BaseDao";
 import { ContentInformation } from "../ContentInformation";
 import { ContentInformationFactory as ContentInformationFactory } from "../../../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {
 
-    constructor(dao: BaseDAO, resultFileModel: ResultFileModel) {
+    constructor(dao: BaseDao, resultFileModel: ResultFileModel) {
         super(dao);
         this._resultFileModel = resultFileModel;
         this._contentFactory = new ContentInformationFactory();

@@ -1,4 +1,4 @@
-import { BaseDAO } from '../DAO/BaseDao';
+import { BaseDao } from '../DAO/BaseDao';
 import { Common } from '../Commons/Common';
 
 export interface  IModelFactory {
@@ -6,7 +6,7 @@ export interface  IModelFactory {
 }
 
 export abstract class BaseModelFactory implements IModelFactory {
-    protected _dao: BaseDAO = Common.DAO;
+    protected _dao: BaseDao = Common.DAO;
 
     // retrieve(): IModel
 }

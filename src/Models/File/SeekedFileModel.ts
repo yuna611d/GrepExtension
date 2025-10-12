@@ -1,15 +1,16 @@
 import * as fs from 'fs';
 import { isNull, isNullOrUndefined } from 'util';
 import { Common } from '../../Commons/Common';
-import { BaseDAO } from '../../DAO/BaseDao';
+import { BaseDao } from '../../DAO/BaseDao';
 import { FileModel } from './FileModel';
 
 export class SeekedFileModel extends FileModel {
 
     public readonly TargetDir: string;
     protected excludedFileNames: string[];
+    protected encoding: BufferEncoding = 'utf8';
 
-    constructor(dao: BaseDAO, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
+    constructor(dao: BaseDao, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
         super(dao);
         this.FileNameWithExtension = fileNameWithExtension;
         this.TargetDir = targetDir;

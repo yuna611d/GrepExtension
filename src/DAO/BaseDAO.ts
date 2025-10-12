@@ -1,4 +1,4 @@
-export abstract class BaseDAO {
+export abstract class BaseDao {
     public abstract getSettingValue(key: string, defaultValue: boolean): boolean;
     public abstract getSettingValue(key: string, defaultValue: string): string;
     public abstract getSettingValue(key: string, defaultValue: string[]): string[];

@@ -1,10 +1,10 @@
-import { BaseDAO } from './BaseDao';
+import { BaseDao } from './BaseDao';
 import * as vscode from 'vscode';
 import {
     isNullOrUndefined, isBoolean
 } from 'util';
 
-export class SettingDAO extends BaseDAO{
+export class SettingDao extends BaseDao{
 
     public getSettingValue(key: string, defaultValue: string): string;
     public getSettingValue(key: string, defaultValue: string[]): string[];
