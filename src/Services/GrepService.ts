@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { isNullOrUndefined, isNull } from 'util';
 import { Common } from '../Commons/Common';
 import { Message } from '../Commons/Message';
-import { IService } from '../Interface/IService';
+import { IService, AbsOptionalService } from '../Interface/IService';
 import { TimeKeeper } from '../Models/TimeKeeper';
 import { FileRepository } from '../Models/File/FileRepository';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
@@ -16,7 +16,7 @@ import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
 export class GrepService implements IService {
 
     protected searchConfig = new SearchWordConfiguration();
-    protected optionalService: DecorationService | undefined;
+    protected optionalService: AbsOptionalService;
     protected fileRepository: FileRepository = new FileRepository();
     protected resultFile: ResultFileModel;
     protected resultContent: ResultContentModel;
@@ -24,7 +24,7 @@ export class GrepService implements IService {
     // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
     private timeKeeper = new TimeKeeper();
 
-    constructor(resultFile: ResultFileModel, searchWord: string | undefined, optionalService?: DecorationService) {
+    constructor(resultFile: ResultFileModel, searchWord: string | undefined, optionalService: DecorationService) {
         // Check search word existence and reg exp mode
         this.searchConfig.configure(searchWord);
         this.resultFile = resultFile;
@@ -49,24 +49,26 @@ export class GrepService implements IService {
                 // Write Column Title
                 await this.resultContent.addColumnTitle();
 
+                // set params for optional service
+                this.optionalService = this.prepareOptionalService(editor);
+
+
                 // Grep word
                 await this.grep();
 
-                // Do optional service
-                await this.doOptionalService(editor);
             });
         });
 
         return this;                         
     }
 
-    protected async doOptionalService(editor: vscode.TextEditor) {
-        if (isNullOrUndefined(this.optionalService)) { return false; }     
-
+    protected prepareOptionalService(editor: vscode.TextEditor) {
         // Decorate found word     
         // Pickup positions found word in result file.
-        const ranges = await this.findWordsWithRange();       
-        return this.optionalService.setParam(editor).setParam(this.resultFile.FullPath).setParam(ranges).doService();   
+        return this.optionalService
+                    .setParam(editor)
+                    .setParam(this.resultFile.FullPath)
+                    ;
     }
 
     protected prepareGrep(): boolean {
@@ -90,7 +92,8 @@ export class GrepService implements IService {
             // Notify finish
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);    
         } catch (e) {
-             // Notify cancellation
+            console.debug(e);
+            // Notify cancellation
             vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
         }
         
@@ -102,7 +105,7 @@ export class GrepService implements IService {
      */
     protected async seekDirectoryOrInsertText(nextTargetDir: string | null = null) {        
         // Get target directory
-        let targetDir = this.getTargetDir(nextTargetDir);
+        const targetDir = this.getTargetDir(nextTargetDir);
         if (isNull(targetDir)) {
             return;
         }
@@ -126,7 +129,10 @@ export class GrepService implements IService {
         const content = r.filter(v => this.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
         for (const v of content) {
             await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
-            .then(r => this.timeKeeper.throwErrorIfCancelled()); 
+            .then(async () => this.optionalService
+                .setParam(await this.findWordsWithRange())
+                .doService())
+            .then(() => this.timeKeeper.throwErrorIfCancelled()); 
         }
     }
 
@@ -134,7 +140,7 @@ export class GrepService implements IService {
     protected async readContent (file: SeekedFileModel, startLine?: number) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = file.Content.split(Common.LINE_BREAK);
-        const counter = (s: number) => {var i=s; return ()=>{return ++i;}; };
+        const counter = (s: number) => {let i=s; return ()=>{return ++i;}; };
         const lineCounter = counter(start);
         return  lines.slice(start)
                      .map(line => { 
@@ -145,10 +151,14 @@ export class GrepService implements IService {
                     });
     }
     
-    protected async findWord (content: string, action: Function, startLine?: number) {
+    protected async findWord(
+        content: string,
+        action: (foundWordInfo: { lineText: string; lineNumber: number }) => Promise<void>,
+        startLine?: number
+    ) {
         const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
         const lines = content.split(Common.LINE_BREAK);
-        const counter = (s: number) => {var i=s; return ()=>{return ++i;}; };
+        const counter = (s: number) => {let i=s; return ()=>{return ++i;}; };
         const lineCounter = counter(start);
         const foundWordInfo = lines.slice(start)
                                     .map(line => { return {lineText: line, lineNumber: lineCounter()};});
@@ -158,7 +168,7 @@ export class GrepService implements IService {
 
 
     public async findWordsWithRange(): Promise<Array<vscode.Range>> {
-        let ranges = new Array();
+        const ranges: vscode.Range[] = [];
 
         // Action when search word is found
         const action = async (foundWordInfo: {lineText: string; lineNumber: number;}) => {
@@ -186,13 +196,13 @@ export class GrepService implements IService {
      */
     protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
         re.lastIndex = 0;
-        let result = re.exec(targetString);
+        const result = re.exec(targetString);
         if (isNull(result)) {
             return null;
         }
 
-        let startIndex = searchStartPos + result.index;
-        let endIndex = startIndex + result[0].length;
+        const startIndex = searchStartPos + result.index;
+        const endIndex = startIndex + result[0].length;
 
         const startPosition = new vscode.Position(lineNumber, startIndex);
         const endPosition = new vscode.Position(lineNumber, endIndex);

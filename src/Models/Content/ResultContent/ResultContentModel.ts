@@ -2,14 +2,14 @@ import { Common } from "../../../Commons/Common";
 import { BaseModel } from "../../../Interface/IModel";
 import { isNull } from "util";
 import { ResultFileModel } from "../../File/ResultFileModel";
-import { BaseDAO } from "../../../DAO/BaseDao";
+import { BaseDao } from "../../../DAO/BaseDao";
 import { ContentInformation } from "../ContentInformation";
 import { ContentInformationFactory as ContentInformationFactory } from "../../../ModelFactories/ContentInfomationFactory";
 
 
 export class ResultContentModel extends BaseModel {
 
-    constructor(dao: BaseDAO, resultFileModel: ResultFileModel) {
+    constructor(dao: BaseDao, resultFileModel: ResultFileModel) {
         super(dao);
         this._resultFileModel = resultFileModel;
         this._contentFactory = new ContentInformationFactory();
@@ -18,8 +18,8 @@ export class ResultContentModel extends BaseModel {
     private _contentFactory: ContentInformationFactory;
 
     protected _columnTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
-    protected _grepConditionText: string = "";
-    protected _separator: string = "\t";
+    protected _grepConditionText = "";
+    protected _separator = "\t";
 
     // ------ Meta information ------
     public get SEPARATOR() {
@@ -35,11 +35,11 @@ export class ResultContentModel extends BaseModel {
         };
     }
 
-    protected _lineNumberOfCursor: number = 0;
+    protected _lineNumberOfCursor = 0;
     public get lineNumberOfCursor(): number {
         return this._lineNumberOfCursor;
     }
-    protected _lineNumberOfContentStart: number = 0;
+    protected _lineNumberOfContentStart = 0;
     public get lineNumberOfContentStart(): number {
         return this._lineNumberOfContentStart;
     }
@@ -64,7 +64,7 @@ export class ResultContentModel extends BaseModel {
     }
 
     public get ColumnTitle() {
-        let contentTitle = this.getFormattedContent(this._columnTitle);
+        const contentTitle = this.getFormattedContent(this._columnTitle);
         return contentTitle;
     }
     
@@ -75,7 +75,7 @@ export class ResultContentModel extends BaseModel {
      * @param line 
      */
     public getContentInOneLine(filePath: string, lineNumber: string, line: string): string {
-        let content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
+        const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         return content;
     }
     //------ Contents ------

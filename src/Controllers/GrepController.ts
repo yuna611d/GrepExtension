@@ -2,19 +2,23 @@
 import { GrepService } from '../Services/GrepService';
 import { DecorationService} from '../Services/DecorationService';
 import * as ib from '../InteractionItems/InputBox';
-import { SettingDAO } from '../DAO/SettingDao';
+import { SettingDao } from '../DAO/SettingDao';
 import { Common } from '../Commons/Common';
 import { FileModelFactory } from '../ModelFactories/FileModelFactory';
 
 export class GrepController {
 
     constructor() {
-        Common.DAO = new SettingDAO();
+        Common.DAO = new SettingDao();
     }
 
     public doAction(): void {
-        let inputBox = new ib.SearchWordInputBox();
+        const inputBox = new ib.SearchWordInputBox();
         inputBox.showInputBox(this.callback);
+    }
+
+    public doActionWithParam(v: string): void {
+        this.callback(v);
     }
 
     protected callback(v: string | undefined) {

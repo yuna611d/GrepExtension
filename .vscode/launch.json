@@ -27,7 +27,7 @@
             "args": [
                 "--disable-extensions",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test"
+                "--extensionTestsPath=${workspaceFolder}/out/test/"
             ],
             "outFiles": [
                 "${workspaceFolder}/out/test/**/*.js"

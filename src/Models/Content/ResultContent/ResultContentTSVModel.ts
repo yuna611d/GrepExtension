@@ -1,7 +1,7 @@
 import { ResultContentCSVModel } from "./ResultContentCSVModel";
 
 export class ResultContentTSVModel extends ResultContentCSVModel {
-    protected _separator: string = "\t";
+    protected _separator = "\t";
 
     protected getFormattedContent(contents: string[]) {
         if (!this.hasOutputTitle()) {

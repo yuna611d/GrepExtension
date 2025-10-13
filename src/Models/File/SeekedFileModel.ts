@@ -1,15 +1,16 @@
 import * as fs from 'fs';
 import { isNull, isNullOrUndefined } from 'util';
 import { Common } from '../../Commons/Common';
-import { BaseDAO } from '../../DAO/BaseDao';
+import { BaseDao } from '../../DAO/BaseDao';
 import { FileModel } from './FileModel';
 
 export class SeekedFileModel extends FileModel {
 
     public readonly TargetDir: string;
     protected excludedFileNames: string[];
+    protected encoding: BufferEncoding = 'utf8';
 
-    constructor(dao: BaseDAO, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
+    constructor(dao: BaseDao, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
         super(dao);
         this.FileNameWithExtension = fileNameWithExtension;
         this.TargetDir = targetDir;
@@ -78,8 +79,8 @@ export class SeekedFileModel extends FileModel {
 
     public isExcludedFile(): boolean {
         // don't read files which have extension specified
-        for (let ext of this.ExcludedFileExtensions) {
-            const re = new RegExp(ext, "i");
+        for (const extension of this.ExcludedFileExtensions) {
+            const re = new RegExp(extension, "i");
             if (re.test(this.FileExtension)) {
                 return true;
             }
@@ -130,8 +131,8 @@ export class SeekedFileModel extends FileModel {
      */
     protected ignoreHiddenFile(): boolean {
         if (isNull(this._ignoreHiddenFile)) {
-            let ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
-            return this._ignoreHiddenFile = ignoreHiddenFile;    
+            const ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
+            return this._ignoreHiddenFile = ignoreHiddenFile;
         }
         return this._ignoreHiddenFile;
     }
