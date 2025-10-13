@@ -17,6 +17,10 @@ export class GrepController {
         inputBox.showInputBox(this.callback);
     }
 
+    public doActionWithParam(v: string): void {
+        this.callback(v);
+    }
+
     protected callback(v: string | undefined) {
         const searchWord = v;
 
