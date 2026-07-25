@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { Common } from '../../Commons/Common';
+import { Lazy } from '../../Commons/Lazy';
 import { BaseDao } from '../../DAO/BaseDao';
 import { FileModel } from './FileModel';
 
@@ -18,24 +19,13 @@ export class SeekedFileModel extends FileModel {
 
     //--- Override Functions ---
     public get FileName() {
-        if (this._fileName === null || this._fileName === undefined) {
-            const fileInfo = this.getFileNameAndExtension();
-            this._fileName = fileInfo[0];
-            this._fileExtension = fileInfo[1];            
-        }
-        return this._fileName;
+        return this._fileNameAndExtension.get()[0];
     }
-    protected _fileName: string | undefined;
 
     public get FileExtension() {
-        if (this._fileExtension === null || this._fileExtension === undefined) {
-            const fileInfo = this.getFileNameAndExtension();
-            this._fileName = fileInfo[0];
-            this._fileExtension = fileInfo[1];
-        }
-        return this._fileExtension;        
+        return this._fileNameAndExtension.get()[1];
     }
-    protected _fileExtension: string | undefined;
+    protected _fileNameAndExtension = new Lazy(() => this.getFileNameAndExtension());
 
     public readonly FileNameWithExtension: string;
 
@@ -61,25 +51,18 @@ export class SeekedFileModel extends FileModel {
     }
 
     public get Content(): string {
-        if (this._content === null || this._content === undefined) {
-            this._content = this.BufferContent.toString(this.encoding);
-        }
-        return this._content;
+        return this._content.get();
     }
-    protected _content: string | undefined;
+    protected _content = new Lazy(() => this.BufferContent.toString(this.encoding));
 
     protected get BufferContent(): Buffer {
-        if (this._bufferContent === null || this._bufferContent === undefined) {
-            this._bufferContent = fs.readFileSync(this.FullPath, null);
-        }
-        return this._bufferContent;
+        return this._bufferContent.get();
     }
-    protected _bufferContent: Buffer | undefined;
+    protected _bufferContent = new Lazy(() => fs.readFileSync(this.FullPath, null));
 
     public isExcludedFile(): boolean {
         // don't read files which have extension specified
-        for (const extension of this.ExcludedFileExtensions) {
-            const re = new RegExp(extension, "i");
+        for (const re of this.ExcludedFileExtensionPatterns) {
             if (re.test(this.FileExtension)) {
                 return true;
             }
@@ -118,25 +101,26 @@ export class SeekedFileModel extends FileModel {
      * Get file extensions which should be ignored when file search.
      */
     protected get ExcludedFileExtensions(): string[] {
-        if (this._excludedFileExtensions === null) {
-            return this._excludedFileExtensions = this._dao.getSettingValue('exclude',['']);
-        }
-        return this._excludedFileExtensions;
+        return this._excludedFileExtensions.get();
     }
-    protected _excludedFileExtensions: string[] | null = null;
+    protected _excludedFileExtensions = new Lazy(() => this._dao.getSettingValue('exclude', ['']));
+
+    /**
+     * Compiled once per instance instead of once per isExcludedFile() call.
+     */
+    protected get ExcludedFileExtensionPatterns(): RegExp[] {
+        return this._excludedFileExtensionPatterns.get();
+    }
+    protected _excludedFileExtensionPatterns = new Lazy(() => this.ExcludedFileExtensions.map(extension => new RegExp(extension, "i")));
 
 
     /**
      * You should ignore hidden file when file seek.
      */
     protected ignoreHiddenFile(): boolean {
-        if (this._ignoreHiddenFile === null) {
-            const ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
-            return this._ignoreHiddenFile = ignoreHiddenFile;
-        }
-        return this._ignoreHiddenFile;
+        return this._ignoreHiddenFile.get();
     }
-    protected _ignoreHiddenFile: boolean | null = null;
+    protected _ignoreHiddenFile = new Lazy(() => this._dao.getSettingValue('ignoreHiddenFile', true));
 
 
 

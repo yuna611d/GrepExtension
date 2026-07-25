@@ -49,17 +49,17 @@ export class SearchWordConfiguration {
         }
 
         // Set Initial  Configuration
-        this.setInitialConfiguration(this._escapeRegExpWord(searchWord));
+        this.setInitialConfiguration(this.escapeRegExpWord(searchWord));
 
         // re/<pattern>/<flags> -> [<pattern>, <flagCandidates>]
-        const splittedWords = this._getPatternAndFlagCandidates(searchWord);        
+        const splittedWords = this.getPatternAndFlagCandidates(searchWord);        
         // Get Pattern, which may be option of regexp
         const pattern = splittedWords[0];
         if (!pattern) {
             return;
         }
         // Get Flags from input word
-        const options = this._getFlags(splittedWords[1]);
+        const options = this.getFlags(splittedWords[1]);
 
         // Configure for regexp
         this.setRegExpMode(pattern, options);
@@ -90,26 +90,26 @@ export class SearchWordConfiguration {
     private _regExp: RegExp | null = null;
 
 
-    private _getPatternAndFlagCandidates(searchWord: string): Array<string | null>{    
+    private getPatternAndFlagCandidates(searchWord: string): Array<string | null>{    
 
         // StartPos
-        const startPos = this._getPatternStartPos(searchWord);
+        const startPos = this.getPatternStartPos(searchWord);
         if (!startPos) {
             return [null, null];
         }
         // EndPos
-        const endPos = this._getPatternEndPos(searchWord, startPos);
+        const endPos = this.getPatternEndPos(searchWord, startPos);
         if (!endPos){
             return [null, null];
         }
 
         // Return pattern and flagCandidates
-        const pattern = this._getPattern(searchWord, startPos, endPos);
-        const flags = this._getFlagCandidates(searchWord, endPos);
+        const pattern = this.getPattern(searchWord, startPos, endPos);
+        const flags = this.getFlagCandidates(searchWord, endPos);
         return [pattern, flags];
     }
 
-    private _getFlags(flagCandidates: string | null): string {
+    private getFlags(flagCandidates: string | null): string {
         const ALLOWED_OPTIONS = ["i"];
 
         return (flagCandidates || "").split("")
@@ -117,7 +117,7 @@ export class SearchWordConfiguration {
             .reduce((option, candidate) => {return option += candidate;}, "");
     }
 
-    private _getPatternStartPos(searchWord: string): number | null {
+    private getPatternStartPos(searchWord: string): number | null {
         const REGEXP_FORMAT_PREFIX = "re/"; 
         const startPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
         if (startPos === -1) {
@@ -125,7 +125,7 @@ export class SearchWordConfiguration {
         }
         return startPos + REGEXP_FORMAT_PREFIX.length;
     }
-    private _getPatternEndPos(searchWord: string, startPos: number): number | null{
+    private getPatternEndPos(searchWord: string, startPos: number): number | null{
         const REGEXP_FORMAT_POSTFIX = "/";
         const endPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
         if (endPos === -1 || startPos >= endPos) {
@@ -134,7 +134,7 @@ export class SearchWordConfiguration {
         return endPos;
     }
 
-    private _getPattern(searchWord: string, startPos: number, endPos: number): string | null{    
+    private getPattern(searchWord: string, startPos: number, endPos: number): string | null{    
         const pattern = searchWord.substring(startPos, endPos);
         if (pattern.length === 0) {
             return null;
@@ -142,7 +142,7 @@ export class SearchWordConfiguration {
         return pattern;
     }
 
-    private _getFlagCandidates(searchWord: string, startPos: number): string | null{    
+    private getFlagCandidates(searchWord: string, startPos: number): string | null{    
         const flags = searchWord.substring(startPos+ 1);
         if (flags.length === 0) {
             return null;
@@ -150,7 +150,7 @@ export class SearchWordConfiguration {
         return flags;
     }
 
-    private _escapeRegExpWord(word: string): string {
+    private escapeRegExpWord(word: string): string {
         return word.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
     }
 

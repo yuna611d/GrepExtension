@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { Common } from '../Commons/Common';
 import { Message } from '../Commons/Message';
 import { IService, AbsOptionalService } from '../Interface/IService';
-import { TimeKeeper } from '../Models/TimeKeeper';
+import { TimeKeeper, CancellationError } from '../Models/TimeKeeper';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
@@ -31,10 +31,14 @@ export class GrepService implements IService {
     protected resultFile: ResultFileModel;
     protected resultContent: ResultContentModel;
 
-    // TODO TimeKeeper should be observe from outside. However, at this time, inside of service
-    private timeKeeper = new TimeKeeper();
+    private timeKeeper: TimeKeeper;
 
-    constructor(resultFile: ResultFileModel, searchWord: string | undefined, optionalService: DecorationService) {
+    constructor(
+        resultFile: ResultFileModel,
+        searchWord: string | undefined,
+        optionalService: DecorationService,
+        timeKeeper: TimeKeeper = new TimeKeeper()
+    ) {
         // Check search word existence and reg exp mode
         this.searchConfig.configure(searchWord);
         this.resultFile = resultFile;
@@ -42,6 +46,7 @@ export class GrepService implements IService {
 
         // Optional Service
         this.optionalService = optionalService;
+        this.timeKeeper = timeKeeper;
     }
 
     public async doService(): Promise<IService> {
@@ -71,11 +76,7 @@ export class GrepService implements IService {
 
     protected prepareOptionalService(editor: vscode.TextEditor) {
         // Decorate found word
-        // Pickup positions found word in result file.
-        return this.optionalService
-                    .setParam(editor)
-                    .setParam(this.resultFile.FullPath)
-                    ;
+        return this.optionalService.setEditor(editor);
     }
 
     protected prepareGrep(): boolean {
@@ -101,9 +102,14 @@ export class GrepService implements IService {
             // Notify finish
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);
         } catch (e) {
-            console.debug(e);
-            // Notify cancellation
-            vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
+            if (e instanceof CancellationError) {
+                // Notify cancellation
+                vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
+            } else {
+                // A genuine failure, not a user-initiated cancellation - don't misreport it as one.
+                console.error(e);
+                vscode.window.showErrorMessage(Message.MESSAGE_ERROR);
+            }
         } finally {
             // Close any wrapping structure the format needs (no-op for txt/csv/tsv).
             await this.resultContent.addFooter();
@@ -147,7 +153,7 @@ export class GrepService implements IService {
             }
         }
 
-        this.optionalService.setParam(this.allRanges).doService();
+        this.optionalService.setRanges(this.allRanges).doService();
 
         this.timeKeeper.throwErrorIfCancelled();
     }

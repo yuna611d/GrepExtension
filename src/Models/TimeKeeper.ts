@@ -1,6 +1,18 @@
 import { performance } from 'perf_hooks';
 import * as vscode from 'vscode';
 
+/**
+ * Thrown by TimeKeeper.throwErrorIfCancelled() when the user chose to cancel a long-running
+ * grep. Lets callers tell an intentional cancellation apart from a genuine error, instead of
+ * treating every exception the same way.
+ */
+export class CancellationError extends Error {
+    constructor() {
+        super('GrepInterruptionError');
+        this.name = 'CancellationError';
+    }
+}
+
 export class TimeKeeper {
 
     protected _timeConsumingLimit = 3000;
@@ -40,8 +52,8 @@ export class TimeKeeper {
     public throwErrorIfCancelled() {
         this.checkConsumedTime();
         if (this._isCancelled) {
-            throw new Error('GrepInterruptionError');
-        }        
+            throw new CancellationError();
+        }
     }
 
 }

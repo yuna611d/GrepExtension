@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as vscode from 'vscode';
 import { BaseDao } from '../DAO/BaseDao';
 import { SettingDao } from '../DAO/SettingDao';
+import { Lazy } from './Lazy';
 
 export class Common {
     public static readonly LINE_BREAK = "\n";
@@ -22,17 +23,9 @@ export class Common {
      * Get the separator of file. 
      */
     public static get DIR_SEPARATOR(): string {
-        if (this._dirSeparator === null) {
-            const osType = os.type();
-            if (osType === 'Windows_NT') {
-                return this._dirSeparator =  "\\";
-            } else {
-                return this._dirSeparator = "/";
-            }
-        }
-        return this._dirSeparator;
+        return this._dirSeparator.get();
     }
-    private static _dirSeparator: string | null = null;
+    private static readonly _dirSeparator = new Lazy(() => os.type() === 'Windows_NT' ? "\\" : "/");
 
     public static get DAO(): BaseDao {
         if (this._dao === null || this._dao === undefined) {

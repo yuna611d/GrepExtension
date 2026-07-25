@@ -1,9 +1,10 @@
 import { Common } from "../../../Commons/Common";
+import { Lazy } from "../../../Commons/Lazy";
 import { BaseModel } from "../../../Interface/IModel";
 import { ResultFileModel } from "../../File/ResultFileModel";
 import { BaseDao } from "../../../DAO/BaseDao";
 import { ContentInformation } from "../ContentInformation";
-import { ContentInformationFactory as ContentInformationFactory } from "../../../ModelFactories/ContentInfomationFactory";
+import { ContentInformationFactory } from "../../../ModelFactories/ContentInformationFactory";
 
 
 export class ResultContentModel extends BaseModel {
@@ -203,12 +204,9 @@ export class ResultContentModel extends BaseModel {
      * You shouldn't output title of content if true is returned.
      */
     protected hasOutputTitle(): boolean {
-        if (this._hasOutputTitle === null) {
-            return this._hasOutputTitle = this._dao.getSettingValue('outputTitle', true);   
-        }
-        return this._hasOutputTitle;
+        return this._hasOutputTitle.get();
     }
-    protected _hasOutputTitle: boolean | null = null;
+    protected _hasOutputTitle = new Lazy(() => this._dao.getSettingValue('outputTitle', true));
  
 
 }
