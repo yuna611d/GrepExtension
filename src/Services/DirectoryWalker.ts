@@ -13,15 +13,15 @@ export class DirectoryWalker {
      */
     public async walk(
         targetDir: string,
-        excludedFileNames: string[],
+        excludedFullPaths: string[],
         onFile: (lines: NumberedFileLine[]) => Promise<void>
     ) {
-        const seekedFilesOrDirectories = this.fileRepository.retrieve(targetDir, excludedFileNames);
+        const seekedFilesOrDirectories = this.fileRepository.retrieve(targetDir, excludedFullPaths);
 
         // if file path is directory, re-walk by using file path as the next target directory
         const directories = seekedFilesOrDirectories.filter(target => target.isDirectory);
         for (const target of directories) {
-            await this.walk(target.FullPath, excludedFileNames, onFile);
+            await this.walk(target.FullPath, excludedFullPaths, onFile);
         }
 
         // if file path is file, read file and pass its lines to onFile

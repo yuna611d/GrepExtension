@@ -44,30 +44,27 @@ export class GrepService implements IService {
         this.optionalService = optionalService;
     }
 
-    public doService(): IService {
+    public async doService(): Promise<IService> {
         // Create and Get file path where result is outputted.
         const filePath = this.resultFile.addNewFile().FullPath;
 
         if (!this.prepareGrep()) { return this; }
 
-        vscode.workspace.openTextDocument(filePath).then(doc => {
-            vscode.window.showTextDocument(doc).then(async editor => {
-                // Set editor to resultFile
-                this.resultFile.initialize(editor);
-                // Write Title
-                await this.resultContent.addTitle();
-                // Write Column Title
-                await this.resultContent.addColumnTitle();
+        const doc = await vscode.workspace.openTextDocument(filePath);
+        const editor = await vscode.window.showTextDocument(doc);
 
-                // set params for optional service
-                this.optionalService = this.prepareOptionalService(editor);
+        // Set editor to resultFile
+        this.resultFile.initialize(editor);
+        // Write Title
+        await this.resultContent.addTitle();
+        // Write Column Title
+        await this.resultContent.addColumnTitle();
 
+        // set params for optional service
+        this.optionalService = this.prepareOptionalService(editor);
 
-                // Grep word
-                await this.grep();
-
-            });
-        });
+        // Grep word
+        await this.grep();
 
         return this;
     }
@@ -98,7 +95,7 @@ export class GrepService implements IService {
 
         // Do grep and write its found result.
         try {
-            await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FileNameWithExtension], r => this.findWordInAFile(r));
+            await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FullPath], r => this.findWordInAFile(r));
             // Flush whatever is left in the buffer (fewer than BATCH_SIZE matches).
             await this.flushPendingMatches();
             // Notify finish

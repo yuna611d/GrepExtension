@@ -6,14 +6,14 @@ import { FileModel } from './FileModel';
 export class SeekedFileModel extends FileModel {
 
     public readonly TargetDir: string;
-    protected excludedFileNames: string[];
+    protected excludedFullPaths: string[];
     protected encoding: BufferEncoding = 'utf8';
 
-    constructor(dao: BaseDao, fileNameWithExtension: string, targetDir: string, excludedFileNames: string[]) {
+    constructor(dao: BaseDao, fileNameWithExtension: string, targetDir: string, excludedFullPaths: string[]) {
         super(dao);
         this.FileNameWithExtension = fileNameWithExtension;
         this.TargetDir = targetDir;
-        this.excludedFileNames = excludedFileNames;
+        this.excludedFullPaths = excludedFullPaths;
     }
 
     //--- Override Functions ---
@@ -84,8 +84,9 @@ export class SeekedFileModel extends FileModel {
                 return true;
             }
         }
-        // don't read result file.
-        return this.excludedFileNames.includes(this.FileNameWithExtension);
+        // don't read result file. Compared by full path (not just basename) so a same-named
+        // fixture nested in a subdirectory isn't mistaken for the actual output file.
+        return this.excludedFullPaths.includes(this.FullPath);
     }
     
     public isIgnoredFileOrDirectory(): boolean {

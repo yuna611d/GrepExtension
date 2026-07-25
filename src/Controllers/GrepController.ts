@@ -17,19 +17,17 @@ export class GrepController {
         inputBox.showInputBox(this.callback);
     }
 
-    public doActionWithParam(v: string): void {
-        this.callback(v);
+    public async doActionWithParam(v: string): Promise<void> {
+        await this.callback(v);
     }
 
-    protected callback(v: string | undefined) {
+    protected async callback(v: string | undefined): Promise<void> {
         const searchWord = v;
 
         // Prepare configuration and utilities
         const resultFile = new FileModelFactory().retrieve();
 
         // Prepare services to be used
-        new GrepService(resultFile, searchWord, new DecorationService()).doService();
-
-        return () => {};
+        await new GrepService(resultFile, searchWord, new DecorationService()).doService();
     }
 }
