@@ -37,10 +37,7 @@ suite('Extension Test Suite - txt output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('lo');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('lo');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -74,10 +71,7 @@ suite('Extension Test Suite - txt output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('re/lo.*it/');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('re/lo.*it/');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -117,10 +111,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('lo');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('lo');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -154,10 +145,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('re/lo.*it/');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('re/lo.*it/');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -197,10 +185,7 @@ suite('Extension Test Suite - csv output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('lo');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('lo');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -234,10 +219,7 @@ suite('Extension Test Suite - csv output', () => {
 		// MEMO : command 後、inputbox へ値をセットすることは難しいらいため、UI操作ではなくControllerを操作
 		// vscode.commands.executeCommand('extension.grepResult2File');
 		const controller = new GrepController();
-		controller.doActionWithParam('re/lo.*it/');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('re/lo.*it/');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -275,10 +257,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Execute command
 		const controller = new GrepController();
-		controller.doActionWithParam('lo');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('lo');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
@@ -311,10 +290,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Execute command
 		const controller = new GrepController();
-		controller.doActionWithParam('re/lo.*it/');
-
-		// Wait for the process to complete
-		await (async () => {return new Promise(resolve => setTimeout(resolve, 5000));})();
+		await controller.doActionWithParam('re/lo.*it/');
 
 		// Get actual result
 		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
