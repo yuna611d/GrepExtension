@@ -1,9 +1,13 @@
 .vscode/**
 .vscode-test/**
+.vscode-test.mjs
+.claude/**
 out/test/**
 out/**/*.map
 src/**
 .gitignore
+.eslintrc*
+eslint.config.mjs
 tsconfig.json
 vsc-extension-quickstart.md
 tslint.json
