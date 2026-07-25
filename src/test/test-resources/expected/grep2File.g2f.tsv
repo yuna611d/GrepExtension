@@ -1,4 +1,5 @@
-GrepConf	FilePath	lineNumber	TextLineSearch Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo | RegExpMode: OFF	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	2	"Lorem ipsum dolor sit amet, 
+GrepConf	FilePath	lineNumber	TextLine
+Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo | RegExpMode: OFF	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	2	"Lorem ipsum dolor sit amet, 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo | RegExpMode: OFF	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	5	labore et dolore magna aliqua. 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo | RegExpMode: OFF	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo | RegExpMode: OFF	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	9	in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 

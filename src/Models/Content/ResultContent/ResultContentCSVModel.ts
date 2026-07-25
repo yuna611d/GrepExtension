@@ -1,3 +1,4 @@
+import { Common } from "../../../Commons/Common";
 import { ResultContentModel } from "./ResultContentModel";
 
 export class ResultContentCSVModel extends ResultContentModel {
@@ -19,6 +20,10 @@ export class ResultContentCSVModel extends ResultContentModel {
         if (!this.hasOutputTitle()) {
             contents.shift();
         }
-        return contents.join(this.SEPARATOR);
+        // A trailing line break is required: ResultFileModel positions each insert at
+        // Position(document.lineCount, 0), which only lands on a fresh line when the
+        // previous insert actually ended one. Without it, rows are pasted together
+        // with no separator at all.
+        return contents.join(this.SEPARATOR) + Common.LINE_BREAK;
     }
 }
