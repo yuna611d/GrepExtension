@@ -1,23 +1,22 @@
 'use strict';
 import * as vscode from 'vscode';
-import { isNullOrUndefined, isNull } from 'util';
 import { Common } from '../Commons/Common';
 import { Message } from '../Commons/Message';
 import { IService, AbsOptionalService } from '../Interface/IService';
 import { TimeKeeper } from '../Models/TimeKeeper';
-import { FileRepository } from '../Models/File/FileRepository';
 import { ResultFileModel } from '../Models/File/ResultFileModel';
-import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { ResultContentModelFactory } from '../ModelFactories/ResultContentModelFactory';
 import { ResultContentModel } from '../Models/Content/ResultContent/ResultContentModel';
 import { DecorationService } from './DecorationService';
 import { SearchWordConfiguration } from '../Models/SearchWordConfiguration';
+import { DirectoryWalker, NumberedFileLine } from './DirectoryWalker';
+import { LineMatcher } from './LineMatcher';
 
 export class GrepService implements IService {
 
     protected searchConfig = new SearchWordConfiguration();
     protected optionalService: AbsOptionalService;
-    protected fileRepository: FileRepository = new FileRepository();
+    protected directoryWalker = new DirectoryWalker();
     protected resultFile: ResultFileModel;
     protected resultContent: ResultContentModel;
 
@@ -59,11 +58,11 @@ export class GrepService implements IService {
             });
         });
 
-        return this;                         
+        return this;
     }
 
     protected prepareOptionalService(editor: vscode.TextEditor) {
-        // Decorate found word     
+        // Decorate found word
         // Pickup positions found word in result file.
         return this.optionalService
                     .setParam(editor)
@@ -76,116 +75,60 @@ export class GrepService implements IService {
             vscode.window.showInformationMessage(Message.MESSAGE_FAILED);
             return false;
         }
-        
+
         // set Configuration
-        this.resultContent.setGrepConditionText(Common.BASE_DIR, 
-                {searchWord: this.searchConfig.SearchWord, 
+        this.resultContent.setGrepConditionText(Common.BASE_DIR,
+                {searchWord: this.searchConfig.SearchWord,
                  isRegExpMode: this.searchConfig.IsRegExpMode});
         return true;
     }
 
-    public async grep() {        
+    public async grep() {
 
         // Do grep and write its found result.
         try {
-            await this.seekDirectoryOrInsertText();
+            await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FileNameWithExtension], r => this.findWordInAFile(r));
             // Notify finish
-            vscode.window.showInformationMessage(Message.MESSAGE_FINISH);    
+            vscode.window.showInformationMessage(Message.MESSAGE_FINISH);
         } catch (e) {
             console.debug(e);
             // Notify cancellation
             vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
+        } finally {
+            // Close any wrapping structure the format needs (no-op for txt/csv/tsv).
+            await this.resultContent.addFooter();
         }
-        
+
     }
 
-    /**
-     * Read file and check if line contain search word or not.
-     * @param nextTargetDir directory where is next target.
-     */
-    protected async seekDirectoryOrInsertText(nextTargetDir: string | null = null) {        
-        // Get target directory
-        const targetDir = this.getTargetDir(nextTargetDir);
-        if (isNull(targetDir)) {
-            return;
-        }
-
-        const seekedFilesOrDirectories = this.fileRepository.retrieve(targetDir, [this.resultFile.FileNameWithExtension]);
-        // if file path is directory, re-grep by using file path as nextTargetDir
-        const directories = seekedFilesOrDirectories.filter(target => target.isDirectory);
-        for (const target of directories) { 
-            await this.seekDirectoryOrInsertText(target.FullPath);
-        }
-
-        // if file path is file, read file and insert grep results to editor
-        const files = seekedFilesOrDirectories.filter(f => f.isFile).filter(f => !f.seemsBinary);
-        for (const f of files) {
-            await this.readContent(f).then(async r => await this.findWordInAFile(r));   
-        }
-    }
-
-
-    async findWordInAFile(r: {filePath:string, lineText: string, lineNumber: number}[]) {
-        const content = r.filter(v => this.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
+    protected async findWordInAFile(r: NumberedFileLine[]) {
+        const content = r.filter(v => LineMatcher.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
         for (const v of content) {
             await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
             .then(async () => this.optionalService
                 .setParam(await this.findWordsWithRange())
                 .doService())
-            .then(() => this.timeKeeper.throwErrorIfCancelled()); 
+            .then(() => this.timeKeeper.throwErrorIfCancelled());
         }
     }
-
-    
-    protected async readContent (file: SeekedFileModel, startLine?: number) {
-        const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
-        const lines = file.Content.split(Common.LINE_BREAK);
-        const counter = (s: number) => {let i=s; return ()=>{return ++i;}; };
-        const lineCounter = counter(start);
-        return  lines.slice(start)
-                     .map(line => { 
-                         return {
-                             filePath: file.FullPath,
-                             lineText: line, 
-                             lineNumber: lineCounter()};
-                    });
-    }
-    
-    protected async findWord(
-        content: string,
-        action: (foundWordInfo: { lineText: string; lineNumber: number }) => Promise<void>,
-        startLine?: number
-    ) {
-        const start = (isNullOrUndefined(startLine)) ? 0 : startLine;
-        const lines = content.split(Common.LINE_BREAK);
-        const counter = (s: number) => {let i=s; return ()=>{return ++i;}; };
-        const lineCounter = counter(start);
-        const foundWordInfo = lines.slice(start)
-                                    .map(line => { return {lineText: line, lineNumber: lineCounter()};});
-        for (const v of foundWordInfo) { await action(v); }
-
-    }
-
 
     public async findWordsWithRange(): Promise<Array<vscode.Range>> {
         const ranges: vscode.Range[] = [];
 
-        // Action when search word is found
-        const action = async (foundWordInfo: {lineText: string; lineNumber: number;}) => {
-            const splittedTexts = foundWordInfo.lineText.split(this.resultContent.SEPARATOR);
-            const contentText = (splittedTexts.length >= this.resultContent.columnPosition.content) ? splittedTexts[this.resultContent.columnPosition.content] : "";
-            const searchStartPos = splittedTexts.map(x => x.length)
-                                                .reduce((a, v, i) => (i < this.resultContent.columnPosition.content) ? a + v + this.resultContent.SEPARATOR.length : a) + this.resultContent.SEPARATOR.length;
+        const lines = LineMatcher.splitIntoNumberedLines(this.resultFile.getText(), this.resultContent.lineNumberOfContentStart);
+        for (const foundWordInfo of lines) {
+            const extracted = this.resultContent.extractContentAndOffset(foundWordInfo.lineText);
+            if (extracted === null) {
+                continue;
+            }
 
             const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = this.getFindWordRange(this.searchConfig.getRegExp(true), contentText, lineNumber, searchStartPos);
-            if (!isNull(range)) {
+            const range = this.getFindWordRange(this.searchConfig.getRegExp(true), extracted.text, lineNumber, extracted.offset);
+            if (range !== null) {
                 ranges.push(range);
             }
-        };
+        }
 
-
-        await this.findWord(this.resultFile.getText(), action, this.resultContent.lineNumberOfContentStart);
         return ranges;
     }
 
@@ -197,7 +140,7 @@ export class GrepService implements IService {
     protected getFindWordRange (re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
         re.lastIndex = 0;
         const result = re.exec(targetString);
-        if (isNull(result)) {
+        if (result === null) {
             return null;
         }
 
@@ -207,18 +150,6 @@ export class GrepService implements IService {
         const startPosition = new vscode.Position(lineNumber, startIndex);
         const endPosition = new vscode.Position(lineNumber, endIndex);
         return new vscode.Range(startPosition, endPosition);
-    }
-
-    /**
-     * Check if line contains search word or not.
-     * @param targetString 
-     */
-    protected isContainSearchWord(re: RegExp, targetString: string): boolean {
-        return re.test(targetString);
-    }
-
-    protected getTargetDir(nextTargetDir: string | null) {
-        return (isNull(nextTargetDir)) ? Common.BASE_DIR : nextTargetDir;
     }
 
 }

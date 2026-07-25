@@ -1,5 +1,4 @@
 import * as os from 'os';
-import { isNullOrUndefined, isNull } from "util";
 import * as vscode from 'vscode';
 import { BaseDao } from '../DAO/BaseDao';
 import { SettingDao } from '../DAO/SettingDao';
@@ -13,7 +12,7 @@ export class Common {
     public static get BASE_DIR(): string {
         // TODO in the future, multi work space should be apply
         const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!isNullOrUndefined(workspaceFolders) && workspaceFolders.length !== 0) {
+        if (workspaceFolders !== null && workspaceFolders !== undefined && workspaceFolders.length !== 0) {
             return workspaceFolders[0].uri.fsPath;
         }
         return "";
@@ -23,7 +22,7 @@ export class Common {
      * Get the separator of file. 
      */
     public static get DIR_SEPARATOR(): string {
-        if (isNull(this._dirSeparator)) {
+        if (this._dirSeparator === null) {
             const osType = os.type();
             if (osType === 'Windows_NT') {
                 return this._dirSeparator =  "\\";
@@ -36,7 +35,7 @@ export class Common {
     private static _dirSeparator: string | null = null;
 
     public static get DAO(): BaseDao {
-        if (isNullOrUndefined(this._dao)) {
+        if (this._dao === null || this._dao === undefined) {
             this._dao = new SettingDao();
         }
         return this._dao;

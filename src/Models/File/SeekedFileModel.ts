@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { isNull, isNullOrUndefined } from 'util';
 import { Common } from '../../Commons/Common';
 import { BaseDao } from '../../DAO/BaseDao';
 import { FileModel } from './FileModel';
@@ -19,7 +18,7 @@ export class SeekedFileModel extends FileModel {
 
     //--- Override Functions ---
     public get FileName() {
-        if (isNullOrUndefined(this._fileName)) {
+        if (this._fileName === null || this._fileName === undefined) {
             const fileInfo = this.getFileNameAndExtension();
             this._fileName = fileInfo[0];
             this._fileExtension = fileInfo[1];            
@@ -29,7 +28,7 @@ export class SeekedFileModel extends FileModel {
     protected _fileName: string | undefined;
 
     public get FileExtension() {
-        if (isNullOrUndefined(this._fileExtension)) {
+        if (this._fileExtension === null || this._fileExtension === undefined) {
             const fileInfo = this.getFileNameAndExtension();
             this._fileName = fileInfo[0];
             this._fileExtension = fileInfo[1];
@@ -62,7 +61,7 @@ export class SeekedFileModel extends FileModel {
     }
 
     public get Content(): string {
-        if (isNullOrUndefined(this._content)) {
+        if (this._content === null || this._content === undefined) {
             this._content = this.BufferContent.toString(this.encoding);
         }
         return this._content;
@@ -70,7 +69,7 @@ export class SeekedFileModel extends FileModel {
     protected _content: string | undefined;
 
     protected get BufferContent(): Buffer {
-        if (isNullOrUndefined(this._bufferContent)) {
+        if (this._bufferContent === null || this._bufferContent === undefined) {
             this._bufferContent = fs.readFileSync(this.FullPath, null);
         }
         return this._bufferContent;
@@ -118,7 +117,7 @@ export class SeekedFileModel extends FileModel {
      * Get file extensions which should be ignored when file search.
      */
     protected get ExcludedFileExtensions(): string[] {
-        if (isNull(this._excludedFileExtensions)) {
+        if (this._excludedFileExtensions === null) {
             return this._excludedFileExtensions = this._dao.getSettingValue('exclude',['']);
         }
         return this._excludedFileExtensions;
@@ -130,7 +129,7 @@ export class SeekedFileModel extends FileModel {
      * You should ignore hidden file when file seek.
      */
     protected ignoreHiddenFile(): boolean {
-        if (isNull(this._ignoreHiddenFile)) {
+        if (this._ignoreHiddenFile === null) {
             const ignoreHiddenFile: boolean = this._dao.getSettingValue('ignoreHiddenFile', true);
             return this._ignoreHiddenFile = ignoreHiddenFile;
         }

@@ -1,6 +1,5 @@
 import { BaseModelFactory } from "../Interface/IModelFactory";
 import { ResultFileModel } from "../Models/File/ResultFileModel";
-import { isNullOrUndefined } from "util";
 import { ResultContentModel } from "../Models/Content/ResultContent/ResultContentModel";
 import { ResultContentTSVModel } from "../Models/Content/ResultContent/ResultContentTSVModel";
 import { ResultContentCSVModel } from "../Models/Content/ResultContent/ResultContentCSVModel";
@@ -16,7 +15,7 @@ export class ResultContentModelFactory extends BaseModelFactory {
     }
     public retrieve() {
 
-        if (isNullOrUndefined(this.resultFile)) {
+        if (this.resultFile === null || this.resultFile === undefined) {
             return new ResultContentModel(this._dao, this.resultFile);
         }
         // TODO this should be duck or override function        
@@ -33,7 +32,6 @@ export class ResultContentModelFactory extends BaseModelFactory {
                 return new ResultContentCSVModel(this._dao, this.resultFile);
                 break;
             case "json":
-                // TODO implement in the future
                 return new ResultContentJSONModel(this._dao, this.resultFile);
             default:
                 return new ResultContentModel(this._dao, this.resultFile);

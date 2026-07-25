@@ -1,6 +1,5 @@
 import { Common } from "../../../Commons/Common";
 import { BaseModel } from "../../../Interface/IModel";
-import { isNull } from "util";
 import { ResultFileModel } from "../../File/ResultFileModel";
 import { BaseDao } from "../../../DAO/BaseDao";
 import { ContentInformation } from "../ContentInformation";
@@ -78,6 +77,18 @@ export class ResultContentModel extends BaseModel {
         const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
         return content;
     }
+    /**
+     * Extract the searchable text and its character offset within lineText (a line of this model's
+     * own formatted output, e.g. one row previously produced by getContentInOneLine).
+     * Returns null when this format has no meaningful searchable offset (see ResultContentJSONModel).
+     */
+    public extractContentAndOffset(lineText: string): { text: string; offset: number } | null {
+        const splittedTexts = lineText.split(this.SEPARATOR);
+        const contentText = (splittedTexts.length >= this.columnPosition.content) ? splittedTexts[this.columnPosition.content] : "";
+        const offset = splittedTexts.map(x => x.length)
+                                     .reduce((a, v, i) => (i < this.columnPosition.content) ? a + v + this.SEPARATOR.length : a) + this.SEPARATOR.length;
+        return { text: contentText, offset };
+    }
     //------ Contents ------
 
 
@@ -103,7 +114,15 @@ export class ResultContentModel extends BaseModel {
         this._lineNumberOfCursor = await this.insertAndStackContent(content);
     }
 
-    private async insertAndStackContent(content: string) {
+    /**
+     * Called once after grepping finishes (success or cancellation). No-op by default;
+     * overridden by formats that need to close a wrapping structure (e.g. json's closing "]").
+     */
+    public async addFooter(): Promise<void> {
+        // no-op for txt/csv/tsv
+    }
+
+    protected async insertAndStackContent(content: string) {
         // Insert result
         const insertedLineNumber = await this._resultFileModel.insertText(content);
         // Stack ContentInformation
@@ -130,7 +149,7 @@ export class ResultContentModel extends BaseModel {
      * You shouldn't output title of content if true is returned.
      */
     protected hasOutputTitle(): boolean {
-        if (isNull(this._hasOutputTitle)) {
+        if (this._hasOutputTitle === null) {
             return this._hasOutputTitle = this._dao.getSettingValue('outputTitle', true);   
         }
         return this._hasOutputTitle;
