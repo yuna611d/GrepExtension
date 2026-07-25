@@ -1,5 +1,4 @@
 'use strict';
-import { isNullOrUndefined, isNull } from 'util';
 
 export class SearchWordConfiguration {
 
@@ -33,7 +32,7 @@ export class SearchWordConfiguration {
     }
 
     hasValidSearchWord(): boolean {
-        if (isNullOrUndefined(this.SearchWord) || this.SearchWord.length === 0) {
+        if (this.SearchWord === null || this.SearchWord === undefined || this.SearchWord.length === 0) {
             return false;
         }
         return true;
@@ -45,7 +44,7 @@ export class SearchWordConfiguration {
      */
     public configure(searchWord: string | null | undefined) {
         // Guard
-        if (isNullOrUndefined(searchWord)) {
+        if (searchWord === null || searchWord === undefined) {
             return;
         }
 
@@ -70,10 +69,14 @@ export class SearchWordConfiguration {
     public getRegExp(isGlobal?: boolean): RegExp {
 
         if (isGlobal) {
-            return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions + 'g');
+            // Intentionally not cached into this._regExp: that field backs the non-global
+            // getRegExp() calls below, and a global-flagged RegExp is stateful (its lastIndex
+            // advances on every exec/test). Caching it there would let a later non-global call
+            // silently receive a stateful regex and start missing matches depending on call order.
+            return new RegExp(this.SearchWord, this.RegExpOptions + 'g');
         }
 
-        if (isNull(this._regExp)) {
+        if (this._regExp === null) {
             if (this.IsRegExpMode) {
                 return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
             } else {

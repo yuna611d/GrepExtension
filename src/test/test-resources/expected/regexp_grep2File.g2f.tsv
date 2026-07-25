@@ -1,4 +1,5 @@
-GrepConf	FilePath	lineNumber	TextLineSearch Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo.*it | RegExpMode: ON	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	2	"Lorem ipsum dolor sit amet, 
+GrepConf	FilePath	lineNumber	TextLine
+Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo.*it | RegExpMode: ON	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	2	"Lorem ipsum dolor sit amet, 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo.*it | RegExpMode: ON	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\dir1-1\fileC.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo.*it | RegExpMode: ON	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\fileB.txt	2	"Lorem ipsum dolor sit amet, 
 Search Dir: c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input | Search Word: lo.*it | RegExpMode: ON	c:\work\repo\vs_extensions\GrepExtension\src\test\test-resources\input\dir1\fileB.txt	8	ea commodo consequat. Duis aute irure dolor in reprehenderit 

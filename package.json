@@ -2,7 +2,7 @@
     "name": "grep2file",
     "displayName": "grep2file",
     "description": "grep word and output result to file",
-    "version": "0.5.5",
+    "version": "0.6.0",
     "publisher": "yuna611d",
     "engines": {
         "vscode": "^1.105.0"
@@ -47,7 +47,7 @@
                 "grep2file.outputContentFormat": {
                     "type": "string",
                     "default": "txt",
-                    "description": "File format of result file. You can opt from txt, csv or tsv."
+                    "description": "File format of result file. You can opt from txt, csv, tsv or json."
                 },
                 "grep2file.outputTitle": {
                     "type": "boolean",
@@ -81,8 +81,5 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/yuna611d/GrepExtension.git"
-    },
-    "dependencies": {
-        "perf_hooks": "0.0.1"
     }
 }

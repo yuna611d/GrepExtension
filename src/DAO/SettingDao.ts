@@ -1,8 +1,5 @@
 import { BaseDao } from './BaseDao';
 import * as vscode from 'vscode';
-import {
-    isNullOrUndefined, isBoolean
-} from 'util';
 
 export class SettingDao extends BaseDao{
 
@@ -22,10 +19,10 @@ export class SettingDao extends BaseDao{
         // Get the value from setting.json
         const value = this.getValue(key);
         // If any value is configured in setting.json, passed default value is returned.
-        if (isNullOrUndefined(value)) {
+        if (value === null || value === undefined) {
             return defaultValue;
         } else {
-            if (!isBoolean(value) && value.length === 0) {
+            if (typeof value !== 'boolean' && value.length === 0) {
                 return defaultValue;
             }
         }

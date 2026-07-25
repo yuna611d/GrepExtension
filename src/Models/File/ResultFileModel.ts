@@ -1,4 +1,3 @@
-import { isNull } from "util";
 import { Common } from "../../Commons/Common";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
@@ -19,7 +18,7 @@ export class ResultFileModel extends FileModel {
      * Output file name.
      */
     public get FileName(): string {
-        if (isNull(this._fileName)) {
+        if (this._fileName === null) {
             const defaultFileName = 'grep2File.g2f';
             // configuration for output file name
             return this._fileName = this._dao.getSettingValue('outputFileName', defaultFileName);    
@@ -30,12 +29,11 @@ export class ResultFileModel extends FileModel {
 
     /**
      * Output content format(extension).
-     * You can opt from txt, tsv, csv.
+     * You can opt from txt, tsv, csv, json.
      */
     public get FileExtension(): string {
-        if (isNull(this._fileExtension)) {
+        if (this._fileExtension === null) {
             const defaultFormat = "txt";
-            // TODO json format will be implemented in the future
             const allowedContentFormats = ["txt", "tsv", "csv", "json"];
     
             const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
@@ -100,13 +98,33 @@ export class ResultFileModel extends FileModel {
         });
 
         // return inserted line number
-        const lineCount = this.getLastLine(editor); 
+        const lineCount = this.getLastLine(editor);
         return lineCount === 0 ? 0 : lineCount - 1;
     }
 
-    public getText(): string {
+    /**
+     * Insert a block made of several newline-terminated chunks (e.g. several grep matches
+     * concatenated together) with a single editor edit, instead of one edit per chunk.
+     * Each editor.edit() call is a round-trip to the main/renderer process, so issuing one per
+     * matched line makes grepping extremely sensitive to whatever else VS Code's UI thread is
+     * doing (typing, clicking, etc.); batching multiple chunks into one edit avoids that.
+     *
+     * Returns the 0-indexed document line of the *first* chunk. Because every previous insert
+     * here always ends with a line break, the document's current last line is empty and gets
+     * filled by the first chunk, so that starting line is (current line count - 1); each
+     * subsequent chunk then lands on the following line.
+     */
+    public async insertTextBlock(content: string): Promise<number> {
         const editor = this._editor!;
-        return editor.document.getText();
+        const startLine = Math.max(this.getLastLine(editor) - 1, 0);
+
+        if (content === "") { return startLine; }
+
+        await editor.edit(editBuilder => {
+            editBuilder.insert(this.getPosition(editor), content);
+        });
+
+        return startLine;
     }
 
 }

@@ -2,6 +2,22 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## 0.6.0
+
+- Added following feature
+
+  - JSON output format
+
+- Fixed following bugs
+
+  - Extension failed to build/run on newer Node/VS Code versions due to a file casing mismatch and use of removed Node APIs
+  - csv/tsv output could lose the separator between matched lines
+  - Match counts could differ between output formats for the same search
+
+- Performance improvement
+
+  - Results are now written in batches instead of one edit per matched line
+
 ## 0.5.5
 
 - Update dependency modules
