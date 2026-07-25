@@ -69,7 +69,11 @@ export class SearchWordConfiguration {
     public getRegExp(isGlobal?: boolean): RegExp {
 
         if (isGlobal) {
-            return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions + 'g');
+            // Intentionally not cached into this._regExp: that field backs the non-global
+            // getRegExp() calls below, and a global-flagged RegExp is stateful (its lastIndex
+            // advances on every exec/test). Caching it there would let a later non-global call
+            // silently receive a stateful regex and start missing matches depending on call order.
+            return new RegExp(this.SearchWord, this.RegExpOptions + 'g');
         }
 
         if (this._regExp === null) {

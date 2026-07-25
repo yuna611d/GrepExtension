@@ -115,6 +115,44 @@ export class ResultContentModel extends BaseModel {
     }
 
     /**
+     * Same as calling addLine() once per entry, but writes the whole batch with a single
+     * editor edit instead of one edit per line. Returns, for each entry in the same order,
+     * the document line it landed on plus its searchable-text offset (for decoration ranges)
+     * so callers never need to read the document back to find out where their match ended up.
+     */
+    public async addLines(entries: Array<{ filePath: string; lineNumber: string; line: string }>)
+        : Promise<Array<{ documentLineNumber: number; extracted: { text: string; offset: number } | null }>> {
+
+        if (entries.length === 0) {
+            return [];
+        }
+
+        // Build every entry's formatted content up front (pure string work, no editor round-trip).
+        const formattedContents = entries.map(e =>
+            this.getFormattedContent([this._grepConditionText, e.filePath, e.lineNumber, e.line])
+        );
+
+        const firstLineNumber = await this.insertAndStackContentBlock(formattedContents);
+
+        // extractContentAndOffset expects a single document line (no trailing break), the same
+        // shape LineMatcher.splitIntoNumberedLines used to hand it back when this ran off a
+        // full-document rescan. Strip the trailing Common.LINE_BREAK that getFormattedContent
+        // adds before handing each chunk over.
+        const results = formattedContents.map((content, i) => {
+            const lineText = content.endsWith(Common.LINE_BREAK)
+                ? content.slice(0, -Common.LINE_BREAK.length)
+                : content;
+            return {
+                documentLineNumber: firstLineNumber + i,
+                extracted: this.extractContentAndOffset(lineText)
+            };
+        });
+
+        this._lineNumberOfCursor = firstLineNumber + formattedContents.length - 1;
+        return results;
+    }
+
+    /**
      * Called once after grepping finishes (success or cancellation). No-op by default;
      * overridden by formats that need to close a wrapping structure (e.g. json's closing "]").
      */
@@ -131,6 +169,22 @@ export class ResultContentModel extends BaseModel {
 
         // return inserted line number
         return insertedLineNumber;
+    }
+
+    /**
+     * Batched counterpart of insertAndStackContent(): writes several already-formatted chunks
+     * with one editor edit and returns the document line of the first chunk.
+     */
+    protected async insertAndStackContentBlock(formattedContents: string[]): Promise<number> {
+        const combinedContent = formattedContents.join('');
+        const firstLineNumber = await this._resultFileModel.insertTextBlock(combinedContent);
+
+        formattedContents.forEach((content, i) => {
+            const contentInfo = this._contentFactory.retrieve(content, firstLineNumber + i);
+            this.contentInformations.push(contentInfo);
+        });
+
+        return firstLineNumber;
     }
     //------ Operation  of ResultFile (Interact with Service) ------
 

@@ -20,14 +20,14 @@ suite('ResultContentCSVModel', () => {
 		const dao = new FakeDao({ outputTitle: true });
 		const model = new ResultContentCSVModel(dao, new ResultFileModel(dao));
 
-		assert.strictEqual(model.ColumnTitle, 'GrepConf,FilePath,lineNumber,TextLine');
+		assert.strictEqual(model.ColumnTitle, 'GrepConf,FilePath,lineNumber,TextLine\n');
 	});
 
 	test('ColumnTitle drops the GrepConf column when outputTitle is off', () => {
 		const dao = new FakeDao({ outputTitle: false });
 		const model = new ResultContentCSVModel(dao, new ResultFileModel(dao));
 
-		assert.strictEqual(model.ColumnTitle, 'FilePath,lineNumber,TextLine');
+		assert.strictEqual(model.ColumnTitle, 'FilePath,lineNumber,TextLine\n');
 	});
 
 	test('getContentInOneLine embeds the grep condition (" | " joined) into every row when outputTitle is on', () => {
@@ -38,7 +38,7 @@ suite('ResultContentCSVModel', () => {
 		const line = model.getContentInOneLine('c:\\some\\file.csv', '3', 'matched text');
 		assert.strictEqual(
 			line,
-			'Search Dir: C:\\base | Search Word: lo | RegExpMode: OFF,c:\\some\\file.csv,3,matched text'
+			'Search Dir: C:\\base | Search Word: lo | RegExpMode: OFF,c:\\some\\file.csv,3,matched text\n'
 		);
 	});
 
@@ -48,7 +48,7 @@ suite('ResultContentCSVModel', () => {
 		model.setGrepConditionText(BASE_DIR, GREP_CONDITION);
 
 		const line = model.getContentInOneLine('c:\\some\\file.csv', '3', 'matched text');
-		assert.strictEqual(line, 'c:\\some\\file.csv,3,matched text');
+		assert.strictEqual(line, 'c:\\some\\file.csv,3,matched text\n');
 	});
 
 });

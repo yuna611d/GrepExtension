@@ -14,6 +14,17 @@ import { LineMatcher } from './LineMatcher';
 
 export class GrepService implements IService {
 
+    // Matches are buffered and flushed together instead of one editor.edit()/setDecorations()
+    // call per matched line. Each of those calls is a round-trip to VS Code's main/renderer
+    // process, so doing one per line makes grepping progress hostage to whatever else the UI
+    // thread is busy with (typing, clicking, scrolling, ...) - operating VS Code while a grep
+    // is running could stall the whole search until the UI went idle again. Batching cuts the
+    // number of round-trips by ~BATCH_SIZE and also avoids doing the write in lock-step with
+    // the UI thread.
+    protected static readonly BATCH_SIZE = 40;
+    protected pendingMatches: NumberedFileLine[] = [];
+    protected allRanges: vscode.Range[] = [];
+
     protected searchConfig = new SearchWordConfiguration();
     protected optionalService: AbsOptionalService;
     protected directoryWalker = new DirectoryWalker();
@@ -88,6 +99,8 @@ export class GrepService implements IService {
         // Do grep and write its found result.
         try {
             await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FileNameWithExtension], r => this.findWordInAFile(r));
+            // Flush whatever is left in the buffer (fewer than BATCH_SIZE matches).
+            await this.flushPendingMatches();
             // Notify finish
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);
         } catch (e) {
@@ -103,33 +116,43 @@ export class GrepService implements IService {
 
     protected async findWordInAFile(r: NumberedFileLine[]) {
         const content = r.filter(v => LineMatcher.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
-        for (const v of content) {
-            await this.resultContent.addLine(v.filePath, v.lineNumber.toString(), v.lineText)
-            .then(async () => this.optionalService
-                .setParam(await this.findWordsWithRange())
-                .doService())
-            .then(() => this.timeKeeper.throwErrorIfCancelled());
+        this.pendingMatches.push(...content);
+
+        if (this.pendingMatches.length >= GrepService.BATCH_SIZE) {
+            await this.flushPendingMatches();
         }
     }
 
-    public async findWordsWithRange(): Promise<Array<vscode.Range>> {
-        const ranges: vscode.Range[] = [];
+    /**
+     * Write every buffered match with a single editor edit, update decorations once for the
+     * whole batch, then check for cancellation. Called every BATCH_SIZE matches and once more
+     * after the walk finishes to flush the remainder.
+     */
+    protected async flushPendingMatches() {
+        if (this.pendingMatches.length === 0) {
+            return;
+        }
 
-        const lines = LineMatcher.splitIntoNumberedLines(this.resultFile.getText(), this.resultContent.lineNumberOfContentStart);
-        for (const foundWordInfo of lines) {
-            const extracted = this.resultContent.extractContentAndOffset(foundWordInfo.lineText);
+        const batch = this.pendingMatches;
+        this.pendingMatches = [];
+
+        const entries = batch.map(v => ({ filePath: v.filePath, lineNumber: v.lineNumber.toString(), line: v.lineText }));
+        const results = await this.resultContent.addLines(entries);
+
+        const regExp = this.searchConfig.getRegExp(true);
+        for (const { documentLineNumber, extracted } of results) {
             if (extracted === null) {
                 continue;
             }
-
-            const lineNumber = (foundWordInfo.lineNumber - 1);
-            const range = this.getFindWordRange(this.searchConfig.getRegExp(true), extracted.text, lineNumber, extracted.offset);
+            const range = this.getFindWordRange(regExp, extracted.text, documentLineNumber, extracted.offset);
             if (range !== null) {
-                ranges.push(range);
+                this.allRanges.push(range);
             }
         }
 
-        return ranges;
+        this.optionalService.setParam(this.allRanges).doService();
+
+        this.timeKeeper.throwErrorIfCancelled();
     }
 
 

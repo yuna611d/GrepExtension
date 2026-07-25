@@ -20,14 +20,14 @@ suite('ResultContentTSVModel', () => {
 		const dao = new FakeDao({ outputTitle: true });
 		const model = new ResultContentTSVModel(dao, new ResultFileModel(dao));
 
-		assert.strictEqual(model.ColumnTitle, 'GrepConf\tFilePath\tlineNumber\tTextLine');
+		assert.strictEqual(model.ColumnTitle, 'GrepConf\tFilePath\tlineNumber\tTextLine\n');
 	});
 
 	test('ColumnTitle drops the GrepConf column when outputTitle is off', () => {
 		const dao = new FakeDao({ outputTitle: false });
 		const model = new ResultContentTSVModel(dao, new ResultFileModel(dao));
 
-		assert.strictEqual(model.ColumnTitle, 'FilePath\tlineNumber\tTextLine');
+		assert.strictEqual(model.ColumnTitle, 'FilePath\tlineNumber\tTextLine\n');
 	});
 
 	test('getContentInOneLine embeds the grep condition (" | " joined) into every row when outputTitle is on', () => {
@@ -38,7 +38,7 @@ suite('ResultContentTSVModel', () => {
 		const line = model.getContentInOneLine('c:\\some\\file.tsv', '3', 'matched text');
 		assert.strictEqual(
 			line,
-			'Search Dir: C:\\base | Search Word: lo | RegExpMode: OFF\tc:\\some\\file.tsv\t3\tmatched text'
+			'Search Dir: C:\\base | Search Word: lo | RegExpMode: OFF\tc:\\some\\file.tsv\t3\tmatched text\n'
 		);
 	});
 
@@ -48,7 +48,7 @@ suite('ResultContentTSVModel', () => {
 		model.setGrepConditionText(BASE_DIR, GREP_CONDITION);
 
 		const line = model.getContentInOneLine('c:\\some\\file.tsv', '3', 'matched text');
-		assert.strictEqual(line, 'c:\\some\\file.tsv\t3\tmatched text');
+		assert.strictEqual(line, 'c:\\some\\file.tsv\t3\tmatched text\n');
 	});
 
 });

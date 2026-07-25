@@ -98,13 +98,33 @@ export class ResultFileModel extends FileModel {
         });
 
         // return inserted line number
-        const lineCount = this.getLastLine(editor); 
+        const lineCount = this.getLastLine(editor);
         return lineCount === 0 ? 0 : lineCount - 1;
     }
 
-    public getText(): string {
+    /**
+     * Insert a block made of several newline-terminated chunks (e.g. several grep matches
+     * concatenated together) with a single editor edit, instead of one edit per chunk.
+     * Each editor.edit() call is a round-trip to the main/renderer process, so issuing one per
+     * matched line makes grepping extremely sensitive to whatever else VS Code's UI thread is
+     * doing (typing, clicking, etc.); batching multiple chunks into one edit avoids that.
+     *
+     * Returns the 0-indexed document line of the *first* chunk. Because every previous insert
+     * here always ends with a line break, the document's current last line is empty and gets
+     * filled by the first chunk, so that starting line is (current line count - 1); each
+     * subsequent chunk then lands on the following line.
+     */
+    public async insertTextBlock(content: string): Promise<number> {
         const editor = this._editor!;
-        return editor.document.getText();
+        const startLine = Math.max(this.getLastLine(editor) - 1, 0);
+
+        if (content === "") { return startLine; }
+
+        await editor.edit(editBuilder => {
+            editBuilder.insert(this.getPosition(editor), content);
+        });
+
+        return startLine;
     }
 
 }
