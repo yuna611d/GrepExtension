@@ -10,6 +10,24 @@ const resourcePath = path.resolve(workspacePath, '..');
 const expectedFolderPath = path.resolve(resourcePath, 'expected');
 const inputFolderPath = path.resolve(resourcePath, 'input');
 
+// Grep output embeds absolute file paths (the "Search Dir:" line and every matched row's
+// filePath), which differ by machine and OS. Normalize the path separator (Windows '\' vs
+// POSIX '/') and the absolute workspace prefix down to a single placeholder so fixtures
+// compare equal across environments.
+//
+// JSON output needs different handling: JSON.stringify escapes every literal '\' as '\\',
+// so a real path separator always shows up doubled there, while other escapes (\", \r, \n, ...)
+// stay single-backslash. Collapsing doubled backslashes handles JSON path separators without
+// touching those other escapes; a second single-backslash pass (only safe for non-JSON, whose
+// raw text is never escaped) would otherwise corrupt \" and \r into invalid /" and /r.
+const PATH_PLACEHOLDER = '<WORKSPACE>';
+function normalizePaths(text: string, isJson: boolean): string {
+	const doubledSeparatorsCollapsed = text.replace(/\\\\/g, '/');
+	const forwardSlashed = isJson ? doubledSeparatorsCollapsed : doubledSeparatorsCollapsed.replace(/\\/g, '/');
+	const forwardSlashedWorkspacePath = workspacePath.replace(/\\/g, '/');
+	return forwardSlashed.split(forwardSlashedWorkspacePath).join(PATH_PLACEHOLDER);
+}
+
 suite('Extension Test Suite - txt output', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
@@ -45,7 +63,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 		
 	});
 
@@ -79,7 +97,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 	});
 
 });
@@ -119,7 +137,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 		
 	});
 
@@ -153,7 +171,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 	});
 
 });
@@ -193,7 +211,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 		
 	});
 
@@ -227,7 +245,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, false));
 	});
 
 });
@@ -265,7 +283,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 
 	});
@@ -298,7 +316,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(expectedValue, normalizePaths(actualValue, true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 	});
 
