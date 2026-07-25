@@ -28,6 +28,20 @@ function normalizePaths(text: string, isJson: boolean): string {
 	return forwardSlashed.split(forwardSlashedWorkspacePath).join(PATH_PLACEHOLDER);
 }
 
+// fs.readdirSync() gives no ordering guarantee, and different OS/filesystem combinations
+// (NTFS vs ext4, etc.) return directory entries in different orders - so the exact same set of
+// matches can land in a different order in the output file depending on the platform the test
+// runs on. Sort before comparing so the assertion checks "same matches" rather than "same
+// matches in the same order". Applied to both sides so it's a no-op when order already agrees.
+function sortForComparison(text: string, isJson: boolean): string {
+	if (isJson) {
+		const elements = JSON.parse(text) as unknown[];
+		elements.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+		return JSON.stringify(elements);
+	}
+	return text.split(/\r?\n/).sort().join('\n');
+}
+
 suite('Extension Test Suite - txt output', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
@@ -63,7 +77,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -97,7 +111,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -137,7 +151,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -171,7 +185,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -211,7 +225,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -245,7 +259,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, false));
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -283,7 +297,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, true));
+		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 
 	});
@@ -316,7 +330,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, normalizePaths(actualValue, true));
+		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 	});
 
