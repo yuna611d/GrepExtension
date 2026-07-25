@@ -1,4 +1,3 @@
-import { isNull } from "util";
 import { Common } from "../../Commons/Common";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
@@ -19,7 +18,7 @@ export class ResultFileModel extends FileModel {
      * Output file name.
      */
     public get FileName(): string {
-        if (isNull(this._fileName)) {
+        if (this._fileName === null) {
             const defaultFileName = 'grep2File.g2f';
             // configuration for output file name
             return this._fileName = this._dao.getSettingValue('outputFileName', defaultFileName);    
@@ -30,12 +29,11 @@ export class ResultFileModel extends FileModel {
 
     /**
      * Output content format(extension).
-     * You can opt from txt, tsv, csv.
+     * You can opt from txt, tsv, csv, json.
      */
     public get FileExtension(): string {
-        if (isNull(this._fileExtension)) {
+        if (this._fileExtension === null) {
             const defaultFormat = "txt";
-            // TODO json format will be implemented in the future
             const allowedContentFormats = ["txt", "tsv", "csv", "json"];
     
             const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
