@@ -33,9 +33,22 @@ function normalizePaths(text: string, isJson: boolean): string {
 // matches can land in a different order in the output file depending on the platform the test
 // runs on. Sort before comparing so the assertion checks "same matches" rather than "same
 // matches in the same order". Applied to both sides so it's a no-op when order already agrees.
+//
+// Separately, .gitattributes normalizes the *source* fixture files under test-resources/input/
+// to CRLF on Windows checkouts and LF on Linux, so a matched line's text may or may not carry a
+// trailing \r depending on platform. For txt/csv/tsv this is harmless: that \r sits directly
+// before the row's own line-break, so splitting on /\r?\n/ below discards it either way. JSON
+// has no such luck - the \r becomes part of the escaped "text" string value itself, a real
+// difference between environments - so strip a trailing \r from each element's text field
+// before comparing.
 function sortForComparison(text: string, isJson: boolean): string {
 	if (isJson) {
-		const elements = JSON.parse(text) as unknown[];
+		const elements = JSON.parse(text) as Array<{ text?: string }>;
+		for (const element of elements) {
+			if (typeof element.text === 'string') {
+				element.text = element.text.replace(/\r$/, '');
+			}
+		}
 		elements.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 		return JSON.stringify(elements);
 	}
