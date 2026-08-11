@@ -76,17 +76,17 @@
         "package:ls": "npx --yes @vscode/vsce ls"
     },
     "devDependencies": {
-        "@stylistic/eslint-plugin": "^5.4.0",
+        "@stylistic/eslint-plugin": "^5.10.0",
         "@types/mocha": "^10.0.10",
         "@types/node": "22.x",
-        "@types/vscode": "^1.105.0",
-        "@typescript-eslint/eslint-plugin": "^8.45.0",
-        "@typescript-eslint/parser": "^8.45.0",
-        "@vscode/test-cli": "^0.0.11",
+        "@types/vscode": "^1.125.0",
+        "@typescript-eslint/eslint-plugin": "^8.66.0",
+        "@typescript-eslint/parser": "^8.66.0",
+        "@vscode/test-cli": "^0.0.15",
         "@vscode/test-electron": "^2.5.2",
         "eslint": "^9.37.0",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.46.0"
+        "typescript-eslint": "^8.66.0"
     },
     "overrides": {
         "diff": "^8.0.3",
