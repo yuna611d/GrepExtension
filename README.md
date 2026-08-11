@@ -79,3 +79,13 @@ You can ignore hidden file from search target
 * true: ignore hidden file from search
 
 * false: include hidden file in search target
+
+## Limitations
+
+### Encoding
+
+Files are read as UTF-8, and the result file is written as UTF-8. This is not configurable.
+
+Files in another encoding are still searched, but their bytes are decoded as UTF-8 first, so
+non-ASCII text becomes mojibake and will not match what you typed. A Shift-JIS file, for
+example, produces replacement characters rather than readable text.

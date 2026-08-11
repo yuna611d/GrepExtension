@@ -1,3 +1,7 @@
 # Set default behavior to automatically normalize line endings.
 * text=auto
 
+# Encoding fixture: the whole point of this file is its exact Shift-JIS bytes, so keep git
+# from rewriting its line endings on checkout. Without this the content differs between a
+# Linux and a Windows checkout, which is exactly what the fixture is meant to pin down.
+src/test/test-resources/input/_Shift_JIS/sjis-encoded.txt -text
