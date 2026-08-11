@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  # Without this file Dependabot only opens security advisories, which is how the
+  # devDependencies drifted far enough to accumulate five open advisories at once.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Everything here is a devDependency (the extension has no runtime deps), so
+      # batch the routine bumps into one PR instead of one per package.
+      dev-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

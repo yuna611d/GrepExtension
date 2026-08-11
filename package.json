@@ -4,11 +4,19 @@
     "description": "grep word and output result to file",
     "version": "0.6.0",
     "publisher": "yuna611d",
+    "license": "MIT",
     "engines": {
         "vscode": "^1.105.0"
     },
     "categories": [
         "Other"
+    ],
+    "keywords": [
+        "grep",
+        "search",
+        "find in files",
+        "csv",
+        "json"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -63,7 +71,9 @@
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src",
-        "test": "vscode-test"
+        "test": "vscode-test",
+        "package": "npx --yes @vscode/vsce package",
+        "package:ls": "npx --yes @vscode/vsce ls"
     },
     "devDependencies": {
         "@stylistic/eslint-plugin": "^5.4.0",
@@ -85,5 +95,9 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/yuna611d/GrepExtension.git"
-    }
+    },
+    "bugs": {
+        "url": "https://github.com/yuna611d/GrepExtension/issues"
+    },
+    "homepage": "https://github.com/yuna611d/GrepExtension#readme"
 }
