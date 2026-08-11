@@ -49,6 +49,21 @@ You can opt following format.
 
 * tsv: tsv format
 
+* json: json format
+
+    Results are written as a JSON array. Each element has `filePath`, `lineNumber` and `text`.
+
+    ```json
+    [
+    {"grepCondition":["Search Dir: /path/to/workspace","Search Word: lo","RegExpMode: OFF"]},
+    {"filePath":"/path/to/workspace/fileA.txt","lineNumber":2,"text":"Lorem ipsum dolor sit amet,"}
+    ]
+    ```
+
+    The leading `grepCondition` element is only present when `grep2file.outputTitle` is enabled.
+    Matched words are not highlighted in this format, because escaping shifts the position of a
+    match inside the `text` value.
+
 ### grep2file.outputTitle
 
 You can opt following options.
