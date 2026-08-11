@@ -11,10 +11,17 @@
     * default mode
     * regexp mode
 * TSV
-    * content compare
+  * content compare
     * default mode
     * regexp mode
+* JSON
+  * content compare
+    * default mode
+    * regexp mode
+  * output parses as valid JSON
 
 ## Manual Test
 
-* decolation
+* decoration
+  * highlighted in txt / csv / tsv
+  * intentionally not applied in json
