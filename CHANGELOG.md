@@ -2,6 +2,13 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
+## Unreleased
+
+- Fixed following bugs
+
+  - Matched lines from files with CRLF line endings carried a trailing carriage return into
+    the result. In json output this ended up inside every element's `text` value.
+
 ## 0.6.0
 
 - Added following feature
