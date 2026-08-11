@@ -6,7 +6,11 @@ export interface NumberedFileLine { filePath: string; lineText: string; lineNumb
 
 export class DirectoryWalker {
 
-    protected fileRepository: FileRepository = new FileRepository();
+    protected fileRepository: FileRepository;
+
+    constructor(fileRepository: FileRepository = new FileRepository()) {
+        this.fileRepository = fileRepository;
+    }
 
     /**
      * Recursively walk targetDir, invoking onFile with the numbered lines of every non-binary file found.

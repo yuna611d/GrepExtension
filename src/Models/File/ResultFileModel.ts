@@ -1,4 +1,5 @@
 import { Common } from "../../Commons/Common";
+import { Lazy } from "../../Commons/Lazy";
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { FileModel } from "./FileModel";
@@ -18,34 +19,28 @@ export class ResultFileModel extends FileModel {
      * Output file name.
      */
     public get FileName(): string {
-        if (this._fileName === null) {
-            const defaultFileName = 'grep2File.g2f';
-            // configuration for output file name
-            return this._fileName = this._dao.getSettingValue('outputFileName', defaultFileName);    
-        }
-        return this._fileName;
+        return this._fileName.get();
     }
-    protected _fileName: string | null = null;
+    protected _fileName = new Lazy(() => {
+        const defaultFileName = 'grep2File.g2f';
+        // configuration for output file name
+        return this._dao.getSettingValue('outputFileName', defaultFileName);
+    });
 
     /**
      * Output content format(extension).
      * You can opt from txt, tsv, csv, json.
      */
     public get FileExtension(): string {
-        if (this._fileExtension === null) {
-            const defaultFormat = "txt";
-            const allowedContentFormats = ["txt", "tsv", "csv", "json"];
-    
-            const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
-            if (allowedContentFormats.indexOf(outputContentFormat) === -1) {
-                return this._fileExtension = defaultFormat;
-            } else {
-                return this._fileExtension = outputContentFormat;
-            }
-        }
-        return this._fileExtension;
+        return this._fileExtension.get();
     }
-    protected _fileExtension: string | null = null;
+    protected _fileExtension = new Lazy(() => {
+        const defaultFormat = "txt";
+        const allowedContentFormats = ["txt", "tsv", "csv", "json"];
+
+        const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
+        return allowedContentFormats.indexOf(outputContentFormat) === -1 ? defaultFormat : outputContentFormat;
+    });
 
     /**
      * Output filename with extension

@@ -10,6 +10,51 @@ const resourcePath = path.resolve(workspacePath, '..');
 const expectedFolderPath = path.resolve(resourcePath, 'expected');
 const inputFolderPath = path.resolve(resourcePath, 'input');
 
+// Grep output embeds absolute file paths (the "Search Dir:" line and every matched row's
+// filePath), which differ by machine and OS. Normalize the path separator (Windows '\' vs
+// POSIX '/') and the absolute workspace prefix down to a single placeholder so fixtures
+// compare equal across environments.
+//
+// JSON output needs different handling: JSON.stringify escapes every literal '\' as '\\',
+// so a real path separator always shows up doubled there, while other escapes (\", \r, \n, ...)
+// stay single-backslash. Collapsing doubled backslashes handles JSON path separators without
+// touching those other escapes; a second single-backslash pass (only safe for non-JSON, whose
+// raw text is never escaped) would otherwise corrupt \" and \r into invalid /" and /r.
+const PATH_PLACEHOLDER = '<WORKSPACE>';
+function normalizePaths(text: string, isJson: boolean): string {
+	const doubledSeparatorsCollapsed = text.replace(/\\\\/g, '/');
+	const forwardSlashed = isJson ? doubledSeparatorsCollapsed : doubledSeparatorsCollapsed.replace(/\\/g, '/');
+	const forwardSlashedWorkspacePath = workspacePath.replace(/\\/g, '/');
+	return forwardSlashed.split(forwardSlashedWorkspacePath).join(PATH_PLACEHOLDER);
+}
+
+// fs.readdirSync() gives no ordering guarantee, and different OS/filesystem combinations
+// (NTFS vs ext4, etc.) return directory entries in different orders - so the exact same set of
+// matches can land in a different order in the output file depending on the platform the test
+// runs on. Sort before comparing so the assertion checks "same matches" rather than "same
+// matches in the same order". Applied to both sides so it's a no-op when order already agrees.
+//
+// Separately, .gitattributes normalizes the *source* fixture files under test-resources/input/
+// to CRLF on Windows checkouts and LF on Linux, so a matched line's text may or may not carry a
+// trailing \r depending on platform. For txt/csv/tsv this is harmless: that \r sits directly
+// before the row's own line-break, so splitting on /\r?\n/ below discards it either way. JSON
+// has no such luck - the \r becomes part of the escaped "text" string value itself, a real
+// difference between environments - so strip a trailing \r from each element's text field
+// before comparing.
+function sortForComparison(text: string, isJson: boolean): string {
+	if (isJson) {
+		const elements = JSON.parse(text) as Array<{ text?: string }>;
+		for (const element of elements) {
+			if (typeof element.text === 'string') {
+				element.text = element.text.replace(/\r$/, '');
+			}
+		}
+		elements.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+		return JSON.stringify(elements);
+	}
+	return text.split(/\r?\n/).sort().join('\n');
+}
+
 suite('Extension Test Suite - txt output', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
@@ -45,7 +90,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -79,7 +124,7 @@ suite('Extension Test Suite - txt output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -119,7 +164,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -153,7 +198,7 @@ suite('Extension Test Suite - tsv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -193,7 +238,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 		
 	});
 
@@ -227,7 +272,7 @@ suite('Extension Test Suite - csv output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, false), sortForComparison(normalizePaths(actualValue, false), false));
 	});
 
 });
@@ -265,7 +310,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 
 	});
@@ -298,7 +343,7 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		// Assert
 		// ---------------------------
-		assert.equal(expectedValue, actualValue);
+		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
 	});
 
