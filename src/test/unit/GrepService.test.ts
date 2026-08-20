@@ -2,30 +2,70 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { GrepService } from '../../Services/GrepService';
 import { DecorationService } from '../../Services/DecorationService';
+import { DirectoryWalker, NumberedFileLine } from '../../Services/DirectoryWalker';
 import { ResultFileModel } from '../../Models/File/ResultFileModel';
 import { ResultContentModel } from '../../Models/Content/ResultContent/ResultContentModel';
+import { CancellationError, TimeKeeper } from '../../Models/TimeKeeper';
 import { FakeDao } from '../testUtils/FakeDao';
 
-// doService()/grep()/findWordInAFile()/flushPendingMatches() all drive a live vscode.TextEditor
-// (via ResultFileModel.insertText/insertTextBlock) and are already covered end-to-end by the
-// integration suites in extension.test.ts. This suite covers the two protected methods that are
-// pure logic and don't need an editor: prepareGrep() and getFindWordRange().
+// doService()/flushPendingMatches() drive a live vscode.TextEditor (via
+// ResultFileModel.insertText/insertTextBlock) and are already covered end-to-end by the
+// integration suites in extension.test.ts. This suite covers the parts that are pure logic and
+// don't need an editor: prepareGrep(), getFindWordRange(), and how findWordInAFile()/grep()
+// handle cancellation (exercised with searches that match nothing, so nothing is ever written).
 class TestableGrepService extends GrepService {
+	public flushCalls = 0;
+
 	public callPrepareGrep(): boolean {
 		return this.prepareGrep();
 	}
 	public callGetFindWordRange(re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
 		return this.getFindWordRange(re, targetString, lineNumber, searchStartPos);
 	}
+	public callFindWordInAFile(lines: NumberedFileLine[]): Promise<void> {
+		return this.findWordInAFile(lines);
+	}
 	public getResultContent(): ResultContentModel {
 		return this.resultContent;
 	}
+	public useWalker(walker: DirectoryWalker): void {
+		this.directoryWalker = walker;
+	}
+	protected async flushPendingMatches(): Promise<void> {
+		this.flushCalls++;
+	}
 }
 
-function newService(searchWord: string | undefined, outputTitle = true): TestableGrepService {
+// Counts how often the service asks about cancellation, and optionally always answers "cancelled".
+class SpyTimeKeeper extends TimeKeeper {
+	public checks = 0;
+
+	constructor(private readonly cancelled = false) {
+		super();
+	}
+
+	public throwErrorIfCancelled(): void {
+		this.checks++;
+		if (this.cancelled) {
+			throw new CancellationError();
+		}
+	}
+}
+
+class ThrowingDirectoryWalker extends DirectoryWalker {
+	public async walk(): Promise<void> {
+		throw new CancellationError();
+	}
+}
+
+function newService(searchWord: string | undefined, outputTitle = true, timeKeeper: TimeKeeper = new TimeKeeper()): TestableGrepService {
 	const dao = new FakeDao({ exclude: [], outputTitle });
 	const resultFile = new ResultFileModel(dao);
-	return new TestableGrepService(resultFile, searchWord, new DecorationService());
+	return new TestableGrepService(resultFile, searchWord, new DecorationService(), timeKeeper);
+}
+
+function lines(...texts: string[]): NumberedFileLine[] {
+	return texts.map((lineText, i) => ({ filePath: '/root/a.txt', lineText, lineNumber: i + 1 }));
 }
 
 suite('GrepService', () => {
@@ -82,6 +122,42 @@ suite('GrepService', () => {
 
 			assert.ok(first !== null && second !== null);
 			assert.strictEqual(first.start.character, second.start.character);
+		});
+
+	});
+
+	suite('cancellation', () => {
+
+		test('checks for cancellation after every file, even one with no matches', async () => {
+			const timeKeeper = new SpyTimeKeeper();
+			const service = newService('lo', true, timeKeeper);
+
+			await service.callFindWordInAFile(lines('nothing to see here'));
+			await service.callFindWordInAFile(lines('still nothing'));
+
+			// One check per file walked. Before, the check lived in flushPendingMatches(), which a
+			// match-free search never reaches - so a long grep with no hits could not be cancelled.
+			assert.strictEqual(timeKeeper.checks, 2);
+		});
+
+		test('a file with no matches still propagates the cancellation', async () => {
+			const service = newService('lo', true, new SpyTimeKeeper(true));
+
+			await assert.rejects(
+				() => service.callFindWordInAFile(lines('nothing to see here')),
+				CancellationError
+			);
+		});
+
+		test('grep() flushes the partial batch when it is cancelled, so found matches are kept', async () => {
+			const service = newService('lo');
+			service.useWalker(new ThrowingDirectoryWalker());
+
+			await service.grep();
+
+			// The walk threw before grep()'s own flush, so the only flush is the one in the
+			// cancellation branch - without it, up to BATCH_SIZE-1 buffered matches are lost.
+			assert.strictEqual(service.flushCalls, 1);
 		});
 
 	});

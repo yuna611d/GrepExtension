@@ -9,6 +9,11 @@ All notable changes to the "Grep to File" extension will be documented in this f
   - Matched lines from files with CRLF line endings carried a trailing carriage return into
     the result. In json output this ended up inside every element's `text` value.
 
+  - A grep that found no matches could not be cancelled. The "this may take a long time"
+    prompt is now shown, and cancellation honoured, regardless of how many matches were found.
+    A cancelled grep also keeps the matches it had already found instead of dropping the
+    last partial batch.
+
 ## 0.6.0
 
 - Added following feature
