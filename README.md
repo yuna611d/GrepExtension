@@ -47,7 +47,14 @@ You can opt following format.
 
 * csv: csv format
 
+    Fields are quoted following RFC 4180: a field containing a comma, a double quote or a line
+    break is wrapped in double quotes, and a double quote inside it is doubled. Matched lines
+    routinely contain commas and quotes, so without this the columns of those rows do not line
+    up for a reader such as Excel or pandas.
+
 * tsv: tsv format
+
+    Same quoting rule as csv, with the tab as the separator.
 
 * json: json format
 
