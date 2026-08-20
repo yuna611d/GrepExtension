@@ -33,7 +33,15 @@ Examples
 
 ### grep2file.exclude
 
-You can exclude files which have specified extensions.
+You can exclude files which have specified extensions. The setting is a list of file extensions,
+written with or without a leading dot and matched case-insensitively:
+
+```json
+"grep2file.exclude": ["bin", "dll", "sln"]
+```
+
+Each entry is a whole extension rather than a pattern, so `"js"` excludes `.js` files and leaves
+`.json` files in the search. An empty list excludes nothing.
 
 ### grep2file.outputFileName
 

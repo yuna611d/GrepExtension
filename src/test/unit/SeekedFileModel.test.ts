@@ -7,9 +7,8 @@ import { FakeDao } from '../testUtils/FakeDao';
 // so Content/isFile/isDirectory/seemsBinary can be exercised against real fixture files.
 const INPUT_DIR = Common.BASE_DIR;
 
-// SeekedFileModel falls back to `['']` when no `exclude` setting is configured, and an empty-string
-// RegExp matches every extension - so any test that wants "not excluded by extension" must pass
-// exclude: [] explicitly rather than relying on FakeDao's default (no `exclude` key at all).
+// SeekedFileModel excludes nothing when no `exclude` setting is configured, so passing exclude: []
+// is the same as omitting it. Kept explicit so each test states which exclusions it runs under.
 function daoWithNoExclusions(overrides: Record<string, string | string[] | boolean> = {}): FakeDao {
 	return new FakeDao({ exclude: [], ...overrides });
 }
@@ -80,6 +79,53 @@ suite('SeekedFileModel', () => {
 		const dao = new FakeDao({ exclude: ['DLL'] });
 		const model = new SeekedFileModel(dao, 'app.dll', INPUT_DIR, []);
 		assert.strictEqual(model.isExcludedFile(), true);
+	});
+
+	test('an excluded extension matches whole extensions only, not substrings of them', () => {
+		const dao = new FakeDao({ exclude: ['js'] });
+
+		assert.strictEqual(new SeekedFileModel(dao, 'app.js', INPUT_DIR, []).isExcludedFile(), true);
+		// Matched as a pattern, 'js' also matched 'json' - so excluding .js files silently
+		// dropped every .json file from the search too.
+		assert.strictEqual(new SeekedFileModel(dao, 'package.json', INPUT_DIR, []).isExcludedFile(), false);
+	});
+
+	test('an excluded extension containing regexp syntax is matched literally', () => {
+		const dao = new FakeDao({ exclude: ['c++'] });
+
+		// Compiled as a RegExp this threw SyntaxError: Nothing to repeat, failing the whole grep.
+		assert.strictEqual(new SeekedFileModel(dao, 'main.c++', INPUT_DIR, []).isExcludedFile(), true);
+		assert.strictEqual(new SeekedFileModel(dao, 'main.cpp', INPUT_DIR, []).isExcludedFile(), false);
+	});
+
+	test('an excluded extension is accepted with a leading dot or surrounding spaces', () => {
+		const dao = new FakeDao({ exclude: ['.DLL', '  bin  '] });
+
+		assert.strictEqual(new SeekedFileModel(dao, 'app.dll', INPUT_DIR, []).isExcludedFile(), true);
+		assert.strictEqual(new SeekedFileModel(dao, 'app.bin', INPUT_DIR, []).isExcludedFile(), true);
+	});
+
+	test('a comma separated string is accepted, as the setting used to be declared', () => {
+		const dao = new FakeDao({ exclude: 'bin,dll' });
+
+		// Reading this shape as an array threw `configured.map is not a function`, which failed
+		// the grep outright for anyone whose settings.json still holds the old string form.
+		assert.strictEqual(new SeekedFileModel(dao, 'app.dll', INPUT_DIR, []).isExcludedFile(), true);
+		assert.strictEqual(new SeekedFileModel(dao, 'fileA.txt', INPUT_DIR, []).isExcludedFile(), false);
+	});
+
+	test('an empty entry in the exclude list excludes nothing', () => {
+		const dao = new FakeDao({ exclude: [''] });
+
+		// An empty RegExp matches every extension, so this used to exclude every file in the
+		// workspace and produce an empty result.
+		assert.strictEqual(new SeekedFileModel(dao, 'fileA.txt', INPUT_DIR, []).isExcludedFile(), false);
+	});
+
+	test('nothing is excluded by extension when the setting is absent', () => {
+		const dao = new FakeDao({});
+
+		assert.strictEqual(new SeekedFileModel(dao, 'fileA.txt', INPUT_DIR, []).isExcludedFile(), false);
 	});
 
 	test('isIgnoredFileOrDirectory is true for a hidden file when ignoreHiddenFile is on', () => {

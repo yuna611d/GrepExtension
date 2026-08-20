@@ -9,6 +9,15 @@ All notable changes to the "Grep to File" extension will be documented in this f
   - Matched lines from files with CRLF line endings carried a trailing carriage return into
     the result. In json output this ended up inside every element's `text` value.
 
+  - `grep2file.exclude` was declared as a string but read as an array of extensions.
+    Setting it to a string failed the grep outright, and clearing it excluded every file in
+    the workspace instead of none. The setting is now declared as an array, an old string
+    value is still accepted, and an empty value excludes nothing.
+
+  - `grep2file.exclude` entries were matched as regular expressions against the file
+    extension, so excluding `js` also excluded `.json` files, and an entry containing regexp
+    syntax (`c++`) failed the grep. Entries are now compared as whole extensions.
+
   - csv and tsv output did not quote its fields. A matched line containing the separator
     pushed every following column one to the right, and a matched line containing a double
     quote made readers swallow the rows after it. Fields are now quoted following RFC 4180.
