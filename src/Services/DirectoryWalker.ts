@@ -35,9 +35,8 @@ export class DirectoryWalker {
         }
     }
 
-    protected readContent(file: SeekedFileModel, startLine?: number): NumberedFileLine[] {
-        const start = (startLine === undefined) ? 0 : startLine;
-        return LineMatcher.splitIntoNumberedLines(file.Content, start)
+    protected readContent(file: SeekedFileModel): NumberedFileLine[] {
+        return LineMatcher.splitIntoNumberedLines(file.Content)
                            .map(v => ({ filePath: file.FullPath, ...v }));
     }
 

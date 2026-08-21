@@ -6,10 +6,6 @@ import { FileModel } from "./FileModel";
 
 export class ResultFileModel extends FileModel {
 
-    public get initialLastLine() {
-        return this._initialLastLine;
-    }
-    protected _initialLastLine = 0;
     private _editor: vscode.TextEditor | undefined;
 
 
@@ -68,12 +64,10 @@ export class ResultFileModel extends FileModel {
     }
 
     /**
-     * Initalize initalLastLine
-     * @param editor 
+     * Bind the editor that every later insert writes into.
      */
     public initialize(editor: vscode.TextEditor) {
         this._editor = editor;
-        this._initialLastLine = this._initialLastLine === 0 ? 0 : editor.document.lineCount;
     }
 
     protected getPosition(editor: vscode.TextEditor): vscode.Position {

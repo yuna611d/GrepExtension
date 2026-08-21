@@ -3,8 +3,6 @@ import { Lazy } from "../../../Commons/Lazy";
 import { BaseModel } from "../../../Interface/IModel";
 import { ResultFileModel } from "../../File/ResultFileModel";
 import { BaseDao } from "../../../DAO/BaseDao";
-import { ContentInformation } from "../ContentInformation";
-import { ContentInformationFactory } from "../../../ModelFactories/ContentInformationFactory";
 
 
 export class ResultContentModel extends BaseModel {
@@ -12,10 +10,8 @@ export class ResultContentModel extends BaseModel {
     constructor(dao: BaseDao, resultFileModel: ResultFileModel) {
         super(dao);
         this._resultFileModel = resultFileModel;
-        this._contentFactory = new ContentInformationFactory();
     }
     private _resultFileModel: ResultFileModel;
-    private _contentFactory: ContentInformationFactory;
 
     protected _columnTitle: string[] = ["GrepConf","FilePath", "lineNumber", "TextLine"];
     protected _grepConditionText = "";
@@ -33,15 +29,6 @@ export class ResultContentModel extends BaseModel {
             lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or column[1] : lineNumber
             content:    this.hasOutputTitle() ? 3 : 2   // column[3] or column[2] : pickedLineText
         };
-    }
-
-    protected _lineNumberOfCursor = 0;
-    public get lineNumberOfCursor(): number {
-        return this._lineNumberOfCursor;
-    }
-    protected _lineNumberOfContentStart = 0;
-    public get lineNumberOfContentStart(): number {
-        return this._lineNumberOfContentStart;
     }
 
     // ------ Meta information ------
@@ -93,33 +80,20 @@ export class ResultContentModel extends BaseModel {
     //------ Contents ------
 
 
-    contentInformations: Array<ContentInformation> = new Array<ContentInformation>();
-
-
     //------ Operation of ResultFile (Interact with Service) ------
     public async addTitle() {
-        const content = this.Title;
-        // Insert result to file and stack content.
-        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
+        await this.insertContent(this.Title);
     }
     public async addColumnTitle() {
-        const content = this.ColumnTitle;
-        // Insert result to file and stack content.
-        this._lineNumberOfContentStart = await this.insertAndStackContent(content);        
-    }
-
-    public async addLine(filePath: string, lineNumber: string, line: string) {
-        // Get formated content
-        const content = this.getFormattedContent([this._grepConditionText, filePath, lineNumber, line]);
-        // Insert result to file and stack content.
-        this._lineNumberOfCursor = await this.insertAndStackContent(content);
+        await this.insertContent(this.ColumnTitle);
     }
 
     /**
-     * Same as calling addLine() once per entry, but writes the whole batch with a single
-     * editor edit instead of one edit per line. Returns, for each entry in the same order,
-     * the document line it landed on plus its searchable-text offset (for decoration ranges)
-     * so callers never need to read the document back to find out where their match ended up.
+     * Write a batch of matches with a single editor edit rather than one edit per line, each of
+     * which would cost a round-trip to the main/renderer process. Returns, for each entry in the
+     * same order, the document line it landed on plus its searchable-text offset (for decoration
+     * ranges) so callers never need to read the document back to find out where their match
+     * ended up.
      */
     public async addLines(entries: Array<{ filePath: string; lineNumber: string; line: string }>)
         : Promise<Array<{ documentLineNumber: number; extracted: { text: string; offset: number } | null }>> {
@@ -133,7 +107,7 @@ export class ResultContentModel extends BaseModel {
             this.getFormattedContent([this._grepConditionText, e.filePath, e.lineNumber, e.line])
         );
 
-        const firstLineNumber = await this.insertAndStackContentBlock(formattedContents);
+        const firstLineNumber = await this.insertContentBlock(formattedContents);
 
         // extractContentAndOffset expects a single document line (no trailing break), the same
         // shape LineMatcher.splitIntoNumberedLines used to hand it back when this ran off a
@@ -149,7 +123,6 @@ export class ResultContentModel extends BaseModel {
             };
         });
 
-        this._lineNumberOfCursor = firstLineNumber + formattedContents.length - 1;
         return results;
     }
 
@@ -161,31 +134,20 @@ export class ResultContentModel extends BaseModel {
         // no-op for txt/csv/tsv
     }
 
-    protected async insertAndStackContent(content: string) {
-        // Insert result
-        const insertedLineNumber = await this._resultFileModel.insertText(content);
-        // Stack ContentInformation
-        const contentInfo = this._contentFactory.retrieve(content, insertedLineNumber);
-        this.contentInformations.push(contentInfo);
-
-        // return inserted line number
-        return insertedLineNumber;
+    /**
+     * Write one already-formatted chunk and return the document line it landed on.
+     * The seam subclasses use to reach the result file, which is private to this class.
+     */
+    protected async insertContent(content: string): Promise<number> {
+        return await this._resultFileModel.insertText(content);
     }
 
     /**
-     * Batched counterpart of insertAndStackContent(): writes several already-formatted chunks
-     * with one editor edit and returns the document line of the first chunk.
+     * Batched counterpart of insertContent(): writes several already-formatted chunks with one
+     * editor edit and returns the document line of the first chunk.
      */
-    protected async insertAndStackContentBlock(formattedContents: string[]): Promise<number> {
-        const combinedContent = formattedContents.join('');
-        const firstLineNumber = await this._resultFileModel.insertTextBlock(combinedContent);
-
-        formattedContents.forEach((content, i) => {
-            const contentInfo = this._contentFactory.retrieve(content, firstLineNumber + i);
-            this.contentInformations.push(contentInfo);
-        });
-
-        return firstLineNumber;
+    protected async insertContentBlock(formattedContents: string[]): Promise<number> {
+        return await this._resultFileModel.insertTextBlock(formattedContents.join(''));
     }
     //------ Operation  of ResultFile (Interact with Service) ------
 

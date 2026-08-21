@@ -45,10 +45,6 @@ export class TimeKeeper {
         }
     }
 
-    public isConfirmationTime(): boolean {
-        return this._isCancelled;
-    }
-
     public throwErrorIfCancelled() {
         this.checkConsumedTime();
         if (this._isCancelled) {
