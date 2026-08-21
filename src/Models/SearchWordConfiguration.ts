@@ -10,28 +10,28 @@ export class SearchWordConfiguration {
     private isRegExpMode = false;
     private regExpOptions =  '';
 
-    resetConfiguration() {
+    private resetConfiguration() {
         this.searchWord = '';
         this.isRegExpMode = false;
         this.regExpOptions =  '';    
     }
 
-    setInitialConfiguration(searchWord: string) {
+    private setInitialConfiguration(searchWord: string) {
         this.resetConfiguration();
         this.searchWord = searchWord;
     }
 
-    setRegExpMode(pattern: string, options: string) {
+    private setRegExpMode(pattern: string, options: string) {
         this.searchWord = pattern;
         this.isRegExpMode = true;
         this.regExpOptions = options;
     }
 
-    addIgnoreCaseOption() {
+    private addIgnoreCaseOption() {
         this.regExpOptions += (this.regExpOptions.indexOf('i') === -1) ? 'i': '';
     }
 
-    hasValidSearchWord(): boolean {
+    public hasValidSearchWord(): boolean {
         if (this.SearchWord === null || this.SearchWord === undefined || this.SearchWord.length === 0) {
             return false;
         }
