@@ -6,6 +6,12 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - A directory symlink pointing back at one of its own parents failed the whole grep. The
+    walk descended through the link over and over until the operating system refused, and the
+    resulting error stopped the search before any file had been read, leaving an error message
+    and an empty result file. Each directory is now visited once. Two links to the same
+    directory no longer report its matches twice either.
+
   - Matched lines from files with CRLF line endings carried a trailing carriage return into
     the result. In json output this ended up inside every element's `text` value.
 
