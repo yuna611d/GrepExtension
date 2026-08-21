@@ -103,6 +103,10 @@ export class GrepService implements IService {
             vscode.window.showInformationMessage(Message.MESSAGE_FINISH);
         } catch (e) {
             if (e instanceof CancellationError) {
+                // The cancellation is raised from findWordInAFile(), which may still be holding a
+                // partial batch. Write it out so a cancelled grep keeps every match it had already
+                // found, instead of silently dropping up to BATCH_SIZE-1 of them.
+                await this.flushPendingMatches();
                 // Notify cancellation
                 vscode.window.showInformationMessage(Message.MESSAGE_CANCEL);
             } else {
@@ -124,12 +128,19 @@ export class GrepService implements IService {
         if (this.pendingMatches.length >= GrepService.BATCH_SIZE) {
             await this.flushPendingMatches();
         }
+
+        // Checked once per file walked rather than once per flush. Flushing only happens when a
+        // batch fills up, so a search that matches nothing - or matches rarely - used to reach
+        // this check late or never: the "this is taking a while, continue?" prompt never appeared
+        // and a long grep over a big tree could not be stopped at all.
+        this.timeKeeper.throwErrorIfCancelled();
     }
 
     /**
-     * Write every buffered match with a single editor edit, update decorations once for the
-     * whole batch, then check for cancellation. Called every BATCH_SIZE matches and once more
-     * after the walk finishes to flush the remainder.
+     * Write every buffered match with a single editor edit and update decorations once for the
+     * whole batch. Called every BATCH_SIZE matches, once more after the walk finishes to flush
+     * the remainder, and once on cancellation. Writing only - cancellation is checked by
+     * findWordInAFile() so that it happens even when no batch ever fills up.
      */
     protected async flushPendingMatches() {
         if (this.pendingMatches.length === 0) {
@@ -154,8 +165,6 @@ export class GrepService implements IService {
         }
 
         this.optionalService.setRanges(this.allRanges).doService();
-
-        this.timeKeeper.throwErrorIfCancelled();
     }
 
 

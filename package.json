@@ -31,16 +31,16 @@
             "title": "Grep2File",
             "properties": {
                 "grep2file.exclude": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
                     "default": [
                         "bin",
                         "dll",
                         "sln"
                     ],
-                    "description": "Files which has file extensions listed up here are ignored."
+                    "description": "Files which has file extensions listed up here are ignored. Each entry is a whole file extension, not a pattern, so \"js\" does not also ignore .json files."
                 },
                 "grep2file.ignoreHiddenFile": {
                     "type": "boolean",

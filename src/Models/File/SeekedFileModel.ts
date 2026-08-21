@@ -61,11 +61,12 @@ export class SeekedFileModel extends FileModel {
     protected _bufferContent = new Lazy(() => fs.readFileSync(this.FullPath, null));
 
     public isExcludedFile(): boolean {
-        // don't read files which have extension specified
-        for (const re of this.ExcludedFileExtensionPatterns) {
-            if (re.test(this.FileExtension)) {
-                return true;
-            }
+        // don't read files which have extension specified. Matched as a whole extension rather
+        // than as a pattern: the setting is documented as a list of extensions, so excluding "js"
+        // must not also drop every .json file, and an extension that happens to contain regexp
+        // syntax ("c++") must be matched literally instead of failing to compile.
+        if (this.ExcludedFileExtensions.includes(this.FileExtension.toLowerCase())) {
+            return true;
         }
         // don't read result file. Compared by full path (not just basename) so a same-named
         // fixture nested in a subdirectory isn't mistaken for the actual output file.
@@ -99,19 +100,32 @@ export class SeekedFileModel extends FileModel {
 
      /**
      * Get file extensions which should be ignored when file search.
+     *
+     * Defaults to excluding nothing. The previous default of [''] excluded *everything*, because
+     * an empty pattern matches every extension - reachable by clearing the setting in settings.json.
      */
     protected get ExcludedFileExtensions(): string[] {
         return this._excludedFileExtensions.get();
     }
-    protected _excludedFileExtensions = new Lazy(() => this._dao.getSettingValue('exclude', ['']));
+    protected _excludedFileExtensions = new Lazy(
+        () => SeekedFileModel.normalizeExcludedExtensions(this._dao.getSettingValue('exclude', [] as string[])));
 
     /**
-     * Compiled once per instance instead of once per isExcludedFile() call.
+     * The setting is declared as a list of extensions, but settings.json can hold anything, and
+     * this extension used to declare the setting as a string - so a comma separated string is
+     * still accepted rather than failing the whole grep on `configured.map is not a function`.
+     * Extensions are compared lower case and without the decorations people write around them,
+     * so "  .DLL " and "dll" mean the same thing.
      */
-    protected get ExcludedFileExtensionPatterns(): RegExp[] {
-        return this._excludedFileExtensionPatterns.get();
+    protected static normalizeExcludedExtensions(configured: unknown): string[] {
+        const candidates = Array.isArray(configured) ? configured
+            : (typeof configured === 'string' ? configured.split(",") : []);
+
+        return candidates
+            .filter((extension): extension is string => typeof extension === 'string')
+            .map(extension => extension.trim().replace(/^\./, "").toLowerCase())
+            .filter(extension => extension.length > 0);
     }
-    protected _excludedFileExtensionPatterns = new Lazy(() => this.ExcludedFileExtensions.map(extension => new RegExp(extension, "i")));
 
 
     /**

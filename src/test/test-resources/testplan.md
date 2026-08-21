@@ -10,10 +10,13 @@
   * content compare
     * default mode
     * regexp mode
+  * a matched line containing the separator or a double quote is quoted, so every row keeps
+    the same column count
 * TSV
   * content compare
     * default mode
     * regexp mode
+  * same quoting rule as CSV, with the tab as the separator
 * JSON
   * content compare
     * default mode

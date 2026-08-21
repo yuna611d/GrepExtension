@@ -33,7 +33,15 @@ Examples
 
 ### grep2file.exclude
 
-You can exclude files which have specified extensions.
+You can exclude files which have specified extensions. The setting is a list of file extensions,
+written with or without a leading dot and matched case-insensitively:
+
+```json
+"grep2file.exclude": ["bin", "dll", "sln"]
+```
+
+Each entry is a whole extension rather than a pattern, so `"js"` excludes `.js` files and leaves
+`.json` files in the search. An empty list excludes nothing.
 
 ### grep2file.outputFileName
 
@@ -47,7 +55,14 @@ You can opt following format.
 
 * csv: csv format
 
+    Fields are quoted following RFC 4180: a field containing a comma, a double quote or a line
+    break is wrapped in double quotes, and a double quote inside it is doubled. Matched lines
+    routinely contain commas and quotes, so without this the columns of those rows do not line
+    up for a reader such as Excel or pandas.
+
 * tsv: tsv format
+
+    Same quoting rule as csv, with the tab as the separator.
 
 * json: json format
 
