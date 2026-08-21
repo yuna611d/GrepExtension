@@ -43,7 +43,7 @@ export class ResultContentJSONModel extends ResultContentModel {
     }
 
     public async addFooter(): Promise<void> {
-        await this.insertAndStackContent(Common.LINE_BREAK + "]");
+        await this.insertContent(Common.LINE_BREAK + "]");
     }
 
 }

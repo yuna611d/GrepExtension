@@ -43,9 +43,10 @@ export class SeekedFileModel extends FileModel {
             return [dirName, ""];
         }
 
+        // FileNameWithExtension comes from fs.readdirSync, which yields a single entry name -
+        // never a path - so there is no directory prefix here to strip off.
         const fileExtension = fileInfos[fileInfos.length -1];
-        const fileNameAndDirs = fileInfos[fileInfos.length -2].split(Common.DIR_SEPARATOR);
-        const fileName = fileNameAndDirs[fileNameAndDirs.length - 1];
+        const fileName = fileInfos[fileInfos.length -2];
         // return filename and extension
         return [fileName, fileExtension];
     }
