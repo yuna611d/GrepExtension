@@ -115,19 +115,36 @@ suite('DirectoryWalker', () => {
 
 	// Real symlinks on a real directory, because the point of the fix is that two routes to one
 	// directory resolve to the same path - which a fake repository keyed by path string cannot show.
-	// 'junction' is what Windows needs to make a directory link without elevated privileges, and is
-	// ignored everywhere else.
 	suite('symlinked directories', () => {
 
 		let root = '';
+		let links: string[] = [];
 
 		setup(() => {
 			root = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-walk-'));
+			links = [];
 		});
 
 		teardown(() => {
+			// Drop the links before deleting the tree. A recursive delete of a directory that still
+			// holds a link back into itself fails on Windows - the junction cannot be resolved - and
+			// removing a directory link needs unlink on POSIX but rmdir on Windows.
+			for (const link of links) {
+				try {
+					fs.unlinkSync(link);
+				} catch {
+					fs.rmdirSync(link);
+				}
+			}
 			fs.rmSync(root, { recursive: true, force: true });
 		});
+
+		// 'junction' is what Windows needs to link a directory without elevated privileges, and is
+		// ignored on every other platform.
+		function linkDirectory(target: string, linkPath: string): void {
+			fs.symlinkSync(target, linkPath, 'junction');
+			links.push(linkPath);
+		}
 
 		async function walkedFileNames(): Promise<string[]> {
 			const seen: string[] = [];
@@ -139,7 +156,7 @@ suite('DirectoryWalker', () => {
 
 		test('a link pointing back at its own parent does not abort the walk', async () => {
 			fs.writeFileSync(path.join(root, 'a.txt'), 'lorem');
-			fs.symlinkSync(root, path.join(root, 'loop'), 'junction');
+			linkDirectory(root, path.join(root, 'loop'));
 
 			// This used to descend loop/loop/loop/... until the OS answered ELOOP. The error escaped
 			// the whole walk, and since directories are recursed into before sibling files are read,
@@ -151,8 +168,8 @@ suite('DirectoryWalker', () => {
 			const shared = path.join(root, 'shared');
 			fs.mkdirSync(shared);
 			fs.writeFileSync(path.join(shared, 'b.txt'), 'lorem');
-			fs.symlinkSync(shared, path.join(root, 'link1'), 'junction');
-			fs.symlinkSync(shared, path.join(root, 'link2'), 'junction');
+			linkDirectory(shared, path.join(root, 'link1'));
+			linkDirectory(shared, path.join(root, 'link2'));
 
 			assert.deepStrictEqual(await walkedFileNames(), ['b.txt']);
 		});
