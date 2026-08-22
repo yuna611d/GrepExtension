@@ -43,6 +43,15 @@ suite('SeekedFileModel', () => {
 		assert.strictEqual(model.Content, '');
 	});
 
+	test('isFile/isDirectory are both false when the entry cannot be stat\'d', () => {
+		const model = new SeekedFileModel(daoWithNoExclusions(), 'no-such-entry.txt', INPUT_DIR, []);
+
+		// statSync throws ENOENT here. It used to escape all the way out of the directory walk and
+		// fail the whole grep; an entry nothing can be learned about is simply skipped instead.
+		assert.strictEqual(model.isFile, false);
+		assert.strictEqual(model.isDirectory, false);
+	});
+
 	test('isFile/isDirectory reflect the real filesystem entry', () => {
 		const file = new SeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
 		assert.strictEqual(file.isFile, true);

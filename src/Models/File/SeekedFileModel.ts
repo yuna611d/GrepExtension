@@ -89,14 +89,33 @@ export class SeekedFileModel extends FileModel {
 
     public get isFile(): boolean {
         // Check if the file path is file or directory
-        return this.stat.isFile();
+        return this.stat?.isFile() ?? false;
     }
 
     public get isDirectory(): boolean {
-        return this.stat.isDirectory();
+        return this.stat?.isDirectory() ?? false;
     }
-    protected get stat() {
-        return fs.statSync(this.FullPath);
+
+    /**
+     * What this entry actually is, or null when the filesystem will not say.
+     *
+     * statSync follows symlinks, so it throws ENOENT on a link whose target is gone - and that
+     * error used to escape all the way out of the directory walk, which reports it as "Grep failed
+     * due to an unexpected error". Because directories are recursed into before their sibling files
+     * are read, one dangling link left the user with that error and an empty result file, no matter
+     * how many perfectly readable files sat next to it.
+     *
+     * The same applies to an entry deleted between reading the directory and stat'ing it, and to
+     * one this process may not stat at all. None of the three can be searched, and none is a reason
+     * to abandon the rest of the workspace, so they are reported as neither file nor directory and
+     * the walk steps over them.
+     */
+    protected get stat(): fs.Stats | null {
+        try {
+            return fs.statSync(this.FullPath);
+        } catch {
+            return null;
+        }
     }
 
      /**

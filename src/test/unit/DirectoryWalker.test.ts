@@ -164,6 +164,15 @@ suite('DirectoryWalker', () => {
 			assert.deepStrictEqual(await walkedFileNames(), ['a.txt']);
 		});
 
+		test('a link whose target is gone is stepped over rather than fatal', async () => {
+			fs.writeFileSync(path.join(root, 'a.txt'), 'lorem');
+			linkDirectory(path.join(root, 'nowhere'), path.join(root, 'dangling'));
+
+			// statSync follows the link and throws ENOENT. That used to escape the walk, and since
+			// directories are recursed into before sibling files are read, a.txt was never grepped.
+			assert.deepStrictEqual(await walkedFileNames(), ['a.txt']);
+		});
+
 		test('two links to the same directory report its files once', async () => {
 			const shared = path.join(root, 'shared');
 			fs.mkdirSync(shared);

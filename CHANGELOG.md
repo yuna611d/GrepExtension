@@ -6,6 +6,11 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - A symlink whose target no longer exists failed the whole grep. Deciding whether the link
+    was a file or a directory threw, and the error stopped the search before any file had been
+    read, leaving an error message and an empty result file. An entry the filesystem will not
+    describe is now skipped and the search carries on.
+
   - A directory symlink pointing back at one of its own parents failed the whole grep. The
     walk descended through the link over and over until the operating system refused, and the
     resulting error stopped the search before any file had been read, leaving an error message
