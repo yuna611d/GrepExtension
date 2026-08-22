@@ -135,6 +135,15 @@ export class ResultContentModel extends BaseModel {
     }
 
     /**
+     * Whether a grep may write below what the previous grep left in the result file.
+     *
+     * True only for txt, which has kept a running log of successive searches since 0.1.7 and
+     * stays readable that way - each search is introduced by its own condition block. A format
+     * that has to be one well-formed document cannot do this and says so by overriding.
+     */
+    public readonly appendsToPreviousResult: boolean = true;
+
+    /**
      * Write one already-formatted chunk and return the document line it landed on.
      * The seam subclasses use to reach the result file, which is private to this class.
      */

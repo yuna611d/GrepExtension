@@ -70,6 +70,25 @@ export class ResultFileModel extends FileModel {
         this._editor = editor;
     }
 
+    /**
+     * Drop whatever the previous grep left in the document.
+     *
+     * Done through the editor rather than the file: nothing saves the result document, so the
+     * previous grep's output is unsaved editor state that truncating the file would not touch.
+     */
+    public async clear(): Promise<void> {
+        const editor = this._editor!;
+        const document = editor.document;
+        if (document.getText().length === 0) {
+            return;
+        }
+
+        await editor.edit(editBuilder => {
+            // A position past the last line is clamped to the end of the document.
+            editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(document.lineCount, 0)));
+        });
+    }
+
     protected getPosition(editor: vscode.TextEditor): vscode.Position {
         return new vscode.Position(this.getLastLine(editor), 0);
     }

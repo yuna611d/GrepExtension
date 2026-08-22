@@ -51,6 +51,12 @@ suite('ResultContentModel (txt)', () => {
 		assert.strictEqual(line, '\tc:\\some\\file.txt\t3\tmatched text\n');
 	});
 
+	test('txt appends to a previous result, keeping a running log of searches', () => {
+		const dao = new FakeDao({ outputTitle: true });
+
+		assert.strictEqual(new ResultContentModel(dao, new ResultFileModel(dao)).appendsToPreviousResult, true);
+	});
+
 	test('extractContentAndOffset locates the content column and its character offset', () => {
 		const dao = new FakeDao({ outputTitle: true });
 		const model = new ResultContentModel(dao, new ResultFileModel(dao));

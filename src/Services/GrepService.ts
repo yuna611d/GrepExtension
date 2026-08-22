@@ -60,6 +60,10 @@ export class GrepService implements IService {
 
         // Set editor to resultFile
         this.resultFile.initialize(editor);
+        // Start from an empty document unless the format is happy to be appended to.
+        if (!this.resultContent.appendsToPreviousResult) {
+            await this.resultFile.clear();
+        }
         // Write Title
         await this.resultContent.addTitle();
         // Write Column Title
