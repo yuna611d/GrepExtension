@@ -1,7 +1,18 @@
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { Common } from '../../Commons/Common';
 import { SeekedFileModel } from '../../Models/File/SeekedFileModel';
 import { FakeDao } from '../testUtils/FakeDao';
+
+// readHead is protected: it is the bound on how much of a file the binary check reads, which is
+// the thing worth pinning, so reach it the way the other suites reach protected methods.
+class TestableSeekedFileModel extends SeekedFileModel {
+	public callReadHead(byteCount: number): Buffer {
+		return this.readHead(byteCount);
+	}
+}
 
 // The test workspace root (.vscode-test.mjs points it at test-resources/input/) is used directly
 // so Content/isFile/isDirectory/seemsBinary can be exercised against real fixture files.
@@ -152,6 +163,66 @@ suite('SeekedFileModel', () => {
 	test('isIgnoredFileOrDirectory is false for a normal, non-excluded file', () => {
 		const model = new SeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
 		assert.strictEqual(model.isIgnoredFileOrDirectory(), false);
+	});
+
+	suite('binary detection', () => {
+
+		const RESOURCE_DIR = path.resolve(INPUT_DIR, '..');
+		const SNIFF_BYTES = 512;
+
+		let tempDir = '';
+
+		setup(() => {
+			tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-sniff-'));
+		});
+
+		teardown(() => {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		});
+
+		function modelFor(fileName: string, targetDir: string): TestableSeekedFileModel {
+			return new TestableSeekedFileModel(daoWithNoExclusions(), fileName, targetDir, []);
+		}
+
+		test('seemsBinary is true for a real binary file', () => {
+			const model = modelFor('sample-image.001.png', RESOURCE_DIR);
+
+			assert.strictEqual(model.seemsBinary, true);
+		});
+
+		test('a control byte within the leading bytes marks the file binary', () => {
+			const content = Buffer.concat([Buffer.from('lorem'), Buffer.from([0]), Buffer.from('ipsum')]);
+			fs.writeFileSync(path.join(tempDir, 'early.dat'), content);
+
+			assert.strictEqual(modelFor('early.dat', tempDir).seemsBinary, true);
+		});
+
+		test('a control byte past the leading bytes does not', () => {
+			const content = Buffer.concat([Buffer.alloc(SNIFF_BYTES, 0x61), Buffer.from([0])]);
+			fs.writeFileSync(path.join(tempDir, 'late.dat'), content);
+
+			// Only the first 512 bytes are looked at, so the byte after them is out of scope - the
+			// same answer the previous whole-file implementation gave.
+			assert.strictEqual(modelFor('late.dat', tempDir).seemsBinary, false);
+		});
+
+		test('readHead reads no more than it is asked for, however large the file', () => {
+			fs.writeFileSync(path.join(tempDir, 'big.dat'), Buffer.alloc(SNIFF_BYTES * 8, 0x61));
+
+			const head = modelFor('big.dat', tempDir).callReadHead(SNIFF_BYTES);
+
+			// The bound that keeps a large binary out of memory: the check never sees the rest.
+			assert.strictEqual(head.length, SNIFF_BYTES);
+		});
+
+		test('readHead returns just the file when it is shorter than the window', () => {
+			fs.writeFileSync(path.join(tempDir, 'small.dat'), Buffer.from('lorem'));
+
+			const head = modelFor('small.dat', tempDir).callReadHead(SNIFF_BYTES);
+
+			assert.strictEqual(head.length, 'lorem'.length);
+		});
+
 	});
 
 });

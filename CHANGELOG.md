@@ -38,6 +38,12 @@ All notable changes to the "Grep to File" extension will be documented in this f
     A cancelled grep also keeps the matches it had already found instead of dropping the
     last partial batch.
 
+- Performance improvement
+
+  - Skipping a binary file no longer reads it. The check looks at the first 512 bytes, but it
+    used to load the whole file to get at them, so a large binary in the workspace was read
+    into memory in full and then thrown away unsearched.
+
 ## 0.6.0
 
 - Added following feature

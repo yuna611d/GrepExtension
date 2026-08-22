@@ -162,16 +162,34 @@ export class SeekedFileModel extends FileModel {
      * Check if passed file is binary or not.
      * This is a cheap implementation to determine if passed file is binary or not.
      * This function determine passed file as binary if file contains code under the ascii 08.
+     *
+     * Only the leading bytes are read. This used to reach for BufferContent, which loads the whole
+     * file - so a large binary sitting in the workspace was read into memory in full purely to
+     * look at its first 512 bytes, and then thrown away unread, since the walk skips binaries.
      */
     public get seemsBinary(): boolean {
-        const buffer = this.BufferContent;
-        const controls = [0,1,2,3,4,5,6,7,8];
-        for (let i = 0; i < 512; i++) {
-            const c = buffer[i];
-            if (controls.indexOf(c) > -1) {
-                return true;
-            }
+        return this._seemsBinary.get();
+    }
+    protected _seemsBinary = new Lazy(() => {
+        const head = this.readHead(SeekedFileModel.BINARY_SNIFF_BYTE_COUNT);
+        // Every byte is 0-255, so this is the same test as the old list of [0..8].
+        return head.some(byte => byte <= SeekedFileModel.HIGHEST_BINARY_CONTROL_BYTE);
+    });
+
+    protected static readonly BINARY_SNIFF_BYTE_COUNT = 512;
+    protected static readonly HIGHEST_BINARY_CONTROL_BYTE = 8;
+
+    /**
+     * The first byteCount bytes of the file, or fewer when the file is shorter.
+     */
+    protected readHead(byteCount: number): Buffer {
+        const buffer = Buffer.alloc(byteCount);
+        const descriptor = fs.openSync(this.FullPath, 'r');
+        try {
+            const bytesRead = fs.readSync(descriptor, buffer, 0, byteCount, 0);
+            return buffer.subarray(0, bytesRead);
+        } finally {
+            fs.closeSync(descriptor);
         }
-        return false;
     }
 }
