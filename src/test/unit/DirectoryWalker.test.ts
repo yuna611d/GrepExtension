@@ -1,4 +1,7 @@
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { DirectoryWalker, NumberedFileLine } from '../../Services/DirectoryWalker';
 import { FileRepository } from '../../Models/File/FileRepository';
 import { SeekedFileModel } from '../../Models/File/SeekedFileModel';
@@ -87,6 +90,90 @@ suite('DirectoryWalker', () => {
 			{ filePath: '/root/a.txt', lineText: 'a2', lineNumber: 2 },
 			{ filePath: '/root/b.txt', lineText: 'b1', lineNumber: 1 },
 		]);
+	});
+
+	suite('directory cycles', () => {
+
+		test('a directory graph that loops back on itself terminates', async () => {
+			const fileInRoot = fakeFile({ isDirectory: false, isFile: true, FullPath: '/root/a.txt', Content: 'lorem' });
+			const loopDir = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root/loop' });
+			const rootAgain = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root' });
+			const walker = new DirectoryWalker(new FakeFileRepository({
+				'/root': [loopDir, fileInRoot],
+				'/root/loop': [rootAgain],
+			}));
+
+			const seen: string[] = [];
+			await walker.walk('/root', [], async lines => { seen.push(...lines.map(l => l.filePath)); });
+
+			// /root is entered once, so descending back into it is skipped and the sibling file is
+			// still reached.
+			assert.deepStrictEqual(seen, ['/root/a.txt']);
+		});
+
+	});
+
+	// Real symlinks on a real directory, because the point of the fix is that two routes to one
+	// directory resolve to the same path - which a fake repository keyed by path string cannot show.
+	suite('symlinked directories', () => {
+
+		let root = '';
+		let links: string[] = [];
+
+		setup(() => {
+			root = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-walk-'));
+			links = [];
+		});
+
+		teardown(() => {
+			// Drop the links before deleting the tree. A recursive delete of a directory that still
+			// holds a link back into itself fails on Windows - the junction cannot be resolved - and
+			// removing a directory link needs unlink on POSIX but rmdir on Windows.
+			for (const link of links) {
+				try {
+					fs.unlinkSync(link);
+				} catch {
+					fs.rmdirSync(link);
+				}
+			}
+			fs.rmSync(root, { recursive: true, force: true });
+		});
+
+		// 'junction' is what Windows needs to link a directory without elevated privileges, and is
+		// ignored on every other platform.
+		function linkDirectory(target: string, linkPath: string): void {
+			fs.symlinkSync(target, linkPath, 'junction');
+			links.push(linkPath);
+		}
+
+		async function walkedFileNames(): Promise<string[]> {
+			const seen: string[] = [];
+			await new DirectoryWalker().walk(root, [], async lines => {
+				seen.push(...lines.map(l => path.basename(l.filePath)));
+			});
+			return seen;
+		}
+
+		test('a link pointing back at its own parent does not abort the walk', async () => {
+			fs.writeFileSync(path.join(root, 'a.txt'), 'lorem');
+			linkDirectory(root, path.join(root, 'loop'));
+
+			// This used to descend loop/loop/loop/... until the OS answered ELOOP. The error escaped
+			// the whole walk, and since directories are recursed into before sibling files are read,
+			// it escaped before a single file had been grepped.
+			assert.deepStrictEqual(await walkedFileNames(), ['a.txt']);
+		});
+
+		test('two links to the same directory report its files once', async () => {
+			const shared = path.join(root, 'shared');
+			fs.mkdirSync(shared);
+			fs.writeFileSync(path.join(shared, 'b.txt'), 'lorem');
+			linkDirectory(shared, path.join(root, 'link1'));
+			linkDirectory(shared, path.join(root, 'link2'));
+
+			assert.deepStrictEqual(await walkedFileNames(), ['b.txt']);
+		});
+
 	});
 
 });
