@@ -99,6 +99,10 @@ export class SeekedFileModel extends FileModel {
     /**
      * What this entry actually is, or null when the filesystem will not say.
      *
+     * Stat'd once per model. The walk asks every entry isDirectory and then asks it isFile, so an
+     * un-cached getter meant two identical statSync calls for every entry in the workspace - and
+     * statSync is synchronous, so each one blocks the extension host.
+     *
      * statSync follows symlinks, so it throws ENOENT on a link whose target is gone - and that
      * error used to escape all the way out of the directory walk, which reports it as "Grep failed
      * due to an unexpected error". Because directories are recursed into before their sibling files
@@ -108,9 +112,15 @@ export class SeekedFileModel extends FileModel {
      * The same applies to an entry deleted between reading the directory and stat'ing it, and to
      * one this process may not stat at all. None of the three can be searched, and none is a reason
      * to abandon the rest of the workspace, so they are reported as neither file nor directory and
-     * the walk steps over them.
+     * the walk steps over them. A failure is cached like any other answer, so a missing entry costs
+     * one failed syscall rather than one per question asked about it.
      */
     protected get stat(): fs.Stats | null {
+        return this._stat.get();
+    }
+    protected _stat = new Lazy<fs.Stats | null>(() => this.statEntry());
+
+    protected statEntry(): fs.Stats | null {
         try {
             return fs.statSync(this.FullPath);
         } catch {

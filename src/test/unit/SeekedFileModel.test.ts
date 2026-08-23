@@ -14,6 +14,17 @@ class TestableSeekedFileModel extends SeekedFileModel {
 	}
 }
 
+// How often the entry is actually stat'd - the thing the caching controls - counted at the seam
+// rather than by patching fs, so a cached failure is as observable as a cached success.
+class CountingSeekedFileModel extends SeekedFileModel {
+	public statEntryCallCount = 0;
+
+	protected override statEntry(): fs.Stats | null {
+		this.statEntryCallCount++;
+		return super.statEntry();
+	}
+}
+
 // The test workspace root (.vscode-test.mjs points it at test-resources/input/) is used directly
 // so Content/isFile/isDirectory/seemsBinary can be exercised against real fixture files.
 const INPUT_DIR = Common.BASE_DIR;
@@ -71,6 +82,52 @@ suite('SeekedFileModel', () => {
 		const dir = new SeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
 		assert.strictEqual(dir.isFile, false);
 		assert.strictEqual(dir.isDirectory, true);
+	});
+
+	suite('stat caching', () => {
+
+		test('an entry is stat\'d once however often it is asked what it is', () => {
+			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
+
+			// The walk asks isDirectory of every entry and then asks isFile of every entry, so an
+			// un-cached getter cost two identical statSync calls for every entry in the workspace.
+			assert.strictEqual(model.isDirectory, false);
+			assert.strictEqual(model.isFile, true);
+			assert.strictEqual(model.isFile, true);
+
+			assert.strictEqual(model.statEntryCallCount, 1);
+		});
+
+		test('an entry that cannot be stat\'d is not re-stat\'d either', () => {
+			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'no-such-entry.txt', INPUT_DIR, []);
+
+			assert.strictEqual(model.isDirectory, false);
+			assert.strictEqual(model.isFile, false);
+
+			// A thrown answer is still an answer: asking again cannot learn anything new.
+			assert.strictEqual(model.statEntryCallCount, 1);
+		});
+
+		test('a directory is stat\'d once too', () => {
+			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
+
+			assert.strictEqual(model.isDirectory, true);
+			assert.strictEqual(model.isFile, false);
+
+			assert.strictEqual(model.statEntryCallCount, 1);
+		});
+
+		test('the cached answer is the real one, not a stale or blank stand-in', () => {
+			const file = new CountingSeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
+			const dir = new CountingSeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
+
+			// Each model caches its own entry, so one model's answer never stands in for another's.
+			assert.strictEqual(file.isFile, true);
+			assert.strictEqual(dir.isFile, false);
+			assert.strictEqual(file.isDirectory, false);
+			assert.strictEqual(dir.isDirectory, true);
+		});
+
 	});
 
 	test('seemsBinary is false for a plain text file', () => {
