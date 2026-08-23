@@ -6,6 +6,11 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - Running a search twice corrupted the result file for every structured format. json ended up
+    as two arrays back to back and no longer parsed at all, and csv and tsv gained a second
+    column-title row in the middle of the file, which readers take for a data row. Those three
+    formats now replace the previous result. txt still appends, as it has since 0.1.7.
+
   - A symlink whose target no longer exists failed the whole grep. Deciding whether the link
     was a file or a directory threw, and the error stopped the search before any file had been
     read, leaving an error message and an empty result file. An entry the filesystem will not

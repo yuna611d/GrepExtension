@@ -46,4 +46,9 @@ export class ResultContentJSONModel extends ResultContentModel {
         await this.insertContent(Common.LINE_BREAK + "]");
     }
 
+    /**
+     * Appending would leave two arrays back to back - "[...][...]" - which is not JSON at all.
+     */
+    public readonly appendsToPreviousResult: boolean = false;
+
 }

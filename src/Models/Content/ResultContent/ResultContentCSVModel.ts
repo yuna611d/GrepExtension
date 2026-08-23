@@ -17,6 +17,12 @@ export class ResultContentCSVModel extends ResultContentModel {
         return titleItems.join(separator);
     }
 
+    /**
+     * Appending would put a second column-title row in the middle of the file, which every reader
+     * takes for a data row.
+     */
+    public readonly appendsToPreviousResult: boolean = false;
+
     protected getFormattedContent(contents: string[]) {
         if (!this.hasOutputTitle()) {
             contents.shift();

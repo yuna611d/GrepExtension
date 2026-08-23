@@ -47,6 +47,13 @@ Each entry is a whole extension rather than a pattern, so `"js"` excludes `.js` 
 
 You can change output file name.
 
+#### Running a search twice
+
+`txt` keeps a running log: a second search is written below the first, each introduced by its own
+condition block. `csv`, `tsv` and `json` replace what the previous search left instead, because
+each of them has to be one well-formed document - appending would put a second header row in the
+middle of a csv, and would leave json as two arrays back to back.
+
 ### grep2file.outputContentFormat
 
 You can opt following format.

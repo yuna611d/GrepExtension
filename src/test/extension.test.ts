@@ -308,6 +308,40 @@ suite('Extension Test Suite - json output', () => {
 
 	});
 
+	test('a second grep replaces the first result instead of appending to it', async () => {
+
+		// ---------------------------
+		// Arrange
+		// ---------------------------
+		// Clear Editor Content
+		await (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).edit(editBuilder => {
+			editBuilder.delete(new vscode.Range(new vscode.Position(0,0), new vscode.Position(1000,0)));
+		});
+		// Setting : json
+		await vscode.workspace.getConfiguration().update('grep2file.outputContentFormat', 'json', vscode.ConfigurationTarget.Global);
+		// Get expected result
+		const expectedFilePath = path.join(expectedFolderPath, 'grep2File.g2f.json');
+		const expectedValue = fs.readFileSync(expectedFilePath, 'utf-8');
+
+		// ---------------------------
+		// Action
+		// ---------------------------
+		// Two greps back to back, with nothing clearing the document in between. Appending left
+		// "[...][...]" behind, which does not parse at all.
+		await new GrepController().doActionWithParam('lo');
+		await new GrepController().doActionWithParam('lo');
+
+		// Get actual result
+		const actualValue = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
+
+		// ---------------------------
+		// Assert
+		// ---------------------------
+		assert.doesNotThrow(() => JSON.parse(actualValue));
+		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
+
+	});
+
 	test('Grep word by regexp mode - re/lo.*it/', async () => {
 
 		// ---------------------------

@@ -54,6 +54,11 @@ suite('ResultContentTSVModel', () => {
 		assert.strictEqual(line, 'c:\\some\\file.tsv\t3\tmatched text\n');
 	});
 
+	test('tsv replaces a previous result rather than appending to it', () => {
+		// Inherited from the csv model, so worth pinning here too.
+		assert.strictEqual(newModel(true).appendsToPreviousResult, false);
+	});
+
 	suite('quoting', () => {
 
 		test('a matched line containing a tab is wrapped in quotes', () => {

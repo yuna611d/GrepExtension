@@ -56,6 +56,13 @@ suite('ResultContentJSONModel', () => {
 		assert.deepStrictEqual(JSON.parse(output), []);
 	});
 
+	test('json replaces a previous result rather than appending to it', () => {
+		const dao = new FakeDao({ outputTitle: true });
+
+		// Appending leaves two arrays back to back, which is not JSON at all.
+		assert.strictEqual(new ResultContentJSONModel(dao, new ResultFileModel(dao)).appendsToPreviousResult, false);
+	});
+
 	test('extractContentAndOffset always returns null (decoration is disabled for json output)', () => {
 		const dao = new FakeDao({ outputTitle: true });
 		const model = new ResultContentJSONModel(dao, new ResultFileModel(dao));

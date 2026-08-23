@@ -54,6 +54,11 @@ suite('ResultContentCSVModel', () => {
 		assert.strictEqual(line, 'c:\\some\\file.csv,3,matched text\n');
 	});
 
+	test('csv replaces a previous result rather than appending to it', () => {
+		// Appending puts a second column-title row in the middle of the file.
+		assert.strictEqual(newModel(true).appendsToPreviousResult, false);
+	});
+
 	suite('quoting', () => {
 
 		test('a matched line containing the separator is wrapped in quotes', () => {
