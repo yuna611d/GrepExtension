@@ -51,7 +51,7 @@ export class GrepService implements IService {
 
     public async doService(): Promise<IService> {
         // Create and Get file path where result is outputted.
-        const filePath = this.resultFile.addNewFile().FullPath;
+        const filePath = (await this.resultFile.addNewFile()).FullPath;
 
         if (!this.prepareGrep()) { return this; }
 

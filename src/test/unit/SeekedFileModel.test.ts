@@ -9,8 +9,20 @@ import { FakeDao } from '../testUtils/FakeDao';
 // readHead is protected: it is the bound on how much of a file the binary check reads, which is
 // the thing worth pinning, so reach it the way the other suites reach protected methods.
 class TestableSeekedFileModel extends SeekedFileModel {
-	public callReadHead(byteCount: number): Buffer {
+	public callReadHead(byteCount: number): Promise<Buffer> {
 		return this.readHead(byteCount);
+	}
+
+	// Which way the binary check read the file: the bounded head read, or one whole-file read.
+	public headReads = 0;
+
+	protected override readHead(byteCount: number): Promise<Buffer> {
+		this.headReads++;
+		return super.readHead(byteCount);
+	}
+
+	public static get singleReadSizeLimit(): number {
+		return SeekedFileModel.SINGLE_READ_SIZE_LIMIT;
 	}
 }
 
@@ -19,7 +31,7 @@ class TestableSeekedFileModel extends SeekedFileModel {
 class CountingSeekedFileModel extends SeekedFileModel {
 	public statEntryCallCount = 0;
 
-	protected override statEntry(): fs.Stats | null {
+	protected override statEntry(): Promise<fs.Stats | null> {
 		this.statEntryCallCount++;
 		return super.statEntry();
 	}
@@ -54,85 +66,97 @@ suite('SeekedFileModel', () => {
 		assert.strictEqual(model.FullPath, INPUT_DIR + Common.DIR_SEPARATOR + 'fileA.txt');
 	});
 
-	test('Content reads the real file at FullPath', () => {
+	test('getContent reads the real file at FullPath', async () => {
 		const model = new SeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
-		assert.ok(model.Content.length > 0);
-		assert.ok(model.Content.includes('Lorem ipsum'));
+		const content = await model.getContent();
+		assert.ok(content.length > 0);
+		assert.ok(content.includes('Lorem ipsum'));
 	});
 
-	test('Content is empty for an empty file', () => {
+	test('getContent is empty for an empty file', async () => {
 		const model = new SeekedFileModel(daoWithNoExclusions(), 'emptyFile.txt', INPUT_DIR, []);
-		assert.strictEqual(model.Content, '');
+		assert.strictEqual(await model.getContent(), '');
 	});
 
-	test('isFile/isDirectory are both false when the entry cannot be stat\'d', () => {
+	test('isFile/isDirectory are both false when the entry cannot be stat\'d', async () => {
 		const model = new SeekedFileModel(daoWithNoExclusions(), 'no-such-entry.txt', INPUT_DIR, []);
 
-		// statSync throws ENOENT here. It used to escape all the way out of the directory walk and
-		// fail the whole grep; an entry nothing can be learned about is simply skipped instead.
-		assert.strictEqual(model.isFile, false);
-		assert.strictEqual(model.isDirectory, false);
+		// stat rejects with ENOENT here. It used to escape all the way out of the directory walk
+		// and fail the whole grep; an entry nothing can be learned about is simply skipped instead.
+		assert.strictEqual(await model.isFile(), false);
+		assert.strictEqual(await model.isDirectory(), false);
 	});
 
-	test('isFile/isDirectory reflect the real filesystem entry', () => {
+	test('isFile/isDirectory reflect the real filesystem entry', async () => {
 		const file = new SeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
-		assert.strictEqual(file.isFile, true);
-		assert.strictEqual(file.isDirectory, false);
+		assert.strictEqual(await file.isFile(), true);
+		assert.strictEqual(await file.isDirectory(), false);
 
 		const dir = new SeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
-		assert.strictEqual(dir.isFile, false);
-		assert.strictEqual(dir.isDirectory, true);
+		assert.strictEqual(await dir.isFile(), false);
+		assert.strictEqual(await dir.isDirectory(), true);
 	});
 
 	suite('stat caching', () => {
 
-		test('an entry is stat\'d once however often it is asked what it is', () => {
+		test('an entry is stat\'d once however often it is asked what it is', async () => {
 			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
 
 			// The walk asks isDirectory of every entry and then asks isFile of every entry, so an
-			// un-cached getter cost two identical statSync calls for every entry in the workspace.
-			assert.strictEqual(model.isDirectory, false);
-			assert.strictEqual(model.isFile, true);
-			assert.strictEqual(model.isFile, true);
+			// un-cached answer cost two identical stat calls for every entry in the workspace.
+			assert.strictEqual(await model.isDirectory(), false);
+			assert.strictEqual(await model.isFile(), true);
+			assert.strictEqual(await model.isFile(), true);
 
 			assert.strictEqual(model.statEntryCallCount, 1);
 		});
 
-		test('an entry that cannot be stat\'d is not re-stat\'d either', () => {
+		test('concurrent questions join the one stat rather than starting another', async () => {
+			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
+
+			// Asking before the first answer has arrived is what an async accessor makes possible,
+			// and caching the value rather than the promise in flight would miss it.
+			const answers = await Promise.all([model.isFile(), model.isDirectory(), model.isFile()]);
+
+			assert.deepStrictEqual(answers, [true, false, true]);
+			assert.strictEqual(model.statEntryCallCount, 1);
+		});
+
+		test('an entry that cannot be stat\'d is not re-stat\'d either', async () => {
 			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'no-such-entry.txt', INPUT_DIR, []);
 
-			assert.strictEqual(model.isDirectory, false);
-			assert.strictEqual(model.isFile, false);
+			assert.strictEqual(await model.isDirectory(), false);
+			assert.strictEqual(await model.isFile(), false);
 
-			// A thrown answer is still an answer: asking again cannot learn anything new.
+			// A rejected answer is still an answer: asking again cannot learn anything new.
 			assert.strictEqual(model.statEntryCallCount, 1);
 		});
 
-		test('a directory is stat\'d once too', () => {
+		test('a directory is stat\'d once too', async () => {
 			const model = new CountingSeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
 
-			assert.strictEqual(model.isDirectory, true);
-			assert.strictEqual(model.isFile, false);
+			assert.strictEqual(await model.isDirectory(), true);
+			assert.strictEqual(await model.isFile(), false);
 
 			assert.strictEqual(model.statEntryCallCount, 1);
 		});
 
-		test('the cached answer is the real one, not a stale or blank stand-in', () => {
+		test('the cached answer is the real one, not a stale or blank stand-in', async () => {
 			const file = new CountingSeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
 			const dir = new CountingSeekedFileModel(daoWithNoExclusions(), 'dir1', INPUT_DIR, []);
 
 			// Each model caches its own entry, so one model's answer never stands in for another's.
-			assert.strictEqual(file.isFile, true);
-			assert.strictEqual(dir.isFile, false);
-			assert.strictEqual(file.isDirectory, false);
-			assert.strictEqual(dir.isDirectory, true);
+			assert.strictEqual(await file.isFile(), true);
+			assert.strictEqual(await dir.isFile(), false);
+			assert.strictEqual(await file.isDirectory(), false);
+			assert.strictEqual(await dir.isDirectory(), true);
 		});
 
 	});
 
-	test('seemsBinary is false for a plain text file', () => {
+	test('seemsBinary is false for a plain text file', async () => {
 		const model = new SeekedFileModel(daoWithNoExclusions(), 'fileA.txt', INPUT_DIR, []);
-		assert.strictEqual(model.seemsBinary, false);
+		assert.strictEqual(await model.seemsBinary(), false);
 	});
 
 	test('isExcludedFile is true when FullPath is in excludedFullPaths', () => {
@@ -241,41 +265,88 @@ suite('SeekedFileModel', () => {
 			return new TestableSeekedFileModel(daoWithNoExclusions(), fileName, targetDir, []);
 		}
 
-		test('seemsBinary is true for a real binary file', () => {
+		test('seemsBinary is true for a real binary file', async () => {
 			const model = modelFor('sample-image.001.png', RESOURCE_DIR);
 
-			assert.strictEqual(model.seemsBinary, true);
+			assert.strictEqual(await model.seemsBinary(), true);
 		});
 
-		test('a control byte within the leading bytes marks the file binary', () => {
+		test('a control byte within the leading bytes marks the file binary', async () => {
 			const content = Buffer.concat([Buffer.from('lorem'), Buffer.from([0]), Buffer.from('ipsum')]);
 			fs.writeFileSync(path.join(tempDir, 'early.dat'), content);
 
-			assert.strictEqual(modelFor('early.dat', tempDir).seemsBinary, true);
+			assert.strictEqual(await modelFor('early.dat', tempDir).seemsBinary(), true);
 		});
 
-		test('a control byte past the leading bytes does not', () => {
+		test('a control byte past the leading bytes does not', async () => {
 			const content = Buffer.concat([Buffer.alloc(SNIFF_BYTES, 0x61), Buffer.from([0])]);
 			fs.writeFileSync(path.join(tempDir, 'late.dat'), content);
 
 			// Only the first 512 bytes are looked at, so the byte after them is out of scope - the
 			// same answer the previous whole-file implementation gave.
-			assert.strictEqual(modelFor('late.dat', tempDir).seemsBinary, false);
+			assert.strictEqual(await modelFor('late.dat', tempDir).seemsBinary(), false);
 		});
 
-		test('readHead reads no more than it is asked for, however large the file', () => {
+		test('a file too large to hold is sniffed with the bounded read', async () => {
+			const size = TestableSeekedFileModel.singleReadSizeLimit + 1;
+			const content = Buffer.concat([Buffer.from([0]), Buffer.alloc(size, 0x61)]);
+			fs.writeFileSync(path.join(tempDir, 'huge.dat'), content);
+			const model = modelFor('huge.dat', tempDir);
+
+			assert.strictEqual(await model.seemsBinary(), true);
+
+			// Reading it in full to look at its start is exactly what must not happen.
+			assert.strictEqual(model.headReads, 1);
+		});
+
+		test('a file small enough to hold is read once and sniffed from that', async () => {
+			fs.writeFileSync(path.join(tempDir, 'small.txt'), 'lorem ipsum');
+			const model = modelFor('small.txt', tempDir);
+
+			assert.strictEqual(await model.seemsBinary(), false);
+
+			// One read answers the check and feeds the search that follows it.
+			assert.strictEqual(model.headReads, 0);
+		});
+
+		test('a searchable file keeps the bytes the check already read', async () => {
+			const filePath = path.join(tempDir, 'kept.txt');
+			fs.writeFileSync(filePath, 'lorem ipsum');
+			const model = modelFor('kept.txt', tempDir);
+
+			assert.strictEqual(await model.seemsBinary(), false);
+			fs.rmSync(filePath);
+
+			// Readable after the file is gone, which it could only be from the check's own read.
+			assert.strictEqual(await model.getContent(), 'lorem ipsum');
+		});
+
+		test('a binary file does not keep them', async () => {
+			const filePath = path.join(tempDir, 'dropped.dat');
+			fs.writeFileSync(filePath, Buffer.concat([Buffer.from([0]), Buffer.from('lorem')]));
+			const model = modelFor('dropped.dat', tempDir);
+
+			assert.strictEqual(await model.seemsBinary(), true);
+			fs.rmSync(filePath);
+
+			// Nothing reads a binary, so holding onto one would only keep it in memory for as
+			// long as its directory is being walked.
+			await assert.rejects(model.getContent(), /ENOENT/);
+		});
+
+		test('readHead reads no more than it is asked for, however large the file', async () => {
 			fs.writeFileSync(path.join(tempDir, 'big.dat'), Buffer.alloc(SNIFF_BYTES * 8, 0x61));
 
-			const head = modelFor('big.dat', tempDir).callReadHead(SNIFF_BYTES);
+			const head = await modelFor('big.dat', tempDir).callReadHead(SNIFF_BYTES);
 
 			// The bound that keeps a large binary out of memory: the check never sees the rest.
 			assert.strictEqual(head.length, SNIFF_BYTES);
 		});
 
-		test('readHead returns just the file when it is shorter than the window', () => {
+		test('readHead returns just the file when it is shorter than the window', async () => {
 			fs.writeFileSync(path.join(tempDir, 'small.dat'), Buffer.from('lorem'));
 
-			const head = modelFor('small.dat', tempDir).callReadHead(SNIFF_BYTES);
+			const head = await modelFor('small.dat', tempDir).callReadHead(SNIFF_BYTES);
 
 			assert.strictEqual(head.length, 'lorem'.length);
 		});
