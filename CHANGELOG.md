@@ -49,6 +49,10 @@ All notable changes to the "Grep to File" extension will be documented in this f
     used to load the whole file to get at them, so a large binary in the workspace was read
     into memory in full and then thrown away unsearched.
 
+  - Every entry in the workspace was inspected twice to decide whether it was a file or a
+    directory, once for each question. The answer is now looked up once per entry, halving
+    the number of blocking filesystem calls a search makes.
+
 ## 0.6.0
 
 - Added following feature
