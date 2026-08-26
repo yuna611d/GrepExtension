@@ -6,6 +6,12 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Added following feature
 
+  - `grep2file.searchAllEncodings` (off by default) searches every file as UTF-8, UTF-16,
+    Shift-JIS and EUC-JP, and reports a line that matches under any of them. Use it when a
+    workspace mixes encodings and you would rather not configure `files.encoding`;
+    `files.autoGuessEncoding` is ignored while it is on. Unmarked UTF-16 files are searched
+    in this mode too. Searches are slower, since each non-ASCII file is decoded several times.
+
   - Files are now read the way VS Code itself reads them, instead of always as UTF-8. A byte
     order mark is honoured and removed, `files.encoding` is applied - including per-language
     overrides - and `files.autoGuessEncoding` is used when it is turned on. A search therefore

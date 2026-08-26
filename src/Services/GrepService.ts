@@ -125,9 +125,18 @@ export class GrepService implements IService {
 
     }
 
-    protected async findWordInAFile(r: NumberedFileLine[]) {
-        const content = r.filter(v => LineMatcher.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
-        this.pendingMatches.push(...content);
+    protected async findWordInAFile(readings: NumberedFileLine[][]) {
+        // One reading of the file normally, several when the search tries every encoding. The
+        // first that finds anything is the one reported: a file is reported through a single
+        // encoding, never as a mixture of them, and the readings are ordered so that the editor's
+        // own comes before any guess. Readings that find nothing say nothing about the file.
+        for (const lines of readings) {
+            const found = lines.filter(v => LineMatcher.isContainSearchWord(this.searchConfig.getRegExp(), v.lineText));
+            if (found.length > 0) {
+                this.pendingMatches.push(...found);
+                break;
+            }
+        }
 
         if (this.pendingMatches.length >= GrepService.BATCH_SIZE) {
             await this.flushPendingMatches();

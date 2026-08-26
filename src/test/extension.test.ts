@@ -393,6 +393,7 @@ suite('Extension Test Suite - file encodings', () => {
 
 	teardown(async () => {
 		await vscode.workspace.getConfiguration().update('files.encoding', undefined, vscode.ConfigurationTarget.Global);
+		await vscode.workspace.getConfiguration().update('grep2file.searchAllEncodings', undefined, vscode.ConfigurationTarget.Global);
 	});
 
 	test('a UTF-16 file is searched instead of being written off as binary', async () => {
@@ -426,6 +427,32 @@ suite('Extension Test Suite - file encodings', () => {
 
 		assert.ok(content.includes('\ufffd'));
 		assert.ok(!content.includes('日本語'));
+	});
+
+	test('searchAllEncodings reads an unmarked Shift-JIS file as Shift-JIS too', async () => {
+		await vscode.workspace.getConfiguration().update('grep2file.searchAllEncodings', true, vscode.ConfigurationTarget.Global);
+
+		const readings = await modelFor('sjis-encoded.txt').getContentCandidates();
+
+		// No files.encoding is set here: the mode finds the text by trying the encoding rather
+		// than by being told, which is the whole point of it.
+		assert.ok(readings.some(reading => reading.includes('日本語')));
+		// And the editor's own reading is still offered first, mojibake though it is here.
+		assert.strictEqual(readings[0], await modelFor('sjis-encoded.txt').getContent());
+	});
+
+	test('without searchAllEncodings that file is read one way only', async () => {
+		const readings = await modelFor('sjis-encoded.txt').getContentCandidates();
+
+		assert.strictEqual(readings.length, 1);
+		assert.ok(!readings[0].includes('日本語'));
+	});
+
+	test('searchAllEncodings leaves a UTF-8 file with a single reading', async () => {
+		await vscode.workspace.getConfiguration().update('grep2file.searchAllEncodings', true, vscode.ConfigurationTarget.Global);
+
+		// fileA.txt is ASCII, so every encoding agrees and there is nothing to try.
+		assert.deepStrictEqual((await modelFor('fileA.txt').getContentCandidates()).length, 1);
 	});
 
 	test('a UTF-8 file is unaffected by any of this', async () => {

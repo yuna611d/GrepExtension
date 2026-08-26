@@ -33,7 +33,7 @@ export class DirectoryWalker {
     public async walk(
         targetDir: string,
         excludedFullPaths: string[],
-        onFile: (lines: NumberedFileLine[]) => Promise<void>
+        onFile: (readings: NumberedFileLine[][]) => Promise<void>
     ) {
         await this.walkDirectory(targetDir, excludedFullPaths, onFile, new Set<string>());
     }
@@ -54,7 +54,7 @@ export class DirectoryWalker {
     protected async walkDirectory(
         targetDir: string,
         excludedFullPaths: string[],
-        onFile: (lines: NumberedFileLine[]) => Promise<void>,
+        onFile: (readings: NumberedFileLine[][]) => Promise<void>,
         visitedDirectories: Set<string>
     ) {
         const resolvedDir = await this.resolvePath(targetDir);
@@ -102,7 +102,7 @@ export class DirectoryWalker {
         // what the sniff above exists to avoid.
         for (let i = 0; i < textFiles.length; i += DirectoryWalker.CONTENT_PREFETCH) {
             const batch = textFiles.slice(i, i + DirectoryWalker.CONTENT_PREFETCH);
-            await forEachWithLimit(batch, DirectoryWalker.CONTENT_PREFETCH, f => f.getContent());
+            await forEachWithLimit(batch, DirectoryWalker.CONTENT_PREFETCH, f => f.getContentCandidates());
 
             for (const file of batch) {
                 await onFile(await this.readContent(file));
@@ -126,9 +126,15 @@ export class DirectoryWalker {
         }
     }
 
-    protected async readContent(file: SeekedFileModel): Promise<NumberedFileLine[]> {
-        return LineMatcher.splitIntoNumberedLines(await file.getContent())
-                           .map(v => ({ filePath: file.FullPath, ...v }));
+    /**
+     * The file's lines, once per reading of it worth searching - normally one, but several when
+     * the search has been asked to try every encoding. Whoever is searching picks between them,
+     * since only they know what is being looked for.
+     */
+    protected async readContent(file: SeekedFileModel): Promise<NumberedFileLine[][]> {
+        const readings = await file.getContentCandidates();
+        return readings.map(text => LineMatcher.splitIntoNumberedLines(text)
+                                               .map(v => ({ filePath: file.FullPath, ...v })));
     }
 
 }

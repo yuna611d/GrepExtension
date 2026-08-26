@@ -57,7 +57,12 @@
                     "default": "txt",
                     "description": "File format of result file. You can opt from txt, csv, tsv or json."
                 },
-                "grep2file.outputTitle": {
+                "grep2file.searchAllEncodings": {
+    "type": "boolean",
+    "default": false,
+    "description": "Search every file under UTF-8, UTF-16 and the Japanese encodings (Shift-JIS, EUC-JP), and report a line that matches under any of them. Use this when a workspace mixes encodings and you would rather not configure files.encoding; files.autoGuessEncoding is ignored while it is on. Each file is decoded several times, so searches are slower."
+   },
+   "grep2file.outputTitle": {
                     "type": "boolean",
                     "default": true,
                     "description": "Search configuration is outputted if checked."
