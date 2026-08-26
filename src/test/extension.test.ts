@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import path from 'path';
 import * as vscode from 'vscode';
 import { GrepController } from '../Controllers/GrepController';
+import { SettingDao } from '../DAO/SettingDao';
+import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 
 // Prepare resource path
 const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath || '';
@@ -372,6 +374,65 @@ suite('Extension Test Suite - json output', () => {
 		// ---------------------------
 		assert.equal(sortForComparison(expectedValue, true), sortForComparison(normalizePaths(actualValue, true), true));
 		assert.doesNotThrow(() => JSON.parse(actualValue));
+	});
+
+});
+
+/**
+ * Decoding is delegated to the editor, and only the extension host has it - so this is the one
+ * place the real thing runs. The unit suite can only assert that the model asks and uses the
+ * answer; what VS Code makes of a given file is asserted here.
+ */
+suite('Extension Test Suite - file encodings', () => {
+
+	const sjisDir = path.join(inputFolderPath, '_Shift_JIS');
+
+	function modelFor(fileName: string): SeekedFileModel {
+		return new SeekedFileModel(new SettingDao(), fileName, sjisDir, []);
+	}
+
+	teardown(async () => {
+		await vscode.workspace.getConfiguration().update('files.encoding', undefined, vscode.ConfigurationTarget.Global);
+	});
+
+	test('a UTF-16 file is searched instead of being written off as binary', async () => {
+		const model = modelFor('utf16le-bom.txt');
+
+		// Half the bytes of UTF-16 text are zero, which the binary check reads as "not text", so
+		// every UTF-16 file in the workspace used to be skipped without ever being read.
+		assert.strictEqual(await model.seemsBinary(), false);
+		assert.ok((await model.getContent()).includes('日本語'));
+	});
+
+	test('a byte order mark is not left at the start of the text', async () => {
+		const content = await modelFor('utf8-bom.txt').getContent();
+
+		// Left in, it sits invisibly before the first character, so a search anchored at the start
+		// of the line misses and the mark travels into the result file.
+		assert.ok(!content.startsWith('\ufeff'));
+		assert.ok(content.startsWith('日本語'));
+	});
+
+	test('files.encoding decides how an unmarked file is read', async () => {
+		// Nothing in a Shift-JIS file says that it is one, so the setting is what settles it -
+		// and the search now sees exactly what opening the file in the editor shows.
+		await vscode.workspace.getConfiguration().update('files.encoding', 'shiftjis', vscode.ConfigurationTarget.Global);
+
+		assert.ok((await modelFor('sjis-encoded.txt').getContent()).includes('日本語'));
+	});
+
+	test('without that setting the same file falls back to UTF-8, as the editor does', async () => {
+		const content = await modelFor('sjis-encoded.txt').getContent();
+
+		assert.ok(content.includes('\ufffd'));
+		assert.ok(!content.includes('日本語'));
+	});
+
+	test('a UTF-8 file is unaffected by any of this', async () => {
+		const content = await modelFor('fileA.txt').getContent();
+
+		assert.ok(content.includes('Lorem'));
+		assert.ok(!content.includes('\ufffd'));
 	});
 
 });

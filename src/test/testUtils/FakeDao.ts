@@ -2,6 +2,15 @@ import { BaseDao } from '../../DAO/BaseDao';
 
 export class FakeDao extends BaseDao {
 
+	/**
+	 * What decodeContent should pretend the editor decided, when a test wants to pin a particular
+	 * encoding rather than let the stand-in below work it out.
+	 */
+	public forcedEncoding: string | undefined;
+
+	/** Every file decodeContent was asked about, so a test can check what it was given. */
+	public readonly decodedPaths: string[] = [];
+
 	constructor(private readonly settings: Record<string, string | string[] | boolean> = {}) {
 		super();
 	}
@@ -13,6 +22,36 @@ export class FakeDao extends BaseDao {
 		return Object.prototype.hasOwnProperty.call(this.settings, key)
 			? this.settings[key] as unknown as T
 			: defaultValue;
+	}
+
+	/**
+	 * Stands in for the editor's decoding, which only exists inside the extension host.
+	 *
+	 * It follows the same two rules the real one starts from - honour a byte order mark and drop
+	 * it, otherwise UTF-8 - which is as much as a unit test can meaningfully assert. What the
+	 * editor's settings and guessing make of a file is the integration suite's business.
+	 */
+	public async decodeContent(content: Uint8Array, filePath: string): Promise<string> {
+		this.decodedPaths.push(filePath);
+
+		const bytes = Buffer.from(content);
+		const encoding = this.forcedEncoding ?? FakeDao.encodingFromByteOrderMark(bytes) ?? 'utf-8';
+		const withoutMark = bytes.subarray(FakeDao.byteOrderMarkLength(bytes));
+
+		return new TextDecoder(encoding).decode(withoutMark);
+	}
+
+	private static encodingFromByteOrderMark(bytes: Buffer): string | undefined {
+		if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) { return 'utf-8'; }
+		if (bytes[0] === 0xFF && bytes[1] === 0xFE) { return 'utf-16le'; }
+		if (bytes[0] === 0xFE && bytes[1] === 0xFF) { return 'utf-16be'; }
+		return undefined;
+	}
+
+	private static byteOrderMarkLength(bytes: Buffer): number {
+		if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) { return 3; }
+		if ((bytes[0] === 0xFF && bytes[1] === 0xFE) || (bytes[0] === 0xFE && bytes[1] === 0xFF)) { return 2; }
+		return 0;
 	}
 
 }

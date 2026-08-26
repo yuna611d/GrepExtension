@@ -55,7 +55,8 @@ export class SeekedFileModel extends FileModel {
     public getContent(): Promise<string> {
         return this._content.get();
     }
-    protected _content = new AsyncLazy(async () => (await this.getBufferContent()).toString(this.encoding));
+    protected _content = new AsyncLazy(async () =>
+        this._dao.decodeContent(await this.getBufferContent(), this.FullPath));
 
     protected getBufferContent(): Promise<Buffer> {
         return this._bufferContent.get();
@@ -208,10 +209,36 @@ export class SeekedFileModel extends FileModel {
         return binary;
     }
 
+    /**
+     * Whether these leading bytes belong to a file nothing can search.
+     *
+     * A byte order mark settles it before any of the guessing below: a file that opens by saying
+     * which encoding it is in is text, whatever bytes follow. UTF-16 is the case that matters -
+     * half of its bytes are zero for ordinary English text, so every UTF-16 file in the workspace
+     * used to be written off as binary and never searched at all.
+     *
+     * Without a mark the old test stands: control characters below the ASCII printable range are
+     * not something text contains. That still mistakes unmarked UTF-16 for binary, which the
+     * editor would also struggle to open unaided.
+     */
     protected static looksBinary(head: Buffer): boolean {
+        if (SeekedFileModel.startsWithByteOrderMark(head)) {
+            return false;
+        }
         // Every byte is 0-255, so this is the same test as the old list of [0..8].
         return head.some(byte => byte <= SeekedFileModel.HIGHEST_BINARY_CONTROL_BYTE);
     }
+
+    protected static startsWithByteOrderMark(head: Buffer): boolean {
+        return SeekedFileModel.BYTE_ORDER_MARKS.some(mark => head.subarray(0, mark.length).equals(mark));
+    }
+
+    /** UTF-8, UTF-16 little endian and UTF-16 big endian, the marks VS Code itself recognises. */
+    protected static readonly BYTE_ORDER_MARKS = [
+        Buffer.from([0xEF, 0xBB, 0xBF]),
+        Buffer.from([0xFF, 0xFE]),
+        Buffer.from([0xFE, 0xFF]),
+    ];
 
     protected static readonly BINARY_SNIFF_BYTE_COUNT = 512;
     protected static readonly HIGHEST_BINARY_CONTROL_BYTE = 8;
