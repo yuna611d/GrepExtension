@@ -119,3 +119,24 @@ see on opening it. Setting `files.encoding` (or turning on `files.autoGuessEncod
 search and the editor together.
 
 The result file is written as UTF-8.
+
+### Searching a workspace that mixes encodings
+
+`grep2file.searchAllEncodings` (off by default) changes the question from *what encoding is this
+file in* — which nothing can answer for an unmarked Shift-JIS file — to *does any encoding make
+this file contain what I searched for*. Each file is read as UTF-8, UTF-16 (both byte orders),
+Shift-JIS and EUC-JP, and a line that matches under any of them is reported.
+
+* `files.autoGuessEncoding` is ignored while this is on: the encodings above are tried whether or
+  not VS Code would have guessed.
+* The editor's own reading of a file is still tried first, so a file with a byte order mark, or
+  one covered by `files.encoding`, is reported through that rather than through a guess.
+* A file is reported through **one** encoding — the first that matches — never as a mixture.
+* Unmarked UTF-16 files are searched in this mode. They are skipped otherwise, because their
+  text is stored with zero bytes that are indistinguishable from binary content.
+* Purely ASCII files are read once, since every one of those encodings agrees about them.
+
+It is slower, since files that are not ASCII are decoded several times, and it can report a line
+that only matches because some encoding happened to spell your search word out of unrelated
+bytes. Prefer `files.encoding` when you know what your files are; reach for this when you do not,
+or when one workspace holds several encodings at once.

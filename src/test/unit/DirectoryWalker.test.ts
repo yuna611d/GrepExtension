@@ -20,7 +20,7 @@ function fakeFile(fields: {
 		isDirectory: async () => fields.isDirectory,
 		isFile: async () => fields.isFile,
 		seemsBinary: async () => fields.seemsBinary ?? false,
-		getContent: async () => fields.Content ?? '',
+		getContentCandidates: async () => [fields.Content ?? ''],
 	} as unknown as SeekedFileModel;
 }
 
@@ -33,6 +33,12 @@ class FakeFileRepository extends FileRepository {
 	}
 }
 
+// Outside searchAllEncodings every file has exactly one reading, which is what these assert on.
+function onlyReading(readings: NumberedFileLine[][]): NumberedFileLine[] {
+	assert.strictEqual(readings.length, 1);
+	return readings[0];
+}
+
 suite('DirectoryWalker', () => {
 
 	test('invokes onFile with numbered lines for a file it finds', async () => {
@@ -40,7 +46,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [file] }));
 
 		const seen: NumberedFileLine[][] = [];
-		await walker.walk('/root', [], async lines => { seen.push(lines); });
+		await walker.walk('/root', [], async readings => { seen.push(onlyReading(readings)); });
 
 		assert.deepStrictEqual(seen, [[
 			{ filePath: '/root/a.txt', lineText: 'line1', lineNumber: 1 },
@@ -57,7 +63,7 @@ suite('DirectoryWalker', () => {
 		}));
 
 		const seenPaths: string[] = [];
-		await walker.walk('/root', [], async lines => { seenPaths.push(...lines.map(l => l.filePath)); });
+		await walker.walk('/root', [], async readings => { seenPaths.push(...onlyReading(readings).map(l => l.filePath)); });
 
 		assert.deepStrictEqual(seenPaths, ['/root/sub/b.txt']);
 	});
@@ -87,7 +93,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [fileA, fileB] }));
 
 		const seen: NumberedFileLine[] = [];
-		await walker.walk('/root', [], async lines => { seen.push(...lines); });
+		await walker.walk('/root', [], async readings => { seen.push(...onlyReading(readings)); });
 
 		assert.deepStrictEqual(seen, [
 			{ filePath: '/root/a.txt', lineText: 'a1', lineNumber: 1 },
@@ -130,7 +136,7 @@ suite('DirectoryWalker', () => {
 			const walker = new DirectoryWalker();
 
 			const seen: NumberedFileLine[][] = [];
-			await walker.walk(tempDir, [], async lines => { seen.push(lines); });
+			await walker.walk(tempDir, [], async readings => { seen.push(onlyReading(readings)); });
 
 			assert.deepStrictEqual(seen, [[
 				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'lorem', lineNumber: 1 },
@@ -152,7 +158,7 @@ suite('DirectoryWalker', () => {
 			}));
 
 			const seen: string[] = [];
-			await walker.walk('/root', [], async lines => { seen.push(...lines.map(l => l.filePath)); });
+			await walker.walk('/root', [], async readings => { seen.push(...onlyReading(readings).map(l => l.filePath)); });
 
 			// /root is entered once, so descending back into it is skipped and the sibling file is
 			// still reached.
@@ -196,8 +202,8 @@ suite('DirectoryWalker', () => {
 
 		async function walkedFileNames(): Promise<string[]> {
 			const seen: string[] = [];
-			await new DirectoryWalker().walk(root, [], async lines => {
-				seen.push(...lines.map(l => path.basename(l.filePath)));
+			await new DirectoryWalker().walk(root, [], async readings => {
+				seen.push(...onlyReading(readings).map(l => path.basename(l.filePath)));
 			});
 			return seen;
 		}

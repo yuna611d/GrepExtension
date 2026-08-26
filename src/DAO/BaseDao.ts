@@ -23,4 +23,16 @@ export abstract class BaseDao {
      *                 encoding settings are keyed on.
      */
     public abstract decodeContent(content: Uint8Array, filePath: string): Promise<string>;
+
+    /**
+     * Turns the bytes of a file into text using the encoding named, whatever the settings say.
+     *
+     * This is how a search can look at one file through several encodings in turn, which is a
+     * question the settings cannot answer: they describe what a file *is*, and this asks what it
+     * would say if it were something else.
+     *
+     * @param content The file's bytes, all of them.
+     * @param encoding A VS Code encoding id, such as 'utf8', 'utf16le', 'shiftjis' or 'eucjp'.
+     */
+    public abstract decodeContentAs(content: Uint8Array, encoding: string): Promise<string>;
 }

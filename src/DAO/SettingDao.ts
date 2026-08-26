@@ -56,4 +56,21 @@ export class SettingDao extends BaseDao{
         }
     }
 
+    /**
+     * Naming the encoding is what takes the settings out of the decision: VS Code applies the one
+     * asked for rather than the one it would have picked, which is what searching a file under
+     * several encodings in turn needs.
+     *
+     * An encoding VS Code does not know falls back to the configured default, and content it
+     * refuses throws; either way the bytes read as UTF-8 are a usable answer rather than a failed
+     * search, and a reading that is wrong for this encoding simply will not match.
+     */
+    public async decodeContentAs(content: Uint8Array, encoding: string): Promise<string> {
+        try {
+            return await vscode.workspace.decode(content, { encoding });
+        } catch {
+            return Buffer.from(content).toString('utf8');
+        }
+    }
+
 }

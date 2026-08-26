@@ -58,6 +58,55 @@ export class SeekedFileModel extends FileModel {
     protected _content = new AsyncLazy(async () =>
         this._dao.decodeContent(await this.getBufferContent(), this.FullPath));
 
+    /**
+     * Every reading of this file that is worth searching, best first.
+     *
+     * Normally there is exactly one: the file as the editor reads it. With searchAllEncodings on
+     * there are several, because the question changes from "what encoding is this file in" -
+     * which nothing can answer for an unmarked Shift-JIS file - to "does any encoding make this
+     * file contain what was searched for". The editor's own reading still comes first, so a file
+     * that is marked, or configured, is answered by that rather than by a guess.
+     */
+    public getContentCandidates(): Promise<string[]> {
+        return this._contentCandidates.get();
+    }
+    protected _contentCandidates = new AsyncLazy(() => this.decodeCandidates());
+
+    protected async decodeCandidates(): Promise<string[]> {
+        const asTheEditorReadsIt = await this.getContent();
+        if (!this.searchAllEncodings()) {
+            return [asTheEditorReadsIt];
+        }
+
+        const bytes = await this.getBufferContent();
+        // Nothing in an ASCII file changes between these encodings - except UTF-16, which would
+        // read its bytes pairwise and invent characters nobody is searching for.
+        if (bytes.every(byte => byte < 0x80)) {
+            return [asTheEditorReadsIt];
+        }
+
+        const readings = [asTheEditorReadsIt];
+        for (const encoding of SeekedFileModel.SEARCHED_ENCODINGS) {
+            readings.push(await this._dao.decodeContentAs(bytes, encoding));
+        }
+        // Encodings agree far more often than they differ - every ASCII line in a Shift-JIS file,
+        // for one - and searching the same text twice can only find the same lines twice.
+        return [...new Set(readings)];
+    }
+
+    /**
+     * The encodings searchAllEncodings tries, in the order a match is preferred from.
+     *
+     * UTF-8 first because it is what a file most likely is; then UTF-16 both ways; then the two
+     * Japanese encodings, which are the ones nothing in the file itself can distinguish.
+     */
+    protected static readonly SEARCHED_ENCODINGS = ['utf8', 'utf16le', 'utf16be', 'shiftjis', 'eucjp'];
+
+    protected searchAllEncodings(): boolean {
+        return this._searchAllEncodings.get();
+    }
+    protected _searchAllEncodings = new Lazy(() => this._dao.getSettingValue('searchAllEncodings', false));
+
     protected getBufferContent(): Promise<Buffer> {
         return this._bufferContent.get();
     }
@@ -202,11 +251,52 @@ export class SeekedFileModel extends FileModel {
         }
 
         const buffer = await fs.promises.readFile(this.FullPath);
-        const binary = SeekedFileModel.looksBinary(buffer.subarray(0, SeekedFileModel.BINARY_SNIFF_BYTE_COUNT));
+        const binary = this.headLooksBinary(buffer.subarray(0, SeekedFileModel.BINARY_SNIFF_BYTE_COUNT));
         if (!binary) {
             this._bufferContent = AsyncLazy.resolved(buffer);
         }
         return binary;
+    }
+
+    /**
+     * Unmarked UTF-16 is indistinguishable from binary by the byte test - its ASCII characters
+     * are stored with a zero byte beside them - so such a file is skipped unless the search has
+     * been asked to try UTF-16 anyway, which is the one case where reading it is worth the risk
+     * of being wrong. A file that really is binary decodes to text nobody is searching for.
+     */
+    protected headLooksBinary(head: Buffer): boolean {
+        if (!SeekedFileModel.looksBinary(head)) {
+            return false;
+        }
+        return !(this.searchAllEncodings() && SeekedFileModel.looksLikeUnmarkedUtf16(head));
+    }
+
+    /**
+     * Zero bytes on one consistent side of every pair, and no other control character: what text
+     * in the ASCII range looks like once it is stored two bytes at a time. Text outside that
+     * range - Japanese, for one - has no zero bytes at all and never reaches this test.
+     */
+    protected static looksLikeUnmarkedUtf16(head: Buffer): boolean {
+        if (head.length < 4) {
+            return false;
+        }
+
+        let zerosAtEvenPositions = 0;
+        let zerosAtOddPositions = 0;
+        for (let position = 0; position < head.length; position++) {
+            const byte = head[position];
+            if (byte === 0) {
+                if (position % 2 === 0) {
+                    zerosAtEvenPositions++;
+                } else {
+                    zerosAtOddPositions++;
+                }
+            } else if (byte <= SeekedFileModel.HIGHEST_BINARY_CONTROL_BYTE) {
+                return false;
+            }
+        }
+
+        return (zerosAtEvenPositions === 0) !== (zerosAtOddPositions === 0);
     }
 
     /**

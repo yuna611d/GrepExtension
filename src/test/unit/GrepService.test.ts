@@ -22,11 +22,14 @@ class TestableGrepService extends GrepService {
 	public callGetFindWordRange(re: RegExp, targetString: string, lineNumber: number, searchStartPos: number): vscode.Range | null {
 		return this.getFindWordRange(re, targetString, lineNumber, searchStartPos);
 	}
-	public callFindWordInAFile(lines: NumberedFileLine[]): Promise<void> {
-		return this.findWordInAFile(lines);
+	public callFindWordInAFile(...readings: NumberedFileLine[][]): Promise<void> {
+		return this.findWordInAFile(readings);
 	}
 	public getResultContent(): ResultContentModel {
 		return this.resultContent;
+	}
+	public getPendingMatches(): NumberedFileLine[] {
+		return this.pendingMatches;
 	}
 	public useWalker(walker: DirectoryWalker): void {
 		this.directoryWalker = walker;
@@ -122,6 +125,46 @@ suite('GrepService', () => {
 
 			assert.ok(first !== null && second !== null);
 			assert.strictEqual(first.start.character, second.start.character);
+		});
+
+	});
+
+	suite('choosing between readings of one file', () => {
+
+		// With searchAllEncodings on, a file arrives decoded several ways and only one of those
+		// readings is the file. Which one is not knowable until something matches in it.
+		test('a file read one way is searched as it always was', async () => {
+			const service = newService('lo');
+
+			await service.callFindWordInAFile(lines('lorem', 'ipsum'));
+
+			assert.deepStrictEqual(service.getPendingMatches().map(m => m.lineText), ['lorem']);
+		});
+
+		test('a later reading is searched when the earlier ones find nothing', async () => {
+			const service = newService('lo');
+
+			await service.callFindWordInAFile(lines('mojibake'), lines('lorem'));
+
+			assert.deepStrictEqual(service.getPendingMatches().map(m => m.lineText), ['lorem']);
+		});
+
+		test('the first reading that finds anything is the only one reported', async () => {
+			const service = newService('lo');
+
+			// Both readings match here. Reporting the file through both would show the same lines
+			// twice, once as mojibake - a file is one file, whichever encoding revealed it.
+			await service.callFindWordInAFile(lines('lorem'), lines('lorem too'));
+
+			assert.deepStrictEqual(service.getPendingMatches().map(m => m.lineText), ['lorem']);
+		});
+
+		test('nothing is reported when no reading finds anything', async () => {
+			const service = newService('lo');
+
+			await service.callFindWordInAFile(lines('nothing here'), lines('still nothing'));
+
+			assert.deepStrictEqual(service.getPendingMatches(), []);
 		});
 
 	});

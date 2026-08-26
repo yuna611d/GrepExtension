@@ -246,6 +246,107 @@ suite('SeekedFileModel', () => {
 		assert.strictEqual(model.isIgnoredFileOrDirectory(), false);
 	});
 
+	suite('searchAllEncodings', () => {
+
+		const SJIS_DIR = INPUT_DIR + Common.DIR_SEPARATOR + '_Shift_JIS';
+
+		let tempDir = '';
+
+		setup(() => {
+			tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-enc-'));
+		});
+
+		teardown(() => {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		});
+
+		function daoWithModeOn(): FakeDao {
+			return daoWithNoExclusions({ searchAllEncodings: true });
+		}
+
+		test('off, a file is read once - the way the editor reads it', async () => {
+			const model = new SeekedFileModel(daoWithNoExclusions(), 'sjis-encoded.txt', SJIS_DIR, []);
+
+			const readings = await model.getContentCandidates();
+
+			assert.strictEqual(readings.length, 1);
+			assert.strictEqual(readings[0], await model.getContent());
+		});
+
+		test('on, the same file is also read as each of the searched encodings', async () => {
+			const dao = daoWithModeOn();
+			const model = new SeekedFileModel(dao, 'sjis-encoded.txt', SJIS_DIR, []);
+
+			const readings = await model.getContentCandidates();
+
+			// Nothing in the file says it is Shift-JIS, so the only way to find its text is to
+			// look at it as Shift-JIS and see whether that is what was searched for.
+			assert.ok(readings.some(reading => reading.includes('日本語')));
+			assert.deepStrictEqual(dao.decodedAs, ['utf8', 'utf16le', 'utf16be', 'shiftjis', 'eucjp']);
+		});
+
+		test('on, the editor\'s own reading is still the first one offered', async () => {
+			const model = new SeekedFileModel(daoWithModeOn(), 'sjis-encoded.txt', SJIS_DIR, []);
+
+			const readings = await model.getContentCandidates();
+
+			// A file that is marked, or configured, is answered by that rather than by a guess.
+			assert.strictEqual(readings[0], await model.getContent());
+		});
+
+		test('on, readings that come out identical are offered once', async () => {
+			fs.writeFileSync(path.join(tempDir, 'jp.txt'), 'これは日本語');
+			const model = new SeekedFileModel(daoWithModeOn(), 'jp.txt', tempDir, []);
+
+			const readings = await model.getContentCandidates();
+
+			// Encodings agree far more often than they differ, and searching the same text twice
+			// can only find the same lines twice.
+			assert.strictEqual(new Set(readings).size, readings.length);
+		});
+
+		test('on, an ASCII file is not read as UTF-16 and turned into something else', async () => {
+			const dao = daoWithModeOn();
+			fs.writeFileSync(path.join(tempDir, 'ascii.txt'), 'lorem ipsum');
+			const model = new SeekedFileModel(dao, 'ascii.txt', tempDir, []);
+
+			const readings = await model.getContentCandidates();
+
+			// Read pairwise its bytes would spell characters nobody is searching for, and every
+			// other encoding agrees with UTF-8 here anyway.
+			assert.deepStrictEqual(readings, ['lorem ipsum']);
+			assert.deepStrictEqual(dao.decodedAs, []);
+		});
+
+		test('on, an unmarked UTF-16 file is searched instead of taken for binary', async () => {
+			fs.writeFileSync(path.join(tempDir, 'u16.txt'), Buffer.from('hit 日本語 here', 'utf16le'));
+			const model = new SeekedFileModel(daoWithModeOn(), 'u16.txt', tempDir, []);
+
+			// Its ASCII characters are stored with a zero byte beside them, which the byte test
+			// reads as "not text" - so without this the mode could not find UTF-16 at all.
+			assert.strictEqual(await model.seemsBinary(), false);
+			assert.ok((await model.getContentCandidates()).some(r => r.includes('日本語')));
+		});
+
+		test('off, that same file is still taken for binary', async () => {
+			fs.writeFileSync(path.join(tempDir, 'u16.txt'), Buffer.from('hit 日本語 here', 'utf16le'));
+			const model = new SeekedFileModel(daoWithNoExclusions(), 'u16.txt', tempDir, []);
+
+			assert.strictEqual(await model.seemsBinary(), true);
+		});
+
+		test('on, a real binary file is still taken for binary', async () => {
+			// A PNG header: control bytes at no particular parity, which is what tells it apart
+			// from UTF-16 text.
+			const png = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x01, 0x02, 0x03]);
+			fs.writeFileSync(path.join(tempDir, 'image.dat'), png);
+			const model = new SeekedFileModel(daoWithModeOn(), 'image.dat', tempDir, []);
+
+			assert.strictEqual(await model.seemsBinary(), true);
+		});
+
+	});
+
 	suite('binary detection', () => {
 
 		const RESOURCE_DIR = path.resolve(INPUT_DIR, '..');

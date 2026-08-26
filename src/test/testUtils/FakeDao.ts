@@ -41,6 +41,26 @@ export class FakeDao extends BaseDao {
 		return new TextDecoder(encoding).decode(withoutMark);
 	}
 
+	/**
+	 * The VS Code encoding ids the extension asks for, in the labels TextDecoder knows them by.
+	 */
+	private static readonly DECODER_LABELS: Record<string, string> = {
+		utf8: 'utf-8',
+		utf8bom: 'utf-8',
+		utf16le: 'utf-16le',
+		utf16be: 'utf-16be',
+		shiftjis: 'shift_jis',
+		eucjp: 'euc-jp',
+	};
+
+	public async decodeContentAs(content: Uint8Array, encoding: string): Promise<string> {
+		this.decodedAs.push(encoding);
+		return new TextDecoder(FakeDao.DECODER_LABELS[encoding] ?? encoding).decode(Buffer.from(content));
+	}
+
+	/** Every encoding decodeContentAs was asked for, in order. */
+	public readonly decodedAs: string[] = [];
+
 	private static encodingFromByteOrderMark(bytes: Buffer): string | undefined {
 		if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) { return 'utf-8'; }
 		if (bytes[0] === 0xFF && bytes[1] === 0xFE) { return 'utf-16le'; }
