@@ -102,12 +102,20 @@ You can ignore hidden file from search target
 
 * false: include hidden file in search target
 
-## Limitations
+## Encoding
 
-### Encoding
+Files are read the way VS Code itself reads them, so a search sees each file exactly as opening
+it in the editor would:
 
-Files are read as UTF-8, and the result file is written as UTF-8. This is not configurable.
+* A byte order mark is honoured, and removed from the text rather than left at the start of the
+  first line. UTF-16 files are searched normally.
+* [`files.encoding`](https://code.visualstudio.com/docs/getstarted/settings) is applied,
+  including any per-language override such as `"[plaintext]": { "files.encoding": "shiftjis" }`.
+* If you turn on `files.autoGuessEncoding`, VS Code's guessing applies here too.
 
-Files in another encoding are still searched, but their bytes are decoded as UTF-8 first, so
-non-ASCII text becomes mojibake and will not match what you typed. A Shift-JIS file, for
-example, produces replacement characters rather than readable text.
+Nothing in a Shift-JIS or EUC-JP file says which encoding it is in, so without one of those two
+settings such a file falls back to UTF-8 and its text becomes mojibake — the same thing you would
+see on opening it. Setting `files.encoding` (or turning on `files.autoGuessEncoding`) fixes the
+search and the editor together.
+
+The result file is written as UTF-8.

@@ -38,4 +38,22 @@ export class SettingDao extends BaseDao{
         return vscode.workspace.getConfiguration('grep2file').get<string | string[] | boolean>(key);
     }
 
+    /**
+     * Decodes with the editor's own rules, so a search sees each file the way opening it would:
+     * a byte order mark is honoured and removed, `files.encoding` is applied - including any
+     * per-language or per-file override - and `files.autoGuessEncoding`, when the user has turned
+     * it on, guesses the rest.
+     *
+     * Decoding can fail, most often because VS Code considers the content binary. Falling back to
+     * UTF-8 leaves such a file exactly as readable as it was before any of this existed, rather
+     * than dropping it from the search or failing the search outright.
+     */
+    public async decodeContent(content: Uint8Array, filePath: string): Promise<string> {
+        try {
+            return await vscode.workspace.decode(content, { uri: vscode.Uri.file(filePath) });
+        } catch {
+            return Buffer.from(content).toString('utf8');
+        }
+    }
+
 }

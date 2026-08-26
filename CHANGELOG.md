@@ -4,7 +4,21 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 ## Unreleased
 
+- Added following feature
+
+  - Files are now read the way VS Code itself reads them, instead of always as UTF-8. A byte
+    order mark is honoured and removed, `files.encoding` is applied - including per-language
+    overrides - and `files.autoGuessEncoding` is used when it is turned on. A search therefore
+    sees each file exactly as opening it in the editor would.
+
 - Fixed following bugs
+
+  - UTF-16 files were never searched. Half the bytes of UTF-16 text are zero, which the check
+    for binary files read as "not text", so they were skipped without being read at all.
+
+  - A byte order mark was left at the start of the first line, where it sits invisibly before
+    the first character - so a search anchored there missed, and the mark was copied into the
+    result file.
 
   - Running a search twice corrupted the result file for every structured format. json ended up
     as two arrays back to back and no longer parsed at all, and csv and tsv gained a second
