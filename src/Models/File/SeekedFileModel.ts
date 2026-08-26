@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { AsyncLazy } from '../../Commons/AsyncLazy';
 import { Common } from '../../Commons/Common';
 import { Lazy } from '../../Commons/Lazy';
 import { BaseDao } from '../../DAO/BaseDao';
@@ -51,15 +52,15 @@ export class SeekedFileModel extends FileModel {
         return [fileName, fileExtension];
     }
 
-    public get Content(): string {
+    public getContent(): Promise<string> {
         return this._content.get();
     }
-    protected _content = new Lazy(() => this.BufferContent.toString(this.encoding));
+    protected _content = new AsyncLazy(async () => (await this.getBufferContent()).toString(this.encoding));
 
-    protected get BufferContent(): Buffer {
+    protected getBufferContent(): Promise<Buffer> {
         return this._bufferContent.get();
     }
-    protected _bufferContent = new Lazy(() => fs.readFileSync(this.FullPath, null));
+    protected _bufferContent = new AsyncLazy(() => fs.promises.readFile(this.FullPath));
 
     public isExcludedFile(): boolean {
         // don't read files which have extension specified. Matched as a whole extension rather
@@ -87,23 +88,22 @@ export class SeekedFileModel extends FileModel {
     }
 
 
-    public get isFile(): boolean {
+    public async isFile(): Promise<boolean> {
         // Check if the file path is file or directory
-        return this.stat?.isFile() ?? false;
+        return (await this.stat())?.isFile() ?? false;
     }
 
-    public get isDirectory(): boolean {
-        return this.stat?.isDirectory() ?? false;
+    public async isDirectory(): Promise<boolean> {
+        return (await this.stat())?.isDirectory() ?? false;
     }
 
     /**
      * What this entry actually is, or null when the filesystem will not say.
      *
      * Stat'd once per model. The walk asks every entry isDirectory and then asks it isFile, so an
-     * un-cached getter meant two identical statSync calls for every entry in the workspace - and
-     * statSync is synchronous, so each one blocks the extension host.
+     * un-cached answer meant two identical stat calls for every entry in the workspace.
      *
-     * statSync follows symlinks, so it throws ENOENT on a link whose target is gone - and that
+     * stat follows symlinks, so it rejects with ENOENT on a link whose target is gone - and that
      * error used to escape all the way out of the directory walk, which reports it as "Grep failed
      * due to an unexpected error". Because directories are recursed into before their sibling files
      * are read, one dangling link left the user with that error and an empty result file, no matter
@@ -115,14 +115,14 @@ export class SeekedFileModel extends FileModel {
      * the walk steps over them. A failure is cached like any other answer, so a missing entry costs
      * one failed syscall rather than one per question asked about it.
      */
-    protected get stat(): fs.Stats | null {
+    protected stat(): Promise<fs.Stats | null> {
         return this._stat.get();
     }
-    protected _stat = new Lazy<fs.Stats | null>(() => this.statEntry());
+    protected _stat = new AsyncLazy<fs.Stats | null>(() => this.statEntry());
 
-    protected statEntry(): fs.Stats | null {
+    protected async statEntry(): Promise<fs.Stats | null> {
         try {
-            return fs.statSync(this.FullPath);
+            return await fs.promises.stat(this.FullPath);
         } catch {
             return null;
         }
@@ -173,33 +173,66 @@ export class SeekedFileModel extends FileModel {
      * This is a cheap implementation to determine if passed file is binary or not.
      * This function determine passed file as binary if file contains code under the ascii 08.
      *
-     * Only the leading bytes are read. This used to reach for BufferContent, which loads the whole
-     * file - so a large binary sitting in the workspace was read into memory in full purely to
-     * look at its first 512 bytes, and then thrown away unread, since the walk skips binaries.
+     * Only the leading bytes are read. This used to reach for the whole file's contents - so a
+     * large binary sitting in the workspace was read into memory in full purely to look at its
+     * first 512 bytes, and then thrown away unread, since the walk skips binaries.
      */
-    public get seemsBinary(): boolean {
+    public seemsBinary(): Promise<boolean> {
         return this._seemsBinary.get();
     }
-    protected _seemsBinary = new Lazy(() => {
-        const head = this.readHead(SeekedFileModel.BINARY_SNIFF_BYTE_COUNT);
+    protected _seemsBinary = new AsyncLazy(() => this.sniffBinary());
+
+    /**
+     * Whether the leading bytes say this file is binary, reading as little as it takes to know.
+     *
+     * A file small enough to hold is read once and answered from what was read, so the sniff and
+     * the search that follows it cost one read between them instead of one each. Those bytes are
+     * kept for the search only when the file turns out to be searchable: nothing reads a binary,
+     * and holding one would keep it in memory for as long as its directory is being walked.
+     *
+     * Anything larger still gets only its first bytes read - the whole point of not reading a
+     * large binary in full is lost if the check itself does it.
+     */
+    protected async sniffBinary(): Promise<boolean> {
+        const size = (await this.stat())?.size ?? Number.POSITIVE_INFINITY;
+
+        if (size > SeekedFileModel.SINGLE_READ_SIZE_LIMIT) {
+            return SeekedFileModel.looksBinary(await this.readHead(SeekedFileModel.BINARY_SNIFF_BYTE_COUNT));
+        }
+
+        const buffer = await fs.promises.readFile(this.FullPath);
+        const binary = SeekedFileModel.looksBinary(buffer.subarray(0, SeekedFileModel.BINARY_SNIFF_BYTE_COUNT));
+        if (!binary) {
+            this._bufferContent = AsyncLazy.resolved(buffer);
+        }
+        return binary;
+    }
+
+    protected static looksBinary(head: Buffer): boolean {
         // Every byte is 0-255, so this is the same test as the old list of [0..8].
         return head.some(byte => byte <= SeekedFileModel.HIGHEST_BINARY_CONTROL_BYTE);
-    });
+    }
 
     protected static readonly BINARY_SNIFF_BYTE_COUNT = 512;
     protected static readonly HIGHEST_BINARY_CONTROL_BYTE = 8;
 
     /**
+     * The largest file that may be read in one go to answer the binary check. Above this the
+     * bounded head read is used instead, so a large binary is never pulled into memory.
+     */
+    protected static readonly SINGLE_READ_SIZE_LIMIT = 1024 * 1024;
+
+    /**
      * The first byteCount bytes of the file, or fewer when the file is shorter.
      */
-    protected readHead(byteCount: number): Buffer {
+    protected async readHead(byteCount: number): Promise<Buffer> {
         const buffer = Buffer.alloc(byteCount);
-        const descriptor = fs.openSync(this.FullPath, 'r');
+        const handle = await fs.promises.open(this.FullPath, 'r');
         try {
-            const bytesRead = fs.readSync(descriptor, buffer, 0, byteCount, 0);
+            const { bytesRead } = await handle.read(buffer, 0, byteCount, 0);
             return buffer.subarray(0, bytesRead);
         } finally {
-            fs.closeSync(descriptor);
+            await handle.close();
         }
     }
 }

@@ -53,6 +53,15 @@ All notable changes to the "Grep to File" extension will be documented in this f
     directory, once for each question. The answer is now looked up once per entry, halving
     the number of blocking filesystem calls a search makes.
 
+  - A search no longer freezes the editor while it runs. Every file was read with a blocking
+    call, so VS Code could not respond to typing, clicking or redrawing until the whole search
+    had finished. Files are now read without blocking, and several questions about the
+    workspace are asked at once rather than one after another.
+
+  - A file small enough to hold is now read once for both the binary check and the search
+    itself, instead of being opened for each. Larger files still have only their first bytes
+    read to decide whether they are binary.
+
 ## 0.6.0
 
 - Added following feature

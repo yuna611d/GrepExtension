@@ -55,13 +55,13 @@ suite('ResultFileModel', () => {
 		assert.strictEqual(model.FileName, 'first');
 	});
 
-	test('addNewFile creates an empty file at FullPath', () => {
+	test('addNewFile creates an empty file at FullPath', async () => {
 		const dao = new FakeDao({ outputFileName: '__unit_test_addNewFile__', outputContentFormat: 'txt' });
 		const model = new ResultFileModel(dao);
 		const path = model.FullPath;
 
 		try {
-			const returned = model.addNewFile();
+			const returned = await model.addNewFile();
 			assert.strictEqual(returned, model);
 			assert.ok(fs.existsSync(path));
 			assert.strictEqual(fs.readFileSync(path, 'utf8'), '');

@@ -56,10 +56,10 @@ export class ResultFileModel extends FileModel {
 
 
 
-    public addNewFile(): ResultFileModel {
+    public async addNewFile(): Promise<ResultFileModel> {
         // TODO use encoding which is defined in config file
         // create result file
-        fs.appendFileSync(this.FullPath, '', { encoding: this.encoding as BufferEncoding });
+        await fs.promises.appendFile(this.FullPath, '', { encoding: this.encoding as BufferEncoding });
         return this;
     }
 

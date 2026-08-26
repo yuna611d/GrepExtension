@@ -24,30 +24,32 @@ function dao(): FakeDao {
  */
 suite('Encoding (Shift-JIS handling)', () => {
 
-	test('a Shift-JIS file is not mistaken for a binary, so it is searched', () => {
+	test('a Shift-JIS file is not mistaken for a binary, so it is searched', async () => {
 		const model = new SeekedFileModel(dao(), 'sjis-encoded.txt', SJIS_DIR, []);
 		// seemsBinary only looks for control characters 0-8; Shift-JIS lead/trail bytes are
 		// all >= 0x81, so the file is treated as text and does get read and matched against.
-		assert.strictEqual(model.seemsBinary, false);
+		assert.strictEqual(await model.seemsBinary(), false);
 	});
 
-	test('Shift-JIS content is decoded as UTF-8, producing replacement characters', () => {
+	test('Shift-JIS content is decoded as UTF-8, producing replacement characters', async () => {
 		const model = new SeekedFileModel(dao(), 'sjis-encoded.txt', SJIS_DIR, []);
+		const content = await model.getContent();
 
 		// The fixture is "日本語テスト" / "あいうえお" encoded in Shift-JIS. Read as UTF-8 those
 		// byte sequences are invalid, so the text the grep actually searches is mojibake.
-		assert.ok(model.Content.includes('�'),
+		assert.ok(content.includes('�'),
 			'expected U+FFFD replacement characters from decoding Shift-JIS bytes as UTF-8');
-		assert.ok(!model.Content.includes('日本語'),
+		assert.ok(!content.includes('日本語'),
 			'Shift-JIS text is not recoverable while the encoding is hardcoded to utf-8');
 	});
 
-	test('the neighbouring fixture in the same folder is plain ASCII despite the folder name', () => {
+	test('the neighbouring fixture in the same folder is plain ASCII despite the folder name', async () => {
 		// Guards the assumption the golden fixtures rest on: _Shift_JIS/fileA.txt is ordinary
 		// ASCII and contributes normal matches, so it must not be confused for encoded data.
 		const model = new SeekedFileModel(dao(), 'fileA.txt', SJIS_DIR, []);
-		assert.ok(!model.Content.includes('�'));
-		assert.ok(model.Content.includes('Lorem'));
+		const content = await model.getContent();
+		assert.ok(!content.includes('�'));
+		assert.ok(content.includes('Lorem'));
 	});
 
 });

@@ -6,6 +6,8 @@ import { DirectoryWalker, NumberedFileLine } from '../../Services/DirectoryWalke
 import { FileRepository } from '../../Models/File/FileRepository';
 import { SeekedFileModel } from '../../Models/File/SeekedFileModel';
 
+// The model answers what an entry is, and what is in it, asynchronously - it is reading the
+// filesystem - so the stand-in answers the same way.
 function fakeFile(fields: {
 	isDirectory: boolean;
 	isFile: boolean;
@@ -14,9 +16,11 @@ function fakeFile(fields: {
 	seemsBinary?: boolean;
 }): SeekedFileModel {
 	return {
-		seemsBinary: false,
-		Content: '',
-		...fields,
+		FullPath: fields.FullPath,
+		isDirectory: async () => fields.isDirectory,
+		isFile: async () => fields.isFile,
+		seemsBinary: async () => fields.seemsBinary ?? false,
+		getContent: async () => fields.Content ?? '',
 	} as unknown as SeekedFileModel;
 }
 
@@ -24,7 +28,7 @@ class FakeFileRepository extends FileRepository {
 	constructor(private readonly filesByDir: Record<string, SeekedFileModel[]>) {
 		super();
 	}
-	public retrieve(targetDir: string): SeekedFileModel[] {
+	public async retrieve(targetDir: string): Promise<SeekedFileModel[]> {
 		return this.filesByDir[targetDir] ?? [];
 	}
 }
@@ -90,6 +94,50 @@ suite('DirectoryWalker', () => {
 			{ filePath: '/root/a.txt', lineText: 'a2', lineNumber: 2 },
 			{ filePath: '/root/b.txt', lineText: 'b1', lineNumber: 1 },
 		]);
+	});
+
+	suite('the extension host', () => {
+
+		let tempDir = '';
+
+		setup(() => {
+			tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-walk-'));
+		});
+
+		teardown(() => {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		});
+
+		test('is left free to do other work while the walk reads the filesystem', async () => {
+			fs.writeFileSync(path.join(tempDir, 'a.txt'), 'lorem\nipsum');
+			// The real repository, so the walk reads a real directory rather than a stand-in.
+			const walker = new DirectoryWalker();
+
+			// setImmediate runs on the next turn of the event loop - the same queue VS Code's UI
+			// work waits in. A walk built on synchronous filesystem calls never reaches that queue
+			// until it has finished, however many files it has to get through, so this stays false
+			// and the editor is frozen for the whole search.
+			let hostGotATurn = false;
+			setImmediate(() => { hostGotATurn = true; });
+
+			await walker.walk(tempDir, [], async () => {});
+
+			assert.ok(hostGotATurn, 'the walk ran to completion without ever yielding the event loop');
+		});
+
+		test('still reports the file it found', async () => {
+			fs.writeFileSync(path.join(tempDir, 'a.txt'), 'lorem\nipsum');
+			const walker = new DirectoryWalker();
+
+			const seen: NumberedFileLine[][] = [];
+			await walker.walk(tempDir, [], async lines => { seen.push(lines); });
+
+			assert.deepStrictEqual(seen, [[
+				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'lorem', lineNumber: 1 },
+				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'ipsum', lineNumber: 2 },
+			]]);
+		});
+
 	});
 
 	suite('directory cycles', () => {
