@@ -19,6 +19,14 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - A search with many matches slowed down as it went. Highlighting replaces every highlight it
+    has already applied, so each update had to hand the editor the whole set of matches found so
+    far - and that was done once per batch of 40. The work grew with the square of the matches:
+    100,000 of them meant 2,500 updates carrying 125,050,000 ranges between them, 1,251 for every
+    match found. Updates now become less frequent as the set grows, which brings that down to
+    20 updates and 387,200 ranges - about three per match, whatever the total. Short searches
+    still update on every batch, and the complete set is always shown once the search ends.
+
   - Highlights from earlier searches stayed in the result file. Each search applied its
     highlights with a decoration type of its own and never released it, so nothing could take
     the previous ones away - and once csv, tsv and json began replacing the previous result,

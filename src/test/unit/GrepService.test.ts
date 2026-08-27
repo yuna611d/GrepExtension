@@ -128,6 +128,65 @@ class RecordingDecorationService extends DecorationService {
 	}
 }
 
+// Runs the real flushPendingMatches() - and so the real decoration bookkeeping - with only the
+// one editor round-trip inside it replaced, and records everything the highlighting is handed.
+class LineCountingContentModel extends ResultContentModel {
+	private nextLine = 0;
+
+	constructor(dao: FakeDao) {
+		super(dao, {} as ResultFileModel);
+	}
+
+	protected async insertContentBlock(formattedContents: string[]): Promise<number> {
+		const firstLine = this.nextLine;
+		this.nextLine += formattedContents.length;
+		return firstLine;
+	}
+}
+
+class HighlightRecordingGrepService extends GrepService {
+	/** The size of the set handed to the editor, one entry per update. */
+	public readonly updateSizes: number[] = [];
+
+	constructor(dao: FakeDao) {
+		super(new ResultFileModel(dao), 'lo', new DecorationService(), new TimeKeeper());
+		this.resultContent = new LineCountingContentModel(dao);
+		this.optionalService.setEditor({
+			setDecorations: (_type: vscode.TextEditorDecorationType, ranges: readonly vscode.Range[]) => {
+				this.updateSizes.push(ranges.length);
+			},
+		} as unknown as vscode.TextEditor);
+	}
+
+	/** Feed the service one matching line at a time, as the walk does, then flush the remainder. */
+	public async findMatches(count: number): Promise<void> {
+		for (let i = 0; i < count; i++) {
+			await this.findWordInAFile([[{ filePath: '/root/a.txt', lineText: 'hello', lineNumber: i + 1 }]]);
+		}
+		await this.flushPendingMatches();
+	}
+
+	public finish(): void {
+		this.showDecorations();
+	}
+
+	public useWalker(walker: DirectoryWalker): void {
+		this.directoryWalker = walker;
+	}
+
+	/** Writing the file needs a live editor and is covered elsewhere; this suite is highlighting. */
+	protected async persistResult(): Promise<void> {}
+
+	public get rangesFound(): number {
+		return this.allRanges.length;
+	}
+
+	/** Total range objects the editor was handed across every update. */
+	public get rangesHandedOver(): number {
+		return this.updateSizes.reduce((total, size) => total + size, 0);
+	}
+}
+
 class SilentDirectoryWalker extends DirectoryWalker {
 	public async walk(): Promise<void> {}
 }
@@ -221,6 +280,76 @@ suite('GrepService', () => {
 			// A search that finds nothing never reaches a flush, so without this the last
 			// search's highlights would simply stay on screen.
 			assert.deepStrictEqual(decoration.calls, ['setEditor', 'clear']);
+		});
+
+		test('shows the highlights on every batch while the set is still small', async () => {
+			const service = new HighlightRecordingGrepService(new FakeDao({ exclude: [], outputTitle: true }));
+
+			await service.findMatches(120);
+
+			// Sending a small set costs almost nothing, and updating each time is what makes the
+			// highlights appear alongside the results as they are written.
+			assert.deepStrictEqual(service.updateSizes, [40, 80, 120]);
+		});
+
+		test('stops handing the whole set over on every batch as it grows', async () => {
+			const service = new HighlightRecordingGrepService(new FakeDao({ exclude: [], outputTitle: true }));
+
+			await service.findMatches(20000);
+			service.finish();
+
+			// setDecorations replaces every decoration of its type, so each update carries the
+			// whole accumulated set. Updating once per 40-match batch therefore made the total
+			// work grow with the square of the matches found: 500 updates carrying 5,010,000
+			// ranges between them, 250 times the 20,000 actually found.
+			assert.strictEqual(service.rangesFound, 20000);
+			assert.ok(service.updateSizes.length < 40,
+				`updated ${service.updateSizes.length} times, which is not far below the 500 batches`);
+			assert.ok(service.rangesHandedOver < 20000 * 5,
+				`handed over ${service.rangesHandedOver} ranges for 20000 matches`);
+		});
+
+		test('the set handed over grows no faster than the matches found', async () => {
+			const perMatch = async (matches: number) => {
+				const service = new HighlightRecordingGrepService(new FakeDao({ exclude: [], outputTitle: true }));
+				await service.findMatches(matches);
+				service.finish();
+				return service.rangesHandedOver / matches;
+			};
+
+			// The cost per match is what used to climb - 13x at 1,000 matches, 251x at 20,000.
+			// Ten times the matches must not mean ten times the cost of each one.
+			const small = await perMatch(2000);
+			const large = await perMatch(20000);
+
+			assert.ok(large < small * 2, `${small.toFixed(1)}x per match at 2,000, ${large.toFixed(1)}x at 20,000`);
+		});
+
+		test('the highlights left on screen are every match, not the set at the last update', async () => {
+			const service = new HighlightRecordingGrepService(new FakeDao({ exclude: [], outputTitle: true }));
+
+			await service.findMatches(5000);
+			// What grep() does once the search is over, however it ended.
+			service.finish();
+
+			// Skipping an update is only ever a delay: the reader must still end up looking at
+			// every match that was found.
+			assert.strictEqual(service.updateSizes[service.updateSizes.length - 1], 5000);
+		});
+
+		test('a grep shows the complete set even when it is cancelled', async () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true });
+			const service = new HighlightRecordingGrepService(dao);
+			service.useWalker(new ThrowingDirectoryWalker());
+			await service.findMatches(300);
+			const shownDuringTheSearch = service.updateSizes.length;
+
+			await service.grep();
+
+			// grep() ends by showing everything, so a cancelled or failed search leaves the
+			// matches it did find highlighted rather than an older, shorter set.
+			assert.ok(service.updateSizes.length > shownDuringTheSearch);
+			assert.strictEqual(service.updateSizes[service.updateSizes.length - 1], 300);
 		});
 
 	});
