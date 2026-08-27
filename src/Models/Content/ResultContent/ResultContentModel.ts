@@ -23,12 +23,30 @@ export class ResultContentModel extends BaseModel {
     }
 
     public get columnPosition() {
+        const shift = this.rowKeepsGrepConditionColumn() ? 0 : 1;
         return {
-            title:                              0,      // column[0]              : Title
-            filePath:   this.hasOutputTitle() ? 1 : 0,  // column[1] or column[2] : filePath
-            lineNumber: this.hasOutputTitle() ? 2 : 1,  // column[2] or column[1] : lineNumber
-            content:    this.hasOutputTitle() ? 3 : 2   // column[3] or column[2] : pickedLineText
+            title:      0,              // column[0]              : Title
+            filePath:   1 - shift,      // column[1] or column[0] : filePath
+            lineNumber: 2 - shift,      // column[2] or column[1] : lineNumber
+            content:    3 - shift       // column[3] or column[2] : pickedLineText
         };
+    }
+
+    /**
+     * Whether a rendered row still carries the grep-condition column in front of the data columns.
+     *
+     * These positions are what decoration ranges are measured from, so they have to describe the
+     * row as it was actually written. txt keeps that column and blanks it, whatever outputTitle
+     * says, so its data columns never move; csv and tsv drop the field when the condition is not
+     * being written, so theirs shift left by one.
+     *
+     * Shifting txt's positions along with theirs pointed the content column at the line number:
+     * with outputTitle off, a matched word was looked for in "42" and never found, so nothing was
+     * highlighted at all - and a search for a number highlighted the line number instead of the
+     * text it appears in.
+     */
+    protected rowKeepsGrepConditionColumn(): boolean {
+        return true;
     }
 
     // ------ Meta information ------
@@ -71,11 +89,22 @@ export class ResultContentModel extends BaseModel {
      * Returns null when this format has no meaningful searchable offset (see ResultContentJSONModel).
      */
     public extractContentAndOffset(lineText: string): { text: string; offset: number } | null {
-        const splittedTexts = lineText.split(this.SEPARATOR);
-        const contentText = (splittedTexts.length >= this.columnPosition.content) ? splittedTexts[this.columnPosition.content] : "";
-        const offset = splittedTexts.map(x => x.length)
-                                     .reduce((a, v, i) => (i < this.columnPosition.content) ? a + v + this.SEPARATOR.length : a) + this.SEPARATOR.length;
-        return { text: contentText, offset };
+        const fields = lineText.split(this.SEPARATOR);
+        const contentColumn = this.columnPosition.content;
+
+        // A row with no content column at all has nothing to search. The guard used to admit a
+        // row with exactly contentColumn fields, whose last index is one short, and hand back the
+        // undefined that reading past the end produces - typed as a string, so a search word was
+        // matched against the text "undefined" and words like "def" or "fine" found there.
+        if (fields.length <= contentColumn) {
+            return { text: "", offset: lineText.length };
+        }
+
+        // Every field before the content one, each followed by the separator that ends it.
+        const offset = fields.slice(0, contentColumn)
+                             .reduce((total, field) => total + field.length + this.SEPARATOR.length, 0);
+
+        return { text: fields[contentColumn], offset };
     }
     //------ Contents ------
 

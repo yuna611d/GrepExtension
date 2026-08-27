@@ -27,12 +27,41 @@ suite('ResultContentModel (txt)', () => {
 		assert.strictEqual(model.Title, '');
 	});
 
-	test('columnPosition shifts by one when the title row is suppressed', () => {
-		const withTitle = new ResultContentModel(new FakeDao({ outputTitle: true }), new ResultFileModel(new FakeDao()));
+	test('columnPosition does not shift when the title row is suppressed', () => {
+		// txt blanks the grep-condition column and keeps it, so its data columns never move -
+		// unlike csv and tsv, which drop the field outright and really do shift left by one.
+		// Shifting txt's along with theirs pointed the content column at the line number.
+		const withTitle = new ResultContentModel(new FakeDao({ outputTitle: true }), {} as ResultFileModel);
 		assert.deepStrictEqual(withTitle.columnPosition, { title: 0, filePath: 1, lineNumber: 2, content: 3 });
 
-		const withoutTitle = new ResultContentModel(new FakeDao({ outputTitle: false }), new ResultFileModel(new FakeDao()));
-		assert.deepStrictEqual(withoutTitle.columnPosition, { title: 0, filePath: 0, lineNumber: 1, content: 2 });
+		const withoutTitle = new ResultContentModel(new FakeDao({ outputTitle: false }), {} as ResultFileModel);
+		assert.deepStrictEqual(withoutTitle.columnPosition, { title: 0, filePath: 1, lineNumber: 2, content: 3 });
+	});
+
+	test('a row written with the title suppressed still yields its matched text', () => {
+		const dao = new FakeDao({ outputTitle: false });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+		model.setGrepConditionText('/ws', { searchWord: 'needle', isRegExpMode: false });
+
+		const row = model.getContentInOneLine('/ws/a.txt', '42', 'the needle is here').replace(/\n$/, '');
+		const extracted = model.extractContentAndOffset(row);
+
+		// This used to hand back "42": the word was looked for in the line number and never found,
+		// so nothing was highlighted - and searching for a number highlighted the line number.
+		assert.strictEqual(extracted?.text, 'the needle is here');
+		assert.strictEqual(row.slice(extracted!.offset), 'the needle is here');
+	});
+
+	test('a row written with the title shown yields its matched text too', () => {
+		const dao = new FakeDao({ outputTitle: true });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+		model.setGrepConditionText('/ws', { searchWord: 'needle', isRegExpMode: false });
+
+		const row = model.getContentInOneLine('/ws/a.txt', '42', 'the needle is here').replace(/\n$/, '');
+		const extracted = model.extractContentAndOffset(row);
+
+		assert.strictEqual(extracted?.text, 'the needle is here');
+		assert.strictEqual(row.slice(extracted!.offset), 'the needle is here');
 	});
 
 	test('ColumnTitle always blanks the first (GrepConf) column for txt output', () => {
@@ -72,6 +101,19 @@ suite('ResultContentModel (txt)', () => {
 
 		const extracted = model.extractContentAndOffset('too\tshort');
 		assert.strictEqual(extracted?.text, '');
+	});
+
+	test('a row one column short yields an empty text, not the undefined past its end', () => {
+		const dao = new FakeDao({ outputTitle: true });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+
+		// Three fields, so index 3 is one past the end. The guard admitted this row and handed
+		// back what reading past the end gives - undefined, typed as a string - which a search
+		// word was then matched against: "def" and "fine" both find themselves in "undefined".
+		const extracted = model.extractContentAndOffset('\tf\t3');
+
+		assert.strictEqual(extracted?.text, '');
+		assert.strictEqual(typeof extracted?.text, 'string');
 	});
 
 });

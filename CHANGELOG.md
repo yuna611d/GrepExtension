@@ -19,6 +19,11 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - With `grep2file.outputTitle` off, txt output highlighted nothing. The matched word was
+    looked for in the line-number column instead of the matched text, so it was never found -
+    and searching for a number highlighted the line number rather than the text containing it.
+    csv and tsv were unaffected.
+
   - UTF-16 files were never searched. Half the bytes of UTF-16 text are zero, which the check
     for binary files read as "not text", so they were skipped without being read at all.
 
