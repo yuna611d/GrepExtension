@@ -132,6 +132,15 @@ class SilentDirectoryWalker extends DirectoryWalker {
 	public async walk(): Promise<void> {}
 }
 
+// Remembers what the search asked it to leave alone.
+class ExclusionRecordingDirectoryWalker extends DirectoryWalker {
+	public excluded: string[] = [];
+
+	public async walk(_targetDir: string, excludedFullPaths: string[]): Promise<void> {
+		this.excluded = excludedFullPaths;
+	}
+}
+
 class FailingDirectoryWalker extends DirectoryWalker {
 	public async walk(): Promise<void> {
 		throw new Error('disk went away');
@@ -212,6 +221,25 @@ suite('GrepService', () => {
 			// A search that finds nothing never reaches a flush, so without this the last
 			// search's highlights would simply stay on screen.
 			assert.deepStrictEqual(decoration.calls, ['setEditor', 'clear']);
+		});
+
+	});
+
+	suite('what a search leaves alone', () => {
+
+		test('every format\'s result file is skipped, not only the one being written', async () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true, outputContentFormat: 'csv' });
+			const resultFile = new ResultFileModel(dao);
+			const service = new TestableGrepService(resultFile, 'lo', new DecorationService(), new TimeKeeper());
+			const walker = new ExclusionRecordingDirectoryWalker();
+			service.useWalker(walker);
+
+			await service.grep();
+
+			// Switching outputContentFormat leaves the previous format's file in the workspace,
+			// and a search that does not skip it reports its own earlier results as matches.
+			assert.deepStrictEqual(walker.excluded, resultFile.AllFormatFullPaths);
+			assert.ok(walker.excluded.includes(resultFile.FullPath));
 		});
 
 	});

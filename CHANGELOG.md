@@ -26,6 +26,10 @@ All notable changes to the "Grep to File" extension will be documented in this f
     found nothing left the previous highlights untouched as well. All searches now share one
     highlight type, and each takes back what the last one left before it starts.
 
+  - A search reported its own earlier results as matches. Only the result file for the format
+    in use was skipped, so the file a previously configured format had left in the workspace
+    was searched like any other. It went unnoticed while those files were never written.
+
   - The result file was never actually written. Every match was inserted into the editor, which
     left the document unsaved and the file itself empty - closing the editor without saving lost
     the results, and anything else reading the file found nothing in it. The file is now saved

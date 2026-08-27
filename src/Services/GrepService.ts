@@ -103,7 +103,7 @@ export class GrepService implements IService {
 
         // Do grep and write its found result.
         try {
-            await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FullPath], r => this.findWordInAFile(r));
+            await this.directoryWalker.walk(Common.BASE_DIR, this.resultFile.AllFormatFullPaths, r => this.findWordInAFile(r));
             // Flush whatever is left in the buffer (fewer than BATCH_SIZE matches).
             await this.flushPendingMatches();
             // Notify finish

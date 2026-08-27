@@ -31,12 +31,14 @@ export class ResultFileModel extends FileModel {
         return this._fileExtension.get();
     }
     protected _fileExtension = new Lazy(() => {
-        const defaultFormat = "txt";
-        const allowedContentFormats = ["txt", "tsv", "csv", "json"];
-
-        const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', defaultFormat);
-        return allowedContentFormats.indexOf(outputContentFormat) === -1 ? defaultFormat : outputContentFormat;
+        const outputContentFormat: string = this._dao.getSettingValue('outputContentFormat', ResultFileModel.DEFAULT_CONTENT_FORMAT);
+        return ResultFileModel.CONTENT_FORMATS.includes(outputContentFormat)
+            ? outputContentFormat
+            : ResultFileModel.DEFAULT_CONTENT_FORMAT;
     });
+
+    private static readonly DEFAULT_CONTENT_FORMAT = "txt";
+    private static readonly CONTENT_FORMATS = ["txt", "tsv", "csv", "json"];
 
     /**
      * Output filename with extension
@@ -50,6 +52,22 @@ export class ResultFileModel extends FileModel {
      */
     public get FullPath() {
         return Common.BASE_DIR + Common.DIR_SEPARATOR + this.FileNameWithExtension;
+    }
+
+    /**
+     * Every path this extension writes a result to, not just the one this search will use.
+     *
+     * A search has to leave its own output alone, or it grepped what it was writing. Leaving the
+     * other formats alone matters just as much: switching outputContentFormat does not remove the
+     * file the previous format left behind, so a search would find its own earlier results
+     * sitting in the workspace and report them as matches in whatever it writes next.
+     *
+     * That went unnoticed while the results never reached the file - every one of them was empty
+     * on disk, so there was nothing in them to find.
+     */
+    public get AllFormatFullPaths(): string[] {
+        return ResultFileModel.CONTENT_FORMATS.map(
+            format => Common.BASE_DIR + Common.DIR_SEPARATOR + this.FileName + "." + format);
     }
 
     //--- Override Functions ---

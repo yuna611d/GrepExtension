@@ -84,6 +84,26 @@ suite('ResultFileModel', () => {
 	});
 
 
+	test('AllFormatFullPaths covers every format this extension writes', () => {
+		const model = new ResultFileModel(new FakeDao({ outputFileName: 'myResults', outputContentFormat: 'csv' }));
+		const base = Common.BASE_DIR + Common.DIR_SEPARATOR;
+
+		// Not just the format in use: switching outputContentFormat leaves the previous format's
+		// file behind, and a search that does not skip it finds its own earlier results.
+		assert.deepStrictEqual(model.AllFormatFullPaths, [
+			base + 'myResults.txt',
+			base + 'myResults.tsv',
+			base + 'myResults.csv',
+			base + 'myResults.json',
+		]);
+	});
+
+	test('AllFormatFullPaths includes the file this search is writing', () => {
+		const model = new ResultFileModel(new FakeDao({ outputContentFormat: 'json' }));
+
+		assert.ok(model.AllFormatFullPaths.includes(model.FullPath));
+	});
+
 	test('save writes the document and reports that it did', async () => {
 		const model = new ResultFileModel(new FakeDao());
 		const log: string[] = [];
