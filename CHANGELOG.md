@@ -19,6 +19,13 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - Highlights from earlier searches stayed in the result file. Each search applied its
+    highlights with a decoration type of its own and never released it, so nothing could take
+    the previous ones away - and once csv, tsv and json began replacing the previous result,
+    those older highlights pointed at whatever text had since taken their place. A search that
+    found nothing left the previous highlights untouched as well. All searches now share one
+    highlight type, and each takes back what the last one left before it starts.
+
   - The result file was never actually written. Every match was inserted into the editor, which
     left the document unsaved and the file itself empty - closing the editor without saving lost
     the results, and anything else reading the file found nothing in it. The file is now saved

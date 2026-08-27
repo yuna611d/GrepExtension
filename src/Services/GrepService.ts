@@ -79,8 +79,11 @@ export class GrepService implements IService {
     }
 
     protected prepareOptionalService(editor: vscode.TextEditor) {
-        // Decorate found word
-        return this.optionalService.setEditor(editor);
+        // Decorate found word. Whatever the last search highlighted goes first: this search's
+        // matches are the ones worth pointing at, and a search that finds nothing never reaches
+        // a flush - so without this the previous highlights would simply stay on screen.
+        this.optionalService.setEditor(editor);
+        return this.optionalService.clear();
     }
 
     protected prepareGrep(): boolean {

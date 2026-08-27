@@ -1,6 +1,7 @@
 'use strict';
 import { GrepController } from './Controllers/GrepController';
 import { Message } from './Commons/Message';
+import { DecorationService } from './Services/DecorationService';
 import * as vscode from 'vscode';
 
 
@@ -20,6 +21,9 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(disposable);
+    // The highlight type outlives any one search - it is shared by all of them - so it is the
+    // extension's to release rather than a search's.
+    context.subscriptions.push({ dispose: () => DecorationService.dispose() });
 }
 
 // this method is called when your extension is deactivated

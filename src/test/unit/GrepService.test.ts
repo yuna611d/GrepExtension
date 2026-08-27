@@ -41,6 +41,9 @@ class TestableGrepService extends GrepService {
 	protected showNotSavedWarning(): void {
 		this.notSavedWarnings++;
 	}
+	public callPrepareOptionalService(editor: vscode.TextEditor): void {
+		this.prepareOptionalService(editor);
+	}
 	protected async flushPendingMatches(): Promise<void> {
 		this.flushCalls++;
 	}
@@ -107,6 +110,22 @@ function serviceWritingTo(log: string[], walker: DirectoryWalker, saved = true):
 	service.useWalker(walker);
 	service.useResultContent(new FooterRecordingContentModel(dao, log));
 	return service;
+}
+
+// Records what a search asks of the highlighting, without needing a live editor.
+class RecordingDecorationService extends DecorationService {
+	public readonly calls: string[] = [];
+
+	public clear(): RecordingDecorationService {
+		this.calls.push('clear');
+		return this;
+	}
+
+	public setEditor(editor: vscode.TextEditor): RecordingDecorationService {
+		this.calls.push('setEditor');
+		super.setEditor(editor);
+		return this;
+	}
 }
 
 class SilentDirectoryWalker extends DirectoryWalker {
@@ -177,6 +196,22 @@ suite('GrepService', () => {
 
 			assert.ok(first !== null && second !== null);
 			assert.strictEqual(first.start.character, second.start.character);
+		});
+
+	});
+
+	suite('highlighting', () => {
+
+		test('a search takes back the previous search\'s highlights before it starts', () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true });
+			const decoration = new RecordingDecorationService();
+			const service = new TestableGrepService(new ResultFileModel(dao), 'lo', decoration, new TimeKeeper());
+
+			service.callPrepareOptionalService({} as vscode.TextEditor);
+
+			// A search that finds nothing never reaches a flush, so without this the last
+			// search's highlights would simply stay on screen.
+			assert.deepStrictEqual(decoration.calls, ['setEditor', 'clear']);
 		});
 
 	});
