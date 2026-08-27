@@ -121,8 +121,23 @@ export class GrepService implements IService {
         } finally {
             // Close any wrapping structure the format needs (no-op for txt/csv/tsv).
             await this.resultContent.addFooter();
+            // Then write it out - after the footer, so what reaches the file is a complete
+            // document, and in the finally so that a cancelled or failed grep still keeps the
+            // matches it did find rather than leaving them in an unsaved editor.
+            await this.persistResult();
         }
 
+    }
+
+    protected async persistResult(): Promise<void> {
+        if (await this.resultFile.save()) {
+            return;
+        }
+        this.showNotSavedWarning();
+    }
+
+    protected showNotSavedWarning(): void {
+        vscode.window.showWarningMessage(Message.MESSAGE_NOT_SAVED);
     }
 
     protected async findWordInAFile(readings: NumberedFileLine[][]) {

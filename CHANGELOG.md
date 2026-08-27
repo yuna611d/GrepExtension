@@ -19,6 +19,12 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - The result file was never actually written. Every match was inserted into the editor, which
+    left the document unsaved and the file itself empty - closing the editor without saving lost
+    the results, and anything else reading the file found nothing in it. The file is now saved
+    once the search finishes, including when it is cancelled or fails, so whatever was found is
+    kept. A save that cannot be done is reported rather than passed over.
+
   - With `grep2file.outputTitle` off, txt output highlighted nothing. The matched word was
     looked for in the line-number column instead of the matched text, so it was never found -
     and searching for a number highlighted the line number rather than the text containing it.

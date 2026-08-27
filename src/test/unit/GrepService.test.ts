@@ -34,6 +34,13 @@ class TestableGrepService extends GrepService {
 	public useWalker(walker: DirectoryWalker): void {
 		this.directoryWalker = walker;
 	}
+	public useResultContent(content: ResultContentModel): void {
+		this.resultContent = content;
+	}
+	public notSavedWarnings = 0;
+	protected showNotSavedWarning(): void {
+		this.notSavedWarnings++;
+	}
 	protected async flushPendingMatches(): Promise<void> {
 		this.flushCalls++;
 	}
@@ -65,6 +72,51 @@ function newService(searchWord: string | undefined, outputTitle = true, timeKeep
 	const dao = new FakeDao({ exclude: [], outputTitle });
 	const resultFile = new ResultFileModel(dao);
 	return new TestableGrepService(resultFile, searchWord, new DecorationService(), timeKeeper);
+}
+
+// Records when the file is asked to save, so the order against the format's footer is visible.
+class RecordingResultFileModel extends ResultFileModel {
+	public saveCalls = 0;
+
+	constructor(dao: FakeDao, private readonly log: string[], private readonly saved = true) {
+		super(dao);
+	}
+
+	public async save(): Promise<boolean> {
+		this.saveCalls++;
+		this.log.push('save');
+		return this.saved;
+	}
+}
+
+// A format whose footer records itself, standing in for json's closing bracket.
+class FooterRecordingContentModel extends ResultContentModel {
+	constructor(dao: FakeDao, private readonly log: string[]) {
+		super(dao, {} as ResultFileModel);
+	}
+
+	public async addFooter(): Promise<void> {
+		this.log.push('footer');
+	}
+}
+
+function serviceWritingTo(log: string[], walker: DirectoryWalker, saved = true): TestableGrepService {
+	const dao = new FakeDao({ exclude: [], outputTitle: true });
+	const service = new TestableGrepService(
+		new RecordingResultFileModel(dao, log, saved), 'lo', new DecorationService(), new TimeKeeper());
+	service.useWalker(walker);
+	service.useResultContent(new FooterRecordingContentModel(dao, log));
+	return service;
+}
+
+class SilentDirectoryWalker extends DirectoryWalker {
+	public async walk(): Promise<void> {}
+}
+
+class FailingDirectoryWalker extends DirectoryWalker {
+	public async walk(): Promise<void> {
+		throw new Error('disk went away');
+	}
 }
 
 function lines(...texts: string[]): NumberedFileLine[] {
@@ -125,6 +177,60 @@ suite('GrepService', () => {
 
 			assert.ok(first !== null && second !== null);
 			assert.strictEqual(first.start.character, second.start.character);
+		});
+
+	});
+
+	suite('writing the result to the file', () => {
+
+		test('a finished grep writes the file, after the format has closed it', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker());
+
+			await service.grep();
+
+			// Saving before the footer would put an incomplete document on disk - json's closing
+			// bracket arrives with the footer.
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a cancelled grep writes what it had found', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new ThrowingDirectoryWalker());
+
+			await service.grep();
+
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a failed grep still writes what it had found', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new FailingDirectoryWalker());
+
+			await service.grep();
+
+			// Whatever went wrong, the matches found before it are worth keeping.
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a refused save is reported rather than passed over', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker(), false);
+
+			await service.grep();
+
+			// The point of the change is that the file holds the result; when it cannot, saying
+			// so is the difference between the user keeping their results and losing them.
+			assert.strictEqual(service.notSavedWarnings, 1);
+		});
+
+		test('a save that worked says nothing', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker());
+
+			await service.grep();
+
+			assert.strictEqual(service.notSavedWarnings, 0);
 		});
 
 	});

@@ -71,6 +71,28 @@ export class ResultFileModel extends FileModel {
     }
 
     /**
+     * Write what the grep produced to the file it was named after.
+     *
+     * Everything up to here is an editor edit, which leaves the document dirty and the file on
+     * disk exactly as addNewFile() left it: empty. For an extension whose whole job is putting
+     * grep results in a file, that meant the file never actually held any - close the editor
+     * without saving and the results were gone, and anything else reading the file saw nothing.
+     *
+     * Saving through the document rather than writing the bytes underneath it keeps the editor
+     * and the file in agreement; writing behind VS Code's back would leave the document dirty
+     * and set up a conflict the next time anything saved it.
+     *
+     * Returns whether the file was written. A save can legitimately fail - a read-only file, a
+     * directory gone - and the caller says so rather than leaving the user thinking it worked.
+     */
+    public async save(): Promise<boolean> {
+        if (this._editor === undefined) {
+            return false;
+        }
+        return await this._editor.document.save();
+    }
+
+    /**
      * Drop whatever the previous grep left in the document.
      *
      * Done through the editor rather than the file: nothing saves the result document, so the

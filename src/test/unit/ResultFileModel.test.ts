@@ -3,6 +3,17 @@ import * as fs from 'fs';
 import { Common } from '../../Commons/Common';
 import { ResultFileModel } from '../../Models/File/ResultFileModel';
 import { FakeDao } from '../testUtils/FakeDao';
+import * as vscode from 'vscode';
+
+// Enough of a TextEditor to answer save(); everything else it needs a live one for is covered
+// end-to-end by the integration suites.
+function editorWhoseSaveReturns(saved: boolean, log: string[] = []): vscode.TextEditor {
+	return {
+		document: {
+			save: async () => { log.push('save'); return saved; },
+		},
+	} as unknown as vscode.TextEditor;
+}
 
 // initialize()/insertText()/insertTextBlock()/getText() all require a live vscode.TextEditor
 // and are already covered end-to-end by the integration suites in extension.test.ts.
@@ -70,6 +81,31 @@ suite('ResultFileModel', () => {
 				fs.unlinkSync(path);
 			}
 		}
+	});
+
+
+	test('save writes the document and reports that it did', async () => {
+		const model = new ResultFileModel(new FakeDao());
+		const log: string[] = [];
+		model.initialize(editorWhoseSaveReturns(true, log));
+
+		assert.strictEqual(await model.save(), true);
+		// Everything up to here is an editor edit, so without this the file stays as addNewFile
+		// left it - empty - and the results live only in an unsaved document.
+		assert.deepStrictEqual(log, ['save']);
+	});
+
+	test('save reports a refusal rather than pretending the file was written', async () => {
+		const model = new ResultFileModel(new FakeDao());
+		model.initialize(editorWhoseSaveReturns(false));
+
+		assert.strictEqual(await model.save(), false);
+	});
+
+	test('save reports false when no editor was ever bound', async () => {
+		const model = new ResultFileModel(new FakeDao());
+
+		assert.strictEqual(await model.save(), false);
 	});
 
 });
