@@ -50,6 +50,18 @@ function sortForComparison(text: string, isJson: boolean): string {
 	return text.split(/\r?\n/).sort().join('\n');
 }
 
+// The result files under input/ are committed empty, and every suite opens one before the grep
+// that would create it - so they have to stay. Now that a grep actually writes them, put them
+// back the way they are committed rather than leaving a modified tree behind.
+suiteTeardown(() => {
+	for (const format of ['txt', 'csv', 'tsv', 'json']) {
+		const resultFilePath = path.join(inputFolderPath, `grep2File.g2f.${format}`);
+		if (fs.existsSync(resultFilePath)) {
+			fs.writeFileSync(resultFilePath, '');
+		}
+	}
+});
+
 suite('Extension Test Suite - txt output', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
@@ -460,6 +472,45 @@ suite('Extension Test Suite - file encodings', () => {
 
 		assert.ok(content.includes('Lorem'));
 		assert.ok(!content.includes('\ufffd'));
+	});
+
+});
+
+/**
+ * The result file is the point of the extension, and until now nothing ever wrote to it: every
+ * insert was an editor edit, so the file addNewFile() created stayed empty and the results lived
+ * only in an unsaved document.
+ */
+suite('Extension Test Suite - writing the result file', () => {
+
+	const inputFilePath = path.join(inputFolderPath, 'grep2File.g2f.txt');
+
+	setup(async () => {
+		await vscode.workspace.getConfiguration().update('grep2file.outputContentFormat', 'txt', vscode.ConfigurationTarget.Global);
+	});
+
+	test('a finished grep leaves the matches in the file, not only in the editor', async () => {
+		// Start from an empty document so the assertion is about this search alone.
+		const editor = await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath));
+		await editor.edit(b => b.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(1000, 0))));
+		await editor.document.save();
+
+		await new GrepController().doActionWithParam('lo');
+
+		const inTheEditor = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document.getText();
+		const onDisk = fs.readFileSync(inputFilePath, 'utf-8');
+
+		assert.ok(inTheEditor.length > 0, 'the grep found nothing, so this proves nothing');
+		assert.strictEqual(onDisk, inTheEditor);
+	});
+
+	test('the document is left saved rather than dirty', async () => {
+		await new GrepController().doActionWithParam('lo');
+
+		const document = (await vscode.window.showTextDocument(vscode.Uri.file(inputFilePath))).document;
+
+		// A dirty document is one closing tab away from losing every match it holds.
+		assert.strictEqual(document.isDirty, false);
 	});
 
 });

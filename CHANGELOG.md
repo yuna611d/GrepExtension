@@ -19,6 +19,28 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - Highlights from earlier searches stayed in the result file. Each search applied its
+    highlights with a decoration type of its own and never released it, so nothing could take
+    the previous ones away - and once csv, tsv and json began replacing the previous result,
+    those older highlights pointed at whatever text had since taken their place. A search that
+    found nothing left the previous highlights untouched as well. All searches now share one
+    highlight type, and each takes back what the last one left before it starts.
+
+  - A search reported its own earlier results as matches. Only the result file for the format
+    in use was skipped, so the file a previously configured format had left in the workspace
+    was searched like any other. It went unnoticed while those files were never written.
+
+  - The result file was never actually written. Every match was inserted into the editor, which
+    left the document unsaved and the file itself empty - closing the editor without saving lost
+    the results, and anything else reading the file found nothing in it. The file is now saved
+    once the search finishes, including when it is cancelled or fails, so whatever was found is
+    kept. A save that cannot be done is reported rather than passed over.
+
+  - With `grep2file.outputTitle` off, txt output highlighted nothing. The matched word was
+    looked for in the line-number column instead of the matched text, so it was never found -
+    and searching for a number highlighted the line number rather than the text containing it.
+    csv and tsv were unaffected.
+
   - UTF-16 files were never searched. Half the bytes of UTF-16 text are zero, which the check
     for binary files read as "not text", so they were skipped without being read at all.
 

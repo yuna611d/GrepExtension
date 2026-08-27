@@ -20,4 +20,14 @@ export abstract class AbsOptionalService implements IService {
         return this;
     }
 
+    /**
+     * Take back whatever this service has applied to the bound editor.
+     *
+     * Wanted at the start of a search: a search that finds nothing never reaches a flush, so
+     * without this the previous search's highlights would simply stay on screen.
+     */
+    clear(): AbsOptionalService {
+        return this.setRanges([]).doService();
+    }
+
 }

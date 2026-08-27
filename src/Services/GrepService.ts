@@ -79,8 +79,11 @@ export class GrepService implements IService {
     }
 
     protected prepareOptionalService(editor: vscode.TextEditor) {
-        // Decorate found word
-        return this.optionalService.setEditor(editor);
+        // Decorate found word. Whatever the last search highlighted goes first: this search's
+        // matches are the ones worth pointing at, and a search that finds nothing never reaches
+        // a flush - so without this the previous highlights would simply stay on screen.
+        this.optionalService.setEditor(editor);
+        return this.optionalService.clear();
     }
 
     protected prepareGrep(): boolean {
@@ -100,7 +103,7 @@ export class GrepService implements IService {
 
         // Do grep and write its found result.
         try {
-            await this.directoryWalker.walk(Common.BASE_DIR, [this.resultFile.FullPath], r => this.findWordInAFile(r));
+            await this.directoryWalker.walk(Common.BASE_DIR, this.resultFile.AllFormatFullPaths, r => this.findWordInAFile(r));
             // Flush whatever is left in the buffer (fewer than BATCH_SIZE matches).
             await this.flushPendingMatches();
             // Notify finish
@@ -121,8 +124,23 @@ export class GrepService implements IService {
         } finally {
             // Close any wrapping structure the format needs (no-op for txt/csv/tsv).
             await this.resultContent.addFooter();
+            // Then write it out - after the footer, so what reaches the file is a complete
+            // document, and in the finally so that a cancelled or failed grep still keeps the
+            // matches it did find rather than leaving them in an unsaved editor.
+            await this.persistResult();
         }
 
+    }
+
+    protected async persistResult(): Promise<void> {
+        if (await this.resultFile.save()) {
+            return;
+        }
+        this.showNotSavedWarning();
+    }
+
+    protected showNotSavedWarning(): void {
+        vscode.window.showWarningMessage(Message.MESSAGE_NOT_SAVED);
     }
 
     protected async findWordInAFile(readings: NumberedFileLine[][]) {

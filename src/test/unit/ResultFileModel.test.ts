@@ -3,6 +3,17 @@ import * as fs from 'fs';
 import { Common } from '../../Commons/Common';
 import { ResultFileModel } from '../../Models/File/ResultFileModel';
 import { FakeDao } from '../testUtils/FakeDao';
+import * as vscode from 'vscode';
+
+// Enough of a TextEditor to answer save(); everything else it needs a live one for is covered
+// end-to-end by the integration suites.
+function editorWhoseSaveReturns(saved: boolean, log: string[] = []): vscode.TextEditor {
+	return {
+		document: {
+			save: async () => { log.push('save'); return saved; },
+		},
+	} as unknown as vscode.TextEditor;
+}
 
 // initialize()/insertText()/insertTextBlock()/getText() all require a live vscode.TextEditor
 // and are already covered end-to-end by the integration suites in extension.test.ts.
@@ -70,6 +81,51 @@ suite('ResultFileModel', () => {
 				fs.unlinkSync(path);
 			}
 		}
+	});
+
+
+	test('AllFormatFullPaths covers every format this extension writes', () => {
+		const model = new ResultFileModel(new FakeDao({ outputFileName: 'myResults', outputContentFormat: 'csv' }));
+		const base = Common.BASE_DIR + Common.DIR_SEPARATOR;
+
+		// Not just the format in use: switching outputContentFormat leaves the previous format's
+		// file behind, and a search that does not skip it finds its own earlier results.
+		assert.deepStrictEqual(model.AllFormatFullPaths, [
+			base + 'myResults.txt',
+			base + 'myResults.tsv',
+			base + 'myResults.csv',
+			base + 'myResults.json',
+		]);
+	});
+
+	test('AllFormatFullPaths includes the file this search is writing', () => {
+		const model = new ResultFileModel(new FakeDao({ outputContentFormat: 'json' }));
+
+		assert.ok(model.AllFormatFullPaths.includes(model.FullPath));
+	});
+
+	test('save writes the document and reports that it did', async () => {
+		const model = new ResultFileModel(new FakeDao());
+		const log: string[] = [];
+		model.initialize(editorWhoseSaveReturns(true, log));
+
+		assert.strictEqual(await model.save(), true);
+		// Everything up to here is an editor edit, so without this the file stays as addNewFile
+		// left it - empty - and the results live only in an unsaved document.
+		assert.deepStrictEqual(log, ['save']);
+	});
+
+	test('save reports a refusal rather than pretending the file was written', async () => {
+		const model = new ResultFileModel(new FakeDao());
+		model.initialize(editorWhoseSaveReturns(false));
+
+		assert.strictEqual(await model.save(), false);
+	});
+
+	test('save reports false when no editor was ever bound', async () => {
+		const model = new ResultFileModel(new FakeDao());
+
+		assert.strictEqual(await model.save(), false);
 	});
 
 });

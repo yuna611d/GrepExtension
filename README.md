@@ -118,7 +118,9 @@ settings such a file falls back to UTF-8 and its text becomes mojibake — the s
 see on opening it. Setting `files.encoding` (or turning on `files.autoGuessEncoding`) fixes the
 search and the editor together.
 
-The result file is written as UTF-8.
+The result file is written as UTF-8, and saved when the search finishes — including when the
+search is cancelled or fails, so the matches found up to that point are kept. If it cannot be
+saved, the extension says so and the results stay in the editor for you to save yourself.
 
 ### Searching a workspace that mixes encodings
 

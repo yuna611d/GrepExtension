@@ -34,6 +34,16 @@ class TestableGrepService extends GrepService {
 	public useWalker(walker: DirectoryWalker): void {
 		this.directoryWalker = walker;
 	}
+	public useResultContent(content: ResultContentModel): void {
+		this.resultContent = content;
+	}
+	public notSavedWarnings = 0;
+	protected showNotSavedWarning(): void {
+		this.notSavedWarnings++;
+	}
+	public callPrepareOptionalService(editor: vscode.TextEditor): void {
+		this.prepareOptionalService(editor);
+	}
 	protected async flushPendingMatches(): Promise<void> {
 		this.flushCalls++;
 	}
@@ -65,6 +75,76 @@ function newService(searchWord: string | undefined, outputTitle = true, timeKeep
 	const dao = new FakeDao({ exclude: [], outputTitle });
 	const resultFile = new ResultFileModel(dao);
 	return new TestableGrepService(resultFile, searchWord, new DecorationService(), timeKeeper);
+}
+
+// Records when the file is asked to save, so the order against the format's footer is visible.
+class RecordingResultFileModel extends ResultFileModel {
+	public saveCalls = 0;
+
+	constructor(dao: FakeDao, private readonly log: string[], private readonly saved = true) {
+		super(dao);
+	}
+
+	public async save(): Promise<boolean> {
+		this.saveCalls++;
+		this.log.push('save');
+		return this.saved;
+	}
+}
+
+// A format whose footer records itself, standing in for json's closing bracket.
+class FooterRecordingContentModel extends ResultContentModel {
+	constructor(dao: FakeDao, private readonly log: string[]) {
+		super(dao, {} as ResultFileModel);
+	}
+
+	public async addFooter(): Promise<void> {
+		this.log.push('footer');
+	}
+}
+
+function serviceWritingTo(log: string[], walker: DirectoryWalker, saved = true): TestableGrepService {
+	const dao = new FakeDao({ exclude: [], outputTitle: true });
+	const service = new TestableGrepService(
+		new RecordingResultFileModel(dao, log, saved), 'lo', new DecorationService(), new TimeKeeper());
+	service.useWalker(walker);
+	service.useResultContent(new FooterRecordingContentModel(dao, log));
+	return service;
+}
+
+// Records what a search asks of the highlighting, without needing a live editor.
+class RecordingDecorationService extends DecorationService {
+	public readonly calls: string[] = [];
+
+	public clear(): RecordingDecorationService {
+		this.calls.push('clear');
+		return this;
+	}
+
+	public setEditor(editor: vscode.TextEditor): RecordingDecorationService {
+		this.calls.push('setEditor');
+		super.setEditor(editor);
+		return this;
+	}
+}
+
+class SilentDirectoryWalker extends DirectoryWalker {
+	public async walk(): Promise<void> {}
+}
+
+// Remembers what the search asked it to leave alone.
+class ExclusionRecordingDirectoryWalker extends DirectoryWalker {
+	public excluded: string[] = [];
+
+	public async walk(_targetDir: string, excludedFullPaths: string[]): Promise<void> {
+		this.excluded = excludedFullPaths;
+	}
+}
+
+class FailingDirectoryWalker extends DirectoryWalker {
+	public async walk(): Promise<void> {
+		throw new Error('disk went away');
+	}
 }
 
 function lines(...texts: string[]): NumberedFileLine[] {
@@ -125,6 +205,95 @@ suite('GrepService', () => {
 
 			assert.ok(first !== null && second !== null);
 			assert.strictEqual(first.start.character, second.start.character);
+		});
+
+	});
+
+	suite('highlighting', () => {
+
+		test('a search takes back the previous search\'s highlights before it starts', () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true });
+			const decoration = new RecordingDecorationService();
+			const service = new TestableGrepService(new ResultFileModel(dao), 'lo', decoration, new TimeKeeper());
+
+			service.callPrepareOptionalService({} as vscode.TextEditor);
+
+			// A search that finds nothing never reaches a flush, so without this the last
+			// search's highlights would simply stay on screen.
+			assert.deepStrictEqual(decoration.calls, ['setEditor', 'clear']);
+		});
+
+	});
+
+	suite('what a search leaves alone', () => {
+
+		test('every format\'s result file is skipped, not only the one being written', async () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true, outputContentFormat: 'csv' });
+			const resultFile = new ResultFileModel(dao);
+			const service = new TestableGrepService(resultFile, 'lo', new DecorationService(), new TimeKeeper());
+			const walker = new ExclusionRecordingDirectoryWalker();
+			service.useWalker(walker);
+
+			await service.grep();
+
+			// Switching outputContentFormat leaves the previous format's file in the workspace,
+			// and a search that does not skip it reports its own earlier results as matches.
+			assert.deepStrictEqual(walker.excluded, resultFile.AllFormatFullPaths);
+			assert.ok(walker.excluded.includes(resultFile.FullPath));
+		});
+
+	});
+
+	suite('writing the result to the file', () => {
+
+		test('a finished grep writes the file, after the format has closed it', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker());
+
+			await service.grep();
+
+			// Saving before the footer would put an incomplete document on disk - json's closing
+			// bracket arrives with the footer.
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a cancelled grep writes what it had found', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new ThrowingDirectoryWalker());
+
+			await service.grep();
+
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a failed grep still writes what it had found', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new FailingDirectoryWalker());
+
+			await service.grep();
+
+			// Whatever went wrong, the matches found before it are worth keeping.
+			assert.deepStrictEqual(log, ['footer', 'save']);
+		});
+
+		test('a refused save is reported rather than passed over', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker(), false);
+
+			await service.grep();
+
+			// The point of the change is that the file holds the result; when it cannot, saying
+			// so is the difference between the user keeping their results and losing them.
+			assert.strictEqual(service.notSavedWarnings, 1);
+		});
+
+		test('a save that worked says nothing', async () => {
+			const log: string[] = [];
+			const service = serviceWritingTo(log, new SilentDirectoryWalker());
+
+			await service.grep();
+
+			assert.strictEqual(service.notSavedWarnings, 0);
 		});
 
 	});

@@ -23,6 +23,14 @@ export class ResultContentCSVModel extends ResultContentModel {
      */
     public readonly appendsToPreviousResult: boolean = false;
 
+    /**
+     * Unlike txt, which blanks the grep-condition field and keeps it, csv drops it outright when
+     * the condition is not being written - so its data columns really do move left by one.
+     */
+    protected rowKeepsGrepConditionColumn(): boolean {
+        return this.hasOutputTitle();
+    }
+
     protected getFormattedContent(contents: string[]) {
         if (!this.hasOutputTitle()) {
             contents.shift();
