@@ -106,6 +106,11 @@ export class DirectoryWalker {
 
             for (const file of batch) {
                 await onFile(await this.readContent(file));
+                // Reported, so nothing needs its contents any more. Every model in this directory
+                // stays alive until the walk of it finishes, so a file that keeps what it read
+                // keeps it for the rest of the directory - which is what made the peak follow the
+                // directory's total size instead of the prefetch window above.
+                file.releaseContent();
             }
         }
     }
