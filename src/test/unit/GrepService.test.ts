@@ -187,6 +187,17 @@ class HighlightRecordingGrepService extends GrepService {
 	}
 }
 
+// Records whether the result file was ever created, so a search that cannot run can be shown to
+// leave nothing behind.
+class CreationRecordingResultFileModel extends ResultFileModel {
+	public creations = 0;
+
+	public async addNewFile(): Promise<CreationRecordingResultFileModel> {
+		this.creations++;
+		return this;
+	}
+}
+
 class SilentDirectoryWalker extends DirectoryWalker {
 	public async walk(): Promise<void> {}
 }
@@ -370,6 +381,26 @@ suite('GrepService', () => {
 			assert.deepStrictEqual(walker.excluded, resultFile.AllFormatFullPaths);
 			assert.ok(walker.excluded.includes(resultFile.FullPath));
 		});
+
+	});
+
+	suite('a search that cannot run', () => {
+
+		test('creates no result file for an empty search word', async () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true });
+			const resultFile = new CreationRecordingResultFileModel(dao);
+			const service = new TestableGrepService(resultFile, '', new DecorationService(), new TimeKeeper());
+
+			await service.doService();
+
+			// The file used to be created before the word was checked, so backing out of a search
+			// still left an empty result file sitting in the workspace.
+			assert.strictEqual(resultFile.creations, 0);
+		});
+
+		// That the file is still created for a word that can be searched for is what every
+		// golden-fixture suite in extension.test.ts depends on, so it is checked there rather
+		// than here - doService() needs a live editor once it gets past this point.
 
 	});
 

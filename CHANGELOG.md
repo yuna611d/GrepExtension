@@ -19,6 +19,14 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - Backing out of the search prompt left a file behind and apologised for it. Pressing Escape
+    resolves the prompt with no word at all, which is not the same as asking to search for
+    nothing - but the search ran anyway, created an empty `grep2File.g2f.txt` in the workspace,
+    and then reported "Sorry, I can't grep this word...". Dismissing the prompt now does
+    nothing at all. A word that was actually submitted but is empty is still reported, since
+    that is a search this extension cannot run - but it no longer leaves a result file behind
+    either: the search word is checked before anything is created.
+
   - A search with many matches slowed down as it went. Highlighting replaces every highlight it
     has already applied, so each update had to hand the editor the whole set of matches found so
     far - and that was done once per batch of 40. The work grew with the square of the matches:
