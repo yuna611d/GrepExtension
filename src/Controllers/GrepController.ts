@@ -44,8 +44,24 @@ export class GrepController {
     }
 
     protected async callback(v: string | undefined): Promise<void> {
-        const searchWord = v;
+        // Escape on the prompt resolves undefined - that is how VS Code reports a dismissal, and
+        // it is not the same as asking to search for nothing. Going on from here created the
+        // result file and then told the user "Sorry, I can't grep this word...", so backing out
+        // of the prompt left a stray file in the workspace and an apology for something they
+        // never asked for. An empty word that was actually submitted still goes through: that is
+        // a search this extension genuinely cannot run, and saying so is the right answer.
+        if (v === undefined) {
+            return;
+        }
 
+        await this.startSearch(v);
+    }
+
+    /**
+     * Run a search for the word the user gave. Separate from callback() so that what a dismissed
+     * prompt skips is one named thing rather than the tail of a method.
+     */
+    protected async startSearch(searchWord: string): Promise<void> {
         // Prepare configuration and utilities
         const resultFile = new FileModelFactory().retrieve();
 

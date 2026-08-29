@@ -66,10 +66,13 @@ export class GrepService implements IService {
     }
 
     public async doService(): Promise<IService> {
+        // Check the search word before creating anything. Creating the file first meant a search
+        // that could not run still left its result file behind - an empty one, in the workspace,
+        // for a search that never happened.
+        if (!this.prepareGrep()) { return this; }
+
         // Create and Get file path where result is outputted.
         const filePath = (await this.resultFile.addNewFile()).FullPath;
-
-        if (!this.prepareGrep()) { return this; }
 
         const doc = await vscode.workspace.openTextDocument(filePath);
         const editor = await vscode.window.showTextDocument(doc);
