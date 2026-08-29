@@ -25,6 +25,22 @@ export class GrepService implements IService {
     protected pendingMatches: NumberedFileLine[] = [];
     protected allRanges: vscode.Range[] = [];
 
+    // setDecorations replaces every decoration of its type, so each update has to be handed the
+    // whole accumulated set, not the new part of it. Doing that once per batch means the same
+    // ranges are marshalled to the renderer again and again, and the total work grows with the
+    // square of the number of matches: 100,000 matches were handed over 125,050,000 times across
+    // 2,500 calls - 1,251 range objects marshalled per match found.
+    //
+    // Updating less often as the set grows makes that total linear instead. Waiting until the set
+    // is DECORATION_GROWTH times the size it was when it was last shown turns the series into a
+    // geometric one, so what gets handed over settles at about three times the number of matches
+    // however many there are, and the number of calls grows with its logarithm.
+    //
+    // The floor keeps short searches - where the whole set is cheap to send - updating on every
+    // batch, which is what makes highlights appear as the results are written.
+    protected static readonly DECORATION_GROWTH = 1.5;
+    protected decorateWhenAtLeast = 0;
+
     protected searchConfig = new SearchWordConfiguration();
     protected optionalService: AbsOptionalService;
     protected directoryWalker = new DirectoryWalker();
@@ -122,6 +138,9 @@ export class GrepService implements IService {
                 vscode.window.showErrorMessage(Message.MESSAGE_ERROR);
             }
         } finally {
+            // Whatever the last update skipped, show now: the highlights the user is left looking
+            // at should be every match, not the set as it stood at some earlier point.
+            this.showDecorations();
             // Close any wrapping structure the format needs (no-op for txt/csv/tsv).
             await this.resultContent.addFooter();
             // Then write it out - after the footer, so what reaches the file is a complete
@@ -195,7 +214,34 @@ export class GrepService implements IService {
             }
         }
 
+        this.showDecorationsIfDue();
+    }
+
+    /**
+     * Show the matches found so far, unless the set has not grown enough since it was last shown
+     * to be worth sending again. See DECORATION_GROWTH.
+     */
+    protected showDecorationsIfDue(): void {
+        if (this.allRanges.length < this.decorateWhenAtLeast) {
+            return;
+        }
+        this.showDecorations();
+    }
+
+    /**
+     * Show every match found so far, whatever was shown last.
+     *
+     * Called once the grep is over - however it ended - so that the highlights on screen are the
+     * complete set. Skipping an update is only ever a delay: the matches it would have shown are
+     * still in allRanges, and this is what finally puts them on screen.
+     */
+    protected showDecorations(): void {
         this.optionalService.setRanges(this.allRanges).doService();
+
+        const shown = this.allRanges.length;
+        this.decorateWhenAtLeast = Math.max(
+            shown + GrepService.BATCH_SIZE,
+            Math.ceil(shown * GrepService.DECORATION_GROWTH));
     }
 
 
