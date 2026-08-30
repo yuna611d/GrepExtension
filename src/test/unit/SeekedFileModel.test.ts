@@ -454,4 +454,74 @@ suite('SeekedFileModel', () => {
 
 	});
 
+	suite('releasing content', () => {
+
+		let tempDir = '';
+
+		setup(() => {
+			tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'g2f-release-'));
+		});
+
+		teardown(() => {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		});
+
+		function modelFor(fileName: string): SeekedFileModel {
+			return new SeekedFileModel(daoWithNoExclusions(), fileName, tempDir, []);
+		}
+
+		// Re-reading is what proves the cache was let go of rather than handed back: if the old
+		// text were still held, editing the file underneath would not change the answer.
+		test('reads the file again rather than answering from what it held', async () => {
+			const filePath = path.join(tempDir, 'a.txt');
+			fs.writeFileSync(filePath, 'first');
+			const model = modelFor('a.txt');
+			assert.strictEqual(await model.getContent(), 'first');
+
+			model.releaseContent();
+			fs.writeFileSync(filePath, 'second');
+
+			assert.strictEqual(await model.getContent(), 'second');
+		});
+
+		test('the candidate readings are let go of too', async () => {
+			const filePath = path.join(tempDir, 'a.txt');
+			fs.writeFileSync(filePath, 'first');
+			const model = modelFor('a.txt');
+			assert.deepStrictEqual(await model.getContentCandidates(), ['first']);
+
+			model.releaseContent();
+			fs.writeFileSync(filePath, 'second');
+
+			assert.deepStrictEqual(await model.getContentCandidates(), ['second']);
+		});
+
+		// A small file is read whole by the binary sniff, which keeps those bytes for the search
+		// that follows. Releasing has to drop that too, or the one file the sniff optimised for
+		// is the one that holds on to its contents.
+		test('the bytes the binary check kept are let go of as well', async () => {
+			const filePath = path.join(tempDir, 'a.txt');
+			fs.writeFileSync(filePath, 'first');
+			const model = modelFor('a.txt');
+			assert.strictEqual(await model.seemsBinary(), false);
+			assert.strictEqual(await model.getContent(), 'first');
+
+			model.releaseContent();
+			fs.writeFileSync(filePath, 'second');
+
+			assert.strictEqual(await model.getContent(), 'second');
+		});
+
+		test('what the entry is stays answered - that is not what is being released', async () => {
+			fs.writeFileSync(path.join(tempDir, 'a.txt'), 'first');
+			const model = modelFor('a.txt');
+			assert.strictEqual(await model.isFile(), true);
+
+			model.releaseContent();
+
+			assert.strictEqual(await model.isFile(), true);
+		});
+
+	});
+
 });

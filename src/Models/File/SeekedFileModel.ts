@@ -55,8 +55,11 @@ export class SeekedFileModel extends FileModel {
     public getContent(): Promise<string> {
         return this._content.get();
     }
-    protected _content = new AsyncLazy(async () =>
-        this._dao.decodeContent(await this.getBufferContent(), this.FullPath));
+    protected _content = this.newContentLazy();
+    protected newContentLazy(): AsyncLazy<string> {
+        return new AsyncLazy(async () =>
+            this._dao.decodeContent(await this.getBufferContent(), this.FullPath));
+    }
 
     /**
      * Every reading of this file that is worth searching, best first.
@@ -70,7 +73,10 @@ export class SeekedFileModel extends FileModel {
     public getContentCandidates(): Promise<string[]> {
         return this._contentCandidates.get();
     }
-    protected _contentCandidates = new AsyncLazy(() => this.decodeCandidates());
+    protected _contentCandidates = this.newContentCandidatesLazy();
+    protected newContentCandidatesLazy(): AsyncLazy<string[]> {
+        return new AsyncLazy(() => this.decodeCandidates());
+    }
 
     protected async decodeCandidates(): Promise<string[]> {
         const asTheEditorReadsIt = await this.getContent();
@@ -110,7 +116,29 @@ export class SeekedFileModel extends FileModel {
     protected getBufferContent(): Promise<Buffer> {
         return this._bufferContent.get();
     }
-    protected _bufferContent = new AsyncLazy(() => fs.promises.readFile(this.FullPath));
+    protected _bufferContent = this.newBufferContentLazy();
+    protected newBufferContentLazy(): AsyncLazy<Buffer> {
+        return new AsyncLazy(() => fs.promises.readFile(this.FullPath));
+    }
+
+    /**
+     * Let go of this file's bytes and text.
+     *
+     * Caching them is right while a file is being searched - the bytes are decoded, the text is
+     * split into lines, and searchAllEncodings decodes the same bytes several ways - but it is
+     * only ever wanted for as long as that lasts. The walk holds a model for every entry in the
+     * directory it is walking, so without this the bytes and the text of every file already
+     * reported stayed reachable until that whole directory was finished: what was held grew with
+     * the directory's total size rather than with how many files were being read at once.
+     *
+     * Everything here is recomputable - the file is still on disk - so this discards a cache
+     * rather than any state. Asking again simply reads it again.
+     */
+    public releaseContent(): void {
+        this._bufferContent = this.newBufferContentLazy();
+        this._content = this.newContentLazy();
+        this._contentCandidates = this.newContentCandidatesLazy();
+    }
 
     public isExcludedFile(): boolean {
         // don't read files which have extension specified. Matched as a whole extension rather

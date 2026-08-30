@@ -19,6 +19,14 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - A search held every file it had already read. The walk reads a few files ahead of the one
+    it is reporting, which was meant to bound how much of the workspace is in memory at once -
+    but nothing let go of a file afterwards, and the walk keeps a model for every entry in the
+    directory it is walking. What was held therefore grew with the directory's total size
+    instead: 128 MB of text in one directory peaked at 132 MB held, where reading eight files
+    at a time should cost a fraction of that. Each file now lets go of its bytes and text once
+    it has been reported, which holds the peak at about 20 MB however large the directory is.
+
   - Backing out of the search prompt left a file behind and apologised for it. Pressing Escape
     resolves the prompt with no word at all, which is not the same as asking to search for
     nothing - but the search ran anyway, created an empty `grep2File.g2f.txt` in the workspace,
