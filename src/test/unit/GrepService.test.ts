@@ -7,6 +7,7 @@ import { ResultFileModel } from '../../Models/File/ResultFileModel';
 import { ResultContentModel } from '../../Models/Content/ResultContent/ResultContentModel';
 import { CancellationError, TimeKeeper } from '../../Models/TimeKeeper';
 import { FakeDao } from '../testUtils/FakeDao';
+import { Common } from '../../Commons/Common';
 
 // doService()/flushPendingMatches() drive a live vscode.TextEditor (via
 // ResultFileModel.insertText/insertTextBlock) and are already covered end-to-end by the
@@ -203,10 +204,13 @@ class SilentDirectoryWalker extends DirectoryWalker {
 }
 
 // Remembers what the search asked it to leave alone.
-class ExclusionRecordingDirectoryWalker extends DirectoryWalker {
+// What the search asked the walk to cover, and what it asked it to leave alone.
+class WalkRecordingDirectoryWalker extends DirectoryWalker {
+	public roots: string[] = [];
 	public excluded: string[] = [];
 
-	public async walk(_targetDir: string, excludedFullPaths: string[]): Promise<void> {
+	public async walk(targetDirs: string[], excludedFullPaths: string[]): Promise<void> {
+		this.roots = targetDirs;
 		this.excluded = excludedFullPaths;
 	}
 }
@@ -371,7 +375,7 @@ suite('GrepService', () => {
 			const dao = new FakeDao({ exclude: [], outputTitle: true, outputContentFormat: 'csv' });
 			const resultFile = new ResultFileModel(dao);
 			const service = new TestableGrepService(resultFile, 'lo', new DecorationService(), new TimeKeeper());
-			const walker = new ExclusionRecordingDirectoryWalker();
+			const walker = new WalkRecordingDirectoryWalker();
 			service.useWalker(walker);
 
 			await service.grep();
@@ -380,6 +384,24 @@ suite('GrepService', () => {
 			// and a search that does not skip it reports its own earlier results as matches.
 			assert.deepStrictEqual(walker.excluded, resultFile.AllFormatFullPaths);
 			assert.ok(walker.excluded.includes(resultFile.FullPath));
+		});
+
+	});
+
+	suite('what a search covers', () => {
+
+		test('every folder of the workspace is walked, not just the first', async () => {
+			const dao = new FakeDao({ exclude: [], outputTitle: true });
+			const resultFile = new ResultFileModel(dao);
+			const service = new TestableGrepService(resultFile, 'lo', new DecorationService(), new TimeKeeper());
+			const walker = new WalkRecordingDirectoryWalker();
+			service.useWalker(walker);
+
+			await service.grep();
+
+			// The walk used to be handed Common.BASE_DIR - one folder - however many the user had
+			// opened, so everything outside the first was passed over without a word.
+			assert.deepStrictEqual(walker.roots, Common.BASE_DIRS);
 		});
 
 	});

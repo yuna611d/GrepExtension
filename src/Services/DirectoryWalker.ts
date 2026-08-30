@@ -28,14 +28,24 @@ export class DirectoryWalker {
     }
 
     /**
-     * Recursively walk targetDir, invoking onFile with the numbered lines of every non-binary file found.
+     * Recursively walk every targetDir, invoking onFile with the numbered lines of every
+     * non-binary file found.
+     *
+     * A workspace is made of however many folders were opened together, so what gets walked is a
+     * list rather than a single directory. They are walked in the order given - the order the
+     * results appear in - and share one record of where the walk has already been, because
+     * nothing stops a workspace from holding a folder and one of its own subfolders as two
+     * separate roots. Without that, every file under the inner one would be reported twice.
      */
     public async walk(
-        targetDir: string,
+        targetDirs: string[],
         excludedFullPaths: string[],
         onFile: (readings: NumberedFileLine[][]) => Promise<void>
     ) {
-        await this.walkDirectory(targetDir, excludedFullPaths, onFile, new Set<string>());
+        const visitedDirectories = new Set<string>();
+        for (const targetDir of targetDirs) {
+            await this.walkDirectory(targetDir, excludedFullPaths, onFile, visitedDirectories);
+        }
     }
 
     /**

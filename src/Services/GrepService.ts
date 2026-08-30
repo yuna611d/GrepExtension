@@ -111,8 +111,10 @@ export class GrepService implements IService {
             return false;
         }
 
-        // set Configuration
-        this.resultContent.setGrepConditionText(Common.BASE_DIR,
+        // set Configuration. Every folder that will be searched is named, not just the one the
+        // result file lands in: with several open, "Search Dir" naming one of them describes a
+        // search that did not happen.
+        this.resultContent.setGrepConditionText(Common.BASE_DIRS.join(", "),
                 {searchWord: this.searchConfig.SearchWord,
                  isRegExpMode: this.searchConfig.IsRegExpMode});
         return true;
@@ -122,7 +124,7 @@ export class GrepService implements IService {
 
         // Do grep and write its found result.
         try {
-            await this.directoryWalker.walk(Common.BASE_DIR, this.resultFile.AllFormatFullPaths, r => this.findWordInAFile(r));
+            await this.directoryWalker.walk(Common.BASE_DIRS, this.resultFile.AllFormatFullPaths, r => this.findWordInAFile(r));
             // Flush whatever is left in the buffer (fewer than BATCH_SIZE matches).
             await this.flushPendingMatches();
             // Notify finish
