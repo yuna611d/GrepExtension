@@ -19,6 +19,14 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Fixed following bugs
 
+  - Only the first folder of a multi-root workspace was searched. VS Code lets several folders
+    be opened together - an app beside the library it uses, beside its docs - but the search
+    walked the first of them and passed over the rest without a word, so a word sitting in plain
+    sight in the second folder was reported as not being in the workspace. Every folder is now
+    walked, in the order VS Code lists them, and all of them are named in the result's
+    `Search Dir` line. A folder nested inside another one is still reported once. The result
+    file continues to be written to the first folder.
+
   - A search held every file it had already read. The walk reads a few files ahead of the one
     it is reporting, which was meant to bound how much of the workspace is in memory at once -
     but nothing let go of a file afterwards, and the walk keeps a model for every entry in the

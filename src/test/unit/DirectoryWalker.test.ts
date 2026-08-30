@@ -48,7 +48,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [file] }));
 
 		const seen: NumberedFileLine[][] = [];
-		await walker.walk('/root', [], async readings => { seen.push(onlyReading(readings)); });
+		await walker.walk(['/root'], [], async readings => { seen.push(onlyReading(readings)); });
 
 		assert.deepStrictEqual(seen, [[
 			{ filePath: '/root/a.txt', lineText: 'line1', lineNumber: 1 },
@@ -65,7 +65,7 @@ suite('DirectoryWalker', () => {
 		}));
 
 		const seenPaths: string[] = [];
-		await walker.walk('/root', [], async readings => { seenPaths.push(...onlyReading(readings).map(l => l.filePath)); });
+		await walker.walk(['/root'], [], async readings => { seenPaths.push(...onlyReading(readings).map(l => l.filePath)); });
 
 		assert.deepStrictEqual(seenPaths, ['/root/sub/b.txt']);
 	});
@@ -75,7 +75,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [binaryFile] }));
 
 		let callCount = 0;
-		await walker.walk('/root', [], async () => { callCount++; });
+		await walker.walk(['/root'], [], async () => { callCount++; });
 
 		assert.strictEqual(callCount, 0);
 	});
@@ -84,7 +84,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [] }));
 
 		let callCount = 0;
-		await walker.walk('/root', [], async () => { callCount++; });
+		await walker.walk(['/root'], [], async () => { callCount++; });
 
 		assert.strictEqual(callCount, 0);
 	});
@@ -95,7 +95,7 @@ suite('DirectoryWalker', () => {
 		const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [fileA, fileB] }));
 
 		const seen: NumberedFileLine[] = [];
-		await walker.walk('/root', [], async readings => { seen.push(...onlyReading(readings)); });
+		await walker.walk(['/root'], [], async readings => { seen.push(...onlyReading(readings)); });
 
 		assert.deepStrictEqual(seen, [
 			{ filePath: '/root/a.txt', lineText: 'a1', lineNumber: 1 },
@@ -118,7 +118,7 @@ suite('DirectoryWalker', () => {
 			}));
 			const walker = new DirectoryWalker(new FakeFileRepository({ '/root': files }));
 
-			await walker.walk('/root', [], async () => {});
+			await walker.walk(['/root'], [], async () => {});
 
 			assert.deepStrictEqual(released, ['/root/a.txt', '/root/b.txt', '/root/c.txt']);
 		});
@@ -132,7 +132,7 @@ suite('DirectoryWalker', () => {
 			const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [file] }));
 			let releasedWhenReported: string[] = ['not called'];
 
-			await walker.walk('/root', [], async () => { releasedWhenReported = [...released]; });
+			await walker.walk(['/root'], [], async () => { releasedWhenReported = [...released]; });
 
 			assert.deepStrictEqual(releasedWhenReported, []);
 			assert.deepStrictEqual(released, ['/root/a.txt']);
@@ -164,7 +164,7 @@ suite('DirectoryWalker', () => {
 			let hostGotATurn = false;
 			setImmediate(() => { hostGotATurn = true; });
 
-			await walker.walk(tempDir, [], async () => {});
+			await walker.walk([tempDir], [], async () => {});
 
 			assert.ok(hostGotATurn, 'the walk ran to completion without ever yielding the event loop');
 		});
@@ -174,12 +174,78 @@ suite('DirectoryWalker', () => {
 			const walker = new DirectoryWalker();
 
 			const seen: NumberedFileLine[][] = [];
-			await walker.walk(tempDir, [], async readings => { seen.push(onlyReading(readings)); });
+			await walker.walk([tempDir], [], async readings => { seen.push(onlyReading(readings)); });
 
 			assert.deepStrictEqual(seen, [[
 				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'lorem', lineNumber: 1 },
 				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'ipsum', lineNumber: 2 },
 			]]);
+		});
+
+	});
+
+	suite('a workspace of several folders', () => {
+
+		// A workspace is however many folders were opened together, and only the first of them
+		// used to be walked - so a word sitting in the second folder was reported as not being in
+		// the workspace at all.
+		test('walks every folder it is given', async () => {
+			const inApp = fakeFile({ isDirectory: false, isFile: true, FullPath: '/app/a.txt', Content: 'lorem' });
+			const inLib = fakeFile({ isDirectory: false, isFile: true, FullPath: '/lib/b.txt', Content: 'ipsum' });
+			const inDocs = fakeFile({ isDirectory: false, isFile: true, FullPath: '/docs/c.txt', Content: 'dolor' });
+			const walker = new DirectoryWalker(new FakeFileRepository({
+				'/app': [inApp], '/lib': [inLib], '/docs': [inDocs],
+			}));
+
+			const seen: string[] = [];
+			await walker.walk(['/app', '/lib', '/docs'], [], async readings => {
+				seen.push(...onlyReading(readings).map(l => l.filePath));
+			});
+
+			assert.deepStrictEqual(seen, ['/app/a.txt', '/lib/b.txt', '/docs/c.txt']);
+		});
+
+		test('reports them in the order the folders were given', async () => {
+			const inApp = fakeFile({ isDirectory: false, isFile: true, FullPath: '/app/a.txt', Content: 'lorem' });
+			const inLib = fakeFile({ isDirectory: false, isFile: true, FullPath: '/lib/b.txt', Content: 'ipsum' });
+			const walker = new DirectoryWalker(new FakeFileRepository({ '/app': [inApp], '/lib': [inLib] }));
+
+			const seen: string[] = [];
+			await walker.walk(['/lib', '/app'], [], async readings => {
+				seen.push(...onlyReading(readings).map(l => l.filePath));
+			});
+
+			assert.deepStrictEqual(seen, ['/lib/b.txt', '/app/a.txt']);
+		});
+
+		// Nothing stops a workspace from holding a folder and one of its own subfolders as two
+		// separate roots. Walking each from scratch would report everything under the inner one
+		// twice - once for itself and once on the way through the outer.
+		test('a folder nested inside another is reported once', async () => {
+			const inner = fakeFile({ isDirectory: true, isFile: false, FullPath: '/outer/inner' });
+			const inOuter = fakeFile({ isDirectory: false, isFile: true, FullPath: '/outer/a.txt', Content: 'lorem' });
+			const inInner = fakeFile({ isDirectory: false, isFile: true, FullPath: '/outer/inner/b.txt', Content: 'ipsum' });
+			const walker = new DirectoryWalker(new FakeFileRepository({
+				'/outer': [inner, inOuter],
+				'/outer/inner': [inInner],
+			}));
+
+			const seen: string[] = [];
+			await walker.walk(['/outer', '/outer/inner'], [], async readings => {
+				seen.push(...onlyReading(readings).map(l => l.filePath));
+			});
+
+			assert.deepStrictEqual(seen, ['/outer/inner/b.txt', '/outer/a.txt']);
+		});
+
+		test('no folders open means nothing is walked', async () => {
+			const file = fakeFile({ isDirectory: false, isFile: true, FullPath: '/root/a.txt', Content: 'lorem' });
+			const walker = new DirectoryWalker(new FakeFileRepository({ '/root': [file] }));
+
+			let callCount = 0;
+			await walker.walk([], [], async () => { callCount++; });
+
+			assert.strictEqual(callCount, 0);
 		});
 
 	});
@@ -196,7 +262,7 @@ suite('DirectoryWalker', () => {
 			}));
 
 			const seen: string[] = [];
-			await walker.walk('/root', [], async readings => { seen.push(...onlyReading(readings).map(l => l.filePath)); });
+			await walker.walk(['/root'], [], async readings => { seen.push(...onlyReading(readings).map(l => l.filePath)); });
 
 			// /root is entered once, so descending back into it is skipped and the sibling file is
 			// still reached.
@@ -240,7 +306,7 @@ suite('DirectoryWalker', () => {
 
 		async function walkedFileNames(): Promise<string[]> {
 			const seen: string[] = [];
-			await new DirectoryWalker().walk(root, [], async readings => {
+			await new DirectoryWalker().walk([root], [], async readings => {
 				seen.push(...onlyReading(readings).map(l => path.basename(l.filePath)));
 			});
 			return seen;
