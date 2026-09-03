@@ -27,6 +27,17 @@ export class SearchWordConfiguration {
         this.regExpOptions = options;
     }
 
+    /**
+     * A word that is not a pattern is matched whatever its case: somebody typing "needle" means
+     * the word, not that spelling of it.
+     *
+     * Decided here, while the word is being configured, rather than the first time a RegExp is
+     * asked for. It used to be a side effect of the non-global getRegExp(), so which flags a
+     * search ran with depended on the order the two callers happened to ask in - ask for the
+     * global one first and it came back without the i, leaving the regexp that finds matches and
+     * the one that highlights them disagreeing about case. The order happens to be right today,
+     * which is exactly what makes it worth not depending on.
+     */
     private addIgnoreCaseOption() {
         this.regExpOptions += (this.regExpOptions.indexOf('i') === -1) ? 'i': '';
     }
@@ -56,6 +67,8 @@ export class SearchWordConfiguration {
         // Get Pattern, which may be option of regexp
         const pattern = splittedWords[0];
         if (!pattern) {
+            // A plain word, so it is matched whatever its case.
+            this.addIgnoreCaseOption();
             return;
         }
         // Get Flags from input word
@@ -77,13 +90,8 @@ export class SearchWordConfiguration {
         }
 
         if (this._regExp === null) {
-            if (this.IsRegExpMode) {
-                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
-            } else {
-                this.addIgnoreCaseOption();
-                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
-            }
-        } 
+            return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
+        }
 
         return this._regExp;
     }
