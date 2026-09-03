@@ -117,14 +117,27 @@ export class SearchWordConfiguration {
             .reduce((option, candidate) => {return option += candidate;}, "");
     }
 
+    /**
+     * Where the pattern starts, for a word written in the documented re/{pattern}/{flags} form.
+     *
+     * The prefix has to open the word. It used to be looked for anywhere inside it, so any text
+     * that happened to contain "re/" and a later "/" was taken for a regular expression and
+     * silently searched for something else: "feature/login/" searched for `login`, "core/lib/"
+     * for `lib`, "a re/b/ c" for `b`. Those are ordinary things to search a codebase for, and
+     * nothing in the result said the word had been reinterpreted.
+     */
     private getPatternStartPos(searchWord: string): number | null {
-        const REGEXP_FORMAT_PREFIX = "re/"; 
-        const startPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
-        if (startPos === -1) {
+        const REGEXP_FORMAT_PREFIX = "re/";
+        if (!searchWord.startsWith(REGEXP_FORMAT_PREFIX)) {
             return null;
         }
-        return startPos + REGEXP_FORMAT_PREFIX.length;
+        return REGEXP_FORMAT_PREFIX.length;
     }
+
+    /**
+     * Where the pattern ends: the last "/" in the word, so that a pattern may contain one. The
+     * flags follow it, which is why it is the last rather than the next.
+     */
     private getPatternEndPos(searchWord: string, startPos: number): number | null{
         const REGEXP_FORMAT_POSTFIX = "/";
         const endPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);
