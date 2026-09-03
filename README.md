@@ -31,6 +31,24 @@ Examples
 
 ## Configuration
 
+### grep2file.useEditorExcludes
+
+On by default. A search leaves out whatever the editor is already told to leave out, by reading
+VS Code's own `files.exclude` and `search.exclude` settings - the same pair the built-in search
+uses, and the reason `node_modules` stays out of the results without configuring anything here.
+The globs are matched against each path relative to the workspace folder it was found under, and
+a folder that matches is skipped along with everything inside it.
+
+Uncheck it to search everything under the workspace folders, dependencies and build output
+included:
+
+```json
+"grep2file.useEditorExcludes": false
+```
+
+A glob written in syntax this cannot express is ignored rather than guessed at, so those files
+stay in the search.
+
 ### grep2file.exclude
 
 You can exclude files which have specified extensions. The setting is a list of file extensions,
