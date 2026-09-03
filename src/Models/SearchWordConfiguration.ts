@@ -27,6 +27,17 @@ export class SearchWordConfiguration {
         this.regExpOptions = options;
     }
 
+    /**
+     * A word that is not a pattern is matched whatever its case: somebody typing "needle" means
+     * the word, not that spelling of it.
+     *
+     * Decided here, while the word is being configured, rather than the first time a RegExp is
+     * asked for. It used to be a side effect of the non-global getRegExp(), so which flags a
+     * search ran with depended on the order the two callers happened to ask in - ask for the
+     * global one first and it came back without the i, leaving the regexp that finds matches and
+     * the one that highlights them disagreeing about case. The order happens to be right today,
+     * which is exactly what makes it worth not depending on.
+     */
     private addIgnoreCaseOption() {
         this.regExpOptions += (this.regExpOptions.indexOf('i') === -1) ? 'i': '';
     }
@@ -56,6 +67,8 @@ export class SearchWordConfiguration {
         // Get Pattern, which may be option of regexp
         const pattern = splittedWords[0];
         if (!pattern) {
+            // A plain word, so it is matched whatever its case.
+            this.addIgnoreCaseOption();
             return;
         }
         // Get Flags from input word
@@ -77,13 +90,8 @@ export class SearchWordConfiguration {
         }
 
         if (this._regExp === null) {
-            if (this.IsRegExpMode) {
-                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
-            } else {
-                this.addIgnoreCaseOption();
-                return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
-            }
-        } 
+            return this._regExp = new RegExp(this.SearchWord, this.RegExpOptions);
+        }
 
         return this._regExp;
     }
@@ -117,14 +125,27 @@ export class SearchWordConfiguration {
             .reduce((option, candidate) => {return option += candidate;}, "");
     }
 
+    /**
+     * Where the pattern starts, for a word written in the documented re/{pattern}/{flags} form.
+     *
+     * The prefix has to open the word. It used to be looked for anywhere inside it, so any text
+     * that happened to contain "re/" and a later "/" was taken for a regular expression and
+     * silently searched for something else: "feature/login/" searched for `login`, "core/lib/"
+     * for `lib`, "a re/b/ c" for `b`. Those are ordinary things to search a codebase for, and
+     * nothing in the result said the word had been reinterpreted.
+     */
     private getPatternStartPos(searchWord: string): number | null {
-        const REGEXP_FORMAT_PREFIX = "re/"; 
-        const startPos = searchWord.indexOf(REGEXP_FORMAT_PREFIX);
-        if (startPos === -1) {
+        const REGEXP_FORMAT_PREFIX = "re/";
+        if (!searchWord.startsWith(REGEXP_FORMAT_PREFIX)) {
             return null;
         }
-        return startPos + REGEXP_FORMAT_PREFIX.length;
+        return REGEXP_FORMAT_PREFIX.length;
     }
+
+    /**
+     * Where the pattern ends: the last "/" in the word, so that a pattern may contain one. The
+     * flags follow it, which is why it is the last rather than the next.
+     */
     private getPatternEndPos(searchWord: string, startPos: number): number | null{
         const REGEXP_FORMAT_POSTFIX = "/";
         const endPos = searchWord.lastIndexOf(REGEXP_FORMAT_POSTFIX);

@@ -64,6 +64,46 @@ suite('ResultContentModel (txt)', () => {
 		assert.strictEqual(row.slice(extracted!.offset), 'the needle is here');
 	});
 
+	// The content column holds a line of somebody's source file, which is free to contain a tab -
+	// the separator txt writes its own columns with. Reading only as far as the next separator cut
+	// the line at the first one, so a tab-indented line yielded "" and its match was never found
+	// again: the row was written to the result with no highlight on it at all.
+	test('a tab-indented line keeps all of its text', () => {
+		const dao = new FakeDao({ outputTitle: true });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+		model.setGrepConditionText('/ws', { searchWord: 'needle', isRegExpMode: false });
+
+		const row = model.getContentInOneLine('/ws/a.go', '42', '\t\tif (needle) { }').replace(/\n$/, '');
+		const extracted = model.extractContentAndOffset(row);
+
+		assert.strictEqual(extracted?.text, '\t\tif (needle) { }');
+		assert.strictEqual(row.slice(extracted!.offset), '\t\tif (needle) { }');
+	});
+
+	test('a tab in the middle of a line keeps the text after it', () => {
+		const dao = new FakeDao({ outputTitle: true });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+		model.setGrepConditionText('/ws', { searchWord: 'needle', isRegExpMode: false });
+
+		const row = model.getContentInOneLine('/ws/a.txt', '42', 'const x = 1;\tneedle here').replace(/\n$/, '');
+		const extracted = model.extractContentAndOffset(row);
+
+		assert.strictEqual(extracted?.text, 'const x = 1;\tneedle here');
+	});
+
+	// The offset is what a decoration range is measured from, so it has to keep pointing at the
+	// first character of the content column however many separators the line itself contains.
+	test('the offset still points at the start of the content column', () => {
+		const dao = new FakeDao({ outputTitle: true });
+		const model = new ResultContentModel(dao, new ResultFileModel(dao));
+		model.setGrepConditionText('/ws', { searchWord: 'needle', isRegExpMode: false });
+
+		const row = model.getContentInOneLine('/ws/a.go', '42', '\tneedle').replace(/\n$/, '');
+		const extracted = model.extractContentAndOffset(row);
+
+		assert.strictEqual(extracted!.offset, '\t/ws/a.go\t42\t'.length);
+	});
+
 	test('ColumnTitle always blanks the first (GrepConf) column for txt output', () => {
 		const dao = new FakeDao({ outputTitle: true });
 		const model = new ResultContentModel(dao, new ResultFileModel(dao));

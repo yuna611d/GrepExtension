@@ -66,6 +66,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Search configuration is outputted if checked."
+                },
+                "grep2file.useEditorExcludes": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Leave out the files and folders the editor is already told to leave out, by honouring the files.exclude and search.exclude settings. Uncheck to search everything under the workspace folders, including node_modules and build output."
                 }
             }
         }

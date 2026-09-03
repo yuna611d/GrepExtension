@@ -6,6 +6,12 @@ All notable changes to the "Grep to File" extension will be documented in this f
 
 - Added following feature
 
+  - `grep2file.useEditorExcludes` (on by default) leaves out the files and folders the editor is
+    already told to leave out, by honouring `files.exclude` and `search.exclude`. Searching this
+    project used to read 5,098 files in 1.9s, 4,864 of them dependencies that matched nothing,
+    and half its results came from its own build output; it now reads 130 files in 0.1s. Uncheck
+    it to go back to searching everything under the workspace folders.
+
   - `grep2file.searchAllEncodings` (off by default) searches every file as UTF-8, UTF-16,
     Shift-JIS and EUC-JP, and reports a line that matches under any of them. Use it when a
     workspace mixes encodings and you would rather not configure `files.encoding`;
@@ -18,6 +24,30 @@ All notable changes to the "Grep to File" extension will be documented in this f
     sees each file exactly as opening it in the editor would.
 
 - Fixed following bugs
+
+  - A matched line containing a tab was not highlighted in the default `txt` format. The line is
+    written to the result in full, but the text the highlight is measured against was read only
+    as far as the next column separator - a tab, which is what txt writes its own columns with.
+    A tab-indented line therefore yielded nothing to search, so every file indented that way
+    (Go, Makefiles, anything else) lost all of its highlights, as did any line with a tab past
+    the match. `csv` and `tsv` were never affected: they quote such a field and parse it back.
+
+  - A search word containing `re/` was silently treated as a regular expression. The
+    `re/{pattern}/{flags}` form is documented as the whole word, but the prefix was honoured
+    anywhere inside it, so `feature/login/` searched for the pattern `login`, `core/lib/` for
+    `lib`, and `a re/b/ c` for `b`. Path fragments are an ordinary thing to search for, and
+    nothing in the result said the word had been reinterpreted. The prefix must now open the
+    word; a pattern may still contain a slash.
+
+  - A file ending in a line break reported one line more than it has. Nothing usually matches an
+    empty line, so this only showed up in a search that does: looking for blank lines found a
+    phantom in every file in the workspace, at a line number one past the end. A blank last line
+    the file really has is still reported.
+
+  - The regular expression that finds matches and the one that positions the highlights could
+    disagree about case, depending on which was asked for first. Not reachable through the
+    current code path, but the ignore-case flag is now settled when the search word is read
+    rather than as a side effect of the first use.
 
   - Only the first folder of a multi-root workspace was searched. VS Code lets several folders
     be opened together - an app beside the library it uses, beside its docs - but the search

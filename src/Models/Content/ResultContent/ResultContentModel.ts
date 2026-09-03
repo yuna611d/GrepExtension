@@ -89,22 +89,39 @@ export class ResultContentModel extends BaseModel {
      * Returns null when this format has no meaningful searchable offset (see ResultContentJSONModel).
      */
     public extractContentAndOffset(lineText: string): { text: string; offset: number } | null {
-        const fields = lineText.split(this.SEPARATOR);
-        const contentColumn = this.columnPosition.content;
+        const offset = this.contentColumnOffset(lineText);
 
         // A row with no content column at all has nothing to search. The guard used to admit a
         // row with exactly contentColumn fields, whose last index is one short, and hand back the
         // undefined that reading past the end produces - typed as a string, so a search word was
         // matched against the text "undefined" and words like "def" or "fine" found there.
-        if (fields.length <= contentColumn) {
+        if (offset === null) {
             return { text: "", offset: lineText.length };
         }
 
-        // Every field before the content one, each followed by the separator that ends it.
-        const offset = fields.slice(0, contentColumn)
-                             .reduce((total, field) => total + field.length + this.SEPARATOR.length, 0);
+        // Everything from there to the end of the row, rather than up to the next separator. The
+        // content column is the last one written, and it holds a line of somebody's source file,
+        // which is free to contain the separator itself. Taking only as far as the next one cut
+        // the text at the first tab: every tab-indented line - Go, Makefiles, any file indented
+        // that way - yielded an empty string, so the match in it was never found again and the
+        // line was written to the result without a highlight.
+        return { text: lineText.slice(offset), offset };
+    }
 
-        return { text: fields[contentColumn], offset };
+    /**
+     * Where the content column starts: past the separator that ends each column before it, or
+     * null when the row does not have that many columns.
+     */
+    protected contentColumnOffset(lineText: string): number | null {
+        let offset = 0;
+        for (let column = 0; column < this.columnPosition.content; column++) {
+            const separatorPos = lineText.indexOf(this.SEPARATOR, offset);
+            if (separatorPos === -1) {
+                return null;
+            }
+            offset = separatorPos + this.SEPARATOR.length;
+        }
+        return offset;
     }
     //------ Contents ------
 

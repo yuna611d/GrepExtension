@@ -24,6 +24,13 @@ export class FakeDao extends BaseDao {
 			: defaultValue;
 	}
 
+	/** The editor exclusions a test wants in force. None, unless it says otherwise. */
+	public editorExcludeGlobs: string[] = [];
+
+	public getEditorExcludeGlobs(): string[] {
+		return this.editorExcludeGlobs;
+	}
+
 	/**
 	 * Stands in for the editor's decoding, which only exists inside the extension host.
 	 *

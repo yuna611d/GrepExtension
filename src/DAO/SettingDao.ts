@@ -39,6 +39,35 @@ export class SettingDao extends BaseDao{
     }
 
     /**
+     * Every glob that is switched on in `files.exclude` or `search.exclude`, for the workspace as
+     * a whole.
+     *
+     * Both are read because that is what the built-in search does: `search.exclude` adds to
+     * `files.exclude` rather than replacing it, and out of the box it is the one that carries the
+     * node_modules glob. A glob mapped to false is a user turning an inherited exclusion back
+     * off, so it is dropped rather than treated as present.
+     */
+    public getEditorExcludeGlobs(): string[] {
+        if (!this.getSettingValue('useEditorExcludes', true)) {
+            return [];
+        }
+        return [...this.enabledGlobs('files'), ...this.enabledGlobs('search')];
+    }
+
+    protected enabledGlobs(section: string): string[] {
+        const configured = vscode.workspace.getConfiguration(section).get<Record<string, unknown>>('exclude');
+        if (configured === null || configured === undefined) {
+            return [];
+        }
+        // A glob can also be mapped to a condition object ("when": ...), which says to exclude the
+        // entry only when a sibling exists. Nothing here can answer that, so such a glob is left
+        // out: searching a file that could have been skipped is the recoverable mistake.
+        return Object.entries(configured)
+                     .filter(([, enabled]) => enabled === true)
+                     .map(([glob]) => glob);
+    }
+
+    /**
      * Decodes with the editor's own rules, so a search sees each file the way opening it would:
      * a byte order mark is honoured and removed, `files.encoding` is applied - including any
      * per-language or per-file override - and `files.autoGuessEncoding`, when the user has turned

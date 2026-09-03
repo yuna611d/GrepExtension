@@ -1,10 +1,19 @@
 import * as fs from 'fs';
+import { Common } from '../Commons/Common';
 import { forEachWithLimit } from '../Commons/Concurrency';
+import { PathExcluder } from '../Commons/PathExcluder';
 import { FileRepository } from '../Models/File/FileRepository';
 import { SeekedFileModel } from '../Models/File/SeekedFileModel';
 import { LineMatcher } from './LineMatcher';
 
 export interface NumberedFileLine { filePath: string; lineText: string; lineNumber: number }
+
+/** What one walk carries from directory to directory: see walk() and walkDirectory(). */
+interface WalkState {
+    visitedDirectories: Set<string>;
+    excluder: PathExcluder;
+    root: string;
+}
 
 export class DirectoryWalker {
 
@@ -42,10 +51,20 @@ export class DirectoryWalker {
         excludedFullPaths: string[],
         onFile: (readings: NumberedFileLine[][]) => Promise<void>
     ) {
+        const excluder = this.excluder();
         const visitedDirectories = new Set<string>();
         for (const targetDir of targetDirs) {
-            await this.walkDirectory(targetDir, excludedFullPaths, onFile, visitedDirectories);
+            await this.walkDirectory(targetDir, excludedFullPaths, onFile,
+                { visitedDirectories, excluder, root: targetDir });
         }
+    }
+
+    /**
+     * What the editor has been told to leave out. Built once per walk rather than per directory,
+     * since turning the globs into matchers costs more than testing a path against them.
+     */
+    protected excluder(): PathExcluder {
+        return new PathExcluder(Common.DAO.getEditorExcludeGlobs());
     }
 
     /**
@@ -65,15 +84,17 @@ export class DirectoryWalker {
         targetDir: string,
         excludedFullPaths: string[],
         onFile: (readings: NumberedFileLine[][]) => Promise<void>,
-        visitedDirectories: Set<string>
+        walkState: WalkState
     ) {
+        const { visitedDirectories } = walkState;
         const resolvedDir = await this.resolvePath(targetDir);
         if (visitedDirectories.has(resolvedDir)) {
             return;
         }
         visitedDirectories.add(resolvedDir);
 
-        const seekedFilesOrDirectories = await this.fileRepository.retrieve(targetDir, excludedFullPaths);
+        const seekedFilesOrDirectories = (await this.fileRepository.retrieve(targetDir, excludedFullPaths))
+            .filter(entry => !this.isExcludedByEditor(entry.FullPath, walkState));
 
         // Ask what every entry is, several at a time. The models cache the answer, so the ordered
         // loops below read it back without going near the filesystem again.
@@ -89,7 +110,7 @@ export class DirectoryWalker {
         // if file path is directory, re-walk by using file path as the next target directory
         for (const { entry, isDirectory } of entries) {
             if (isDirectory) {
-                await this.walkDirectory(entry.FullPath, excludedFullPaths, onFile, visitedDirectories);
+                await this.walkDirectory(entry.FullPath, excludedFullPaths, onFile, walkState);
             }
         }
 
@@ -124,6 +145,35 @@ export class DirectoryWalker {
             }
         }
     }
+
+    /**
+     * Whether this entry is one the editor's own exclusions cover.
+     *
+     * Tested against the path relative to the workspace folder it was found under, which is what
+     * the globs are written against. A directory that matches is filtered out before the walk
+     * descends into it, so its whole subtree goes with it - the same way excluding a folder in
+     * the editor hides everything inside it.
+     */
+    protected isExcludedByEditor(fullPath: string, walkState: WalkState): boolean {
+        const root = walkState.root.replace(DirectoryWalker.TRAILING_SEPARATORS, "");
+        if (!fullPath.startsWith(root)) {
+            return false;
+        }
+
+        // Requiring a separator after the root keeps a sibling folder whose name merely starts
+        // with it - /work/app and /work/app-old - from being measured against the wrong root.
+        const remainder = fullPath.slice(root.length);
+        if (!DirectoryWalker.LEADING_SEPARATOR.test(remainder)) {
+            return false;
+        }
+
+        return walkState.excluder.excludes(remainder.replace(DirectoryWalker.LEADING_SEPARATORS, ""));
+    }
+
+    // Either separator, whichever platform built the path and whichever wrote the workspace root.
+    private static readonly LEADING_SEPARATOR = /^[\\/]/;
+    private static readonly LEADING_SEPARATORS = /^[\\/]+/;
+    private static readonly TRAILING_SEPARATORS = /[\\/]+$/;
 
     /**
      * The real path behind targetDir, so that two routes to one directory compare equal.
