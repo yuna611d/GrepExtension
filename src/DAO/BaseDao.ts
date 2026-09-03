@@ -11,6 +11,15 @@ export abstract class BaseDao {
     public abstract getSettingValue<T>(key: string, defaultValue: T): T;
 
     /**
+     * The globs the editor has been told to leave out of a search: `files.exclude` together with
+     * `search.exclude`, which is how VS Code itself decides what its own search covers.
+     *
+     * Asked of the DAO rather than read directly because they are the editor's settings, not this
+     * extension's - the same reason decoding goes through here.
+     */
+    public abstract getEditorExcludeGlobs(): string[];
+
+    /**
      * Turns the bytes of a file into the text to search.
      *
      * Which encoding those bytes are in is not something the extension decides: the editor

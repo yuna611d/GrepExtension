@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DirectoryWalker, NumberedFileLine } from '../../Services/DirectoryWalker';
+import { PathExcluder } from '../../Commons/PathExcluder';
 import { FileRepository } from '../../Models/File/FileRepository';
 import { SeekedFileModel } from '../../Models/File/SeekedFileModel';
 
@@ -180,6 +181,87 @@ suite('DirectoryWalker', () => {
 				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'lorem', lineNumber: 1 },
 				{ filePath: path.join(tempDir, 'a.txt'), lineText: 'ipsum', lineNumber: 2 },
 			]]);
+		});
+
+	});
+
+	// The walk asks Common.DAO for the editor's exclusions; these name them outright so the test
+	// is about what the walk does with them rather than about reading settings.
+	class ExcludingDirectoryWalker extends DirectoryWalker {
+		constructor(repository: FileRepository, private readonly globs: string[]) {
+			super(repository);
+		}
+		protected excluder(): PathExcluder {
+			return new PathExcluder(this.globs);
+		}
+	}
+
+	suite('what the editor has been told to leave out', () => {
+
+		// files.exclude and search.exclude are how a user says "node_modules is not my code". The
+		// walk ignored them, so a search read every dependency in the workspace - on this project,
+		// 4,864 files of them for no matches at all - and reported its own build output as hits.
+		function walkerOver(globs: string[]): DirectoryWalker {
+			const deep = fakeFile({ isDirectory: false, isFile: true, FullPath: '/root/node_modules/pkg/i.js', Content: 'lorem' });
+			const pkg = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root/node_modules/pkg' });
+			const modules = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root/node_modules' });
+			const buildOutput = fakeFile({ isDirectory: false, isFile: true, FullPath: '/root/out/a.js', Content: 'lorem' });
+			const out = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root/out' });
+			const source = fakeFile({ isDirectory: false, isFile: true, FullPath: '/root/src/a.ts', Content: 'lorem' });
+			const src = fakeFile({ isDirectory: true, isFile: false, FullPath: '/root/src' });
+
+			return new ExcludingDirectoryWalker(new FakeFileRepository({
+				'/root': [modules, out, src],
+				'/root/node_modules': [pkg],
+				'/root/node_modules/pkg': [deep],
+				'/root/out': [buildOutput],
+				'/root/src': [source],
+			}), globs);
+		}
+
+		async function walkedWith(globs: string[]): Promise<string[]> {
+			const seen: string[] = [];
+			await walkerOver(globs).walk(['/root'], [], async readings => {
+				seen.push(...onlyReading(readings).map(l => l.filePath));
+			});
+			return seen;
+		}
+
+		test('an excluded folder is not descended into', async () => {
+			assert.deepStrictEqual(await walkedWith(['**/node_modules']), ['/root/out/a.js', '/root/src/a.ts']);
+		});
+
+		test('everything beneath it goes with it, however deep', async () => {
+			const seen = await walkedWith(['**/node_modules']);
+
+			assert.ok(!seen.some(p => p.includes('node_modules')));
+		});
+
+		test('a plain name excludes the folder of that name in the workspace root', async () => {
+			assert.deepStrictEqual(await walkedWith(['out']), ['/root/node_modules/pkg/i.js', '/root/src/a.ts']);
+		});
+
+		test('several globs are all applied', async () => {
+			assert.deepStrictEqual(await walkedWith(['**/node_modules', 'out']), ['/root/src/a.ts']);
+		});
+
+		test('no exclusions means the whole workspace, as before', async () => {
+			assert.deepStrictEqual(await walkedWith([]),
+				['/root/node_modules/pkg/i.js', '/root/out/a.js', '/root/src/a.ts']);
+		});
+
+		// The globs are relative to the workspace folder, so the root's own path must not be
+		// matched against them - a workspace opened at a folder called "out" is still searched.
+		test('the workspace root itself is never excluded by its own name', async () => {
+			const file = fakeFile({ isDirectory: false, isFile: true, FullPath: '/work/out/a.ts', Content: 'lorem' });
+			const walker = new ExcludingDirectoryWalker(new FakeFileRepository({ '/work/out': [file] }), ['out']);
+
+			const seen: string[] = [];
+			await walker.walk(['/work/out'], [], async readings => {
+				seen.push(...onlyReading(readings).map(l => l.filePath));
+			});
+
+			assert.deepStrictEqual(seen, ['/work/out/a.ts']);
 		});
 
 	});
