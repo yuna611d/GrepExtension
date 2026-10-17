@@ -14,3 +14,7 @@ eslint.config.mjs
 tsconfig.json
 package-lock.json
 vsc-extension-quickstart.md
+# The readme's only image is rewritten to an absolute repository URL when the package is built,
+# so the marketplace page loads it from GitHub and nothing in the package ever reads the file.
+# Shipping it made every install a 5.4 MB download for a 40 KB extension.
+images/**

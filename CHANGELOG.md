@@ -2,7 +2,7 @@
 
 All notable changes to the "Grep to File" extension will be documented in this file.
 
-## Unreleased
+## 0.7.0
 
 - Added following feature
 
